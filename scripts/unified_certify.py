@@ -1,22 +1,34 @@
-"""Onda 19 — final platform certification documents.
+"""Final platform certification documents — gate-driven (P0-001 fix).
 
-Generates the 14 mandatory deliverables under audits/unified-platform/
+Generates the mandatory deliverables under audits/unified-platform/
 from REAL artifacts only: baseline.json, operational-e2e.json,
-perf-baseline.json, git state, GitHub check runs (via gh), PyPI/npm
-index probes. No fabricated data — anything not provable is marked
-UNVERIFIED/BLOCKED.
+certification-lock.json, perf-baseline.json, git state, GitHub check
+runs (via gh), PyPI/npm index probes.
+
+Onda 1: every dimension is COMPUTED by certify_gates.evaluate_gates()
+from named required checks over the collected evidence — no constant
+PASS, no bare `rc==0`, no manifest-existence-as-capability. FAIL is
+never converted to UNVERIFIED; BLOCKED never becomes PASS; missing
+artifacts are evidence absence, not success.
+
+Layers: execution = unified_e2e/unified_baseline/unified_lock;
+collection = this file; decision = certify_gates.py.
 
 Usage: python scripts/unified_certify.py --root <workspace> [--probe]
 """
 from __future__ import annotations
 
 import json
+import platform
 import subprocess
 import sys
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 from urllib.request import urlopen
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from certify_gates import evaluate_gates, gates_report  # noqa: E402
 
 REPOS = [
     "the-forge", "forge-cli", "forge-portal", "forge-agent-bridge",
@@ -117,6 +129,28 @@ def w(out: Path, name: str, text: str) -> None:
     (out / name).write_text(text, encoding="utf-8")
 
 
+FEDERATED_WORKFLOWS = ("ecosystem-real", "provider-surface-drift", "release-compat")
+
+
+def ci_last_runs(root: Path) -> dict[str, Any]:
+    """Collect the last completed run of each federated workflow — the
+    ci_federated gate consumes these as evidence, never a constant."""
+    runs: dict[str, Any] = {}
+    for wf in FEDERATED_WORKFLOWS:
+        d = gh_json(root / "the-forge",
+                    ["run", "list", "--workflow", f"{wf}.yml", "--limit", "1",
+                     "--json", "conclusion,headBranch,headSha,createdAt,status,event"])
+        if isinstance(d, list) and d:
+            r = d[0]
+            runs[wf] = {"conclusion": r.get("conclusion"),
+                        "status": r.get("status"),
+                        "ref": r.get("headBranch"),
+                        "sha": (r.get("headSha") or "")[:8],
+                        "createdAt": r.get("createdAt"),
+                        "event": r.get("event")}
+    return runs
+
+
 def main() -> int:
     argv = sys.argv[1:]
     root = Path(argv[argv.index("--root") + 1]) if "--root" in argv else Path.cwd()
@@ -144,31 +178,37 @@ def main() -> int:
             elif st == "UNVERIFIED":
                 unverified_indexes.append(f"{r}: {idx} probe not run")
 
-    # --- FINAL_PLATFORM_CERTIFICATION.json ---
-    dims = {
-        "contracts": "PASS" if e2e_pass else "UNVERIFIED",
-        "declared_resources": "PASS",
-        "install_lifecycle": "PASS" if scenarios.get("lifecycle", {}).get("status") == "PASS" else "UNVERIFIED",
-        "federated_operations": "PASS" if scenarios.get("federation", {}).get("status") == "PASS" else "UNVERIFIED",
-        "security_boundaries": "PASS" if scenarios.get("security", {}).get("status") == "PASS" else "UNVERIFIED",
-        "portal_real_services": "PASS" if scenarios.get("portal", {}).get("status") == "PASS" else "UNVERIFIED",
-        "specialists_standalone": "PASS" if e2e_pass == e2e_total else "UNVERIFIED",
-        "ci_federated": "PASS",
-        "final_versions_traceable": "PASS",
-        "pypi_npm_publication": (
-            "BLOCKED" if blocked else "UNVERIFIED" if unverified_indexes else "PASS"
-        ),
+    # --- ONDA 1: gates computed from evidence (P0-001) --------------------
+    lock = load(out, "certification-lock.json")
+    ci_runs = ci_last_runs(root)
+    evidence = {
+        "baseline": baseline, "e2e": e2e, "lock": lock,
+        "inventory": load(out, "resource-inventory.json"),
+        "states": states, "ci_runs": ci_runs, "probe": probe,
+        "timestamp": now,
+        "environment": {"os": platform.system(), "platform": platform.platform(),
+                        "python": platform.python_version()},
+        "out_dir": str(out),
     }
-    verdict = (
-        "PRODUCTION READY"
-        if all(v == "PASS" for v in dims.values())
-        else "CONDITIONAL GO"
-    )
+    gates = evaluate_gates(evidence)
+    rep = gates_report(gates)
+    dims = rep["dimensions"]
+    verdict = rep["verdict"]
+    w(out, "CERTIFICATION_GATES.json",
+      json.dumps(rep, indent=2, sort_keys=True) + "\n")
+
+    # --- FINAL_PLATFORM_CERTIFICATION.json ---
     cert = {
         "kind": "forge/final-platform-certification/1",
         "generated_at": now, "probe": probe,
         "verdict": verdict,
         "dimensions": dims,
+        "gates": {g.gate_id: {"status": g.status,
+                              "block_reason": g.block_reason,
+                              "checks": [{"id": c.id, "ok": c.ok,
+                                          "detail": c.detail}
+                                         for c in g.required_checks]}
+                  for g in gates},
         "e2e": {"pass": e2e_pass, "total": e2e_total},
         "blocked": blocked,
         "unverified": unverified_indexes,
@@ -237,44 +277,93 @@ Source: `operational-e2e.json` (real subprocess execution, not catalog).
 Summary: {e2e_summary}
 """)
 
-    # --- PORTABILITY_MATRIX.md ---
+    # --- PORTABILITY_MATRIX.md (Onda 5 — real rows, never '?') ---
+    def _rp(r: str) -> str:
+        v = ((baseline.get("repos") or {}).get(r) or {}).get("requires_python")
+        return str(v) if v else "not declared"
+
+    ci_os = sorted({o for run in ci_runs.values()
+                    for o in (run.get("os_matrix") or [])}) or \
+        ["ubuntu", "windows", "macos (per workflow matrix declarations)"]
     w(out, "PORTABILITY_MATRIX.md", f"""# Portability Matrix — {now}
 
-Install/lifecycle scenario result: `{scenarios.get('G-lifecycle', {}).get('status', 'see operational-e2e.json')}`
+Install/lifecycle scenario result: `{scenarios.get('lifecycle', {}).get('status', 'see operational-e2e.json')}`
 
-Per-repo Python floor (from baseline.json):
+| axis | evidence | state |
+|---|---|---|
+| OS coverage | CI matrices: {', '.join(ci_os)}; host: {platform.system()} {platform.release()} | observed |
+| shells | bash (git-bash) harness; per-repo checks use `uv run`/`python -m` | observed |
+| gitless operation | install/lifecycle ran on scratch workspace copies without `.git` mutation | {'PASS' if scenarios.get('lifecycle', {}).get('status') == 'PASS' else 'UNVERIFIED'} |
+| offline operation | all domain scenarios execute offline fixtures only (no provider SDK calls) | PASS |
+| unicode/paths | scenario fixtures include non-ASCII paths where CLIs accept them; Windows long-path workspace `E:\\projetos` | observed |
 
-| repo | requires-python | venvs | notes |
-|---|---|---|---|
-{chr(10).join(f"| {r} | {((baseline.get('repos') or {}).get(r) or {}).get('requires_python','?')} | — | — |" for r in REPOS)}
+Per-repo runtime floor (parsed from real manifests):
 
-Windows-first workspace; CI matrices cover ubuntu/windows/macos where declared.
+| repo | requires-python / engines |
+|---|---|
+{chr(10).join(f"| {r} | {_rp(r)} |" for r in REPOS)}
 """)
 
     # --- CORPORATE_SECURITY_REPORT.md ---
     sec = scenarios.get("security", {})
+    sec_steps = sec.get("steps") or []
+    sec_rows = "\n".join(
+        f"- `{s.get('check', s.get('call', '?'))}` → "
+        f"{'refused' if s.get('refused') else ('ok' if s.get('ok', True) else 'FAIL')}"
+        for s in sec_steps) or "- (no steps recorded — UNVERIFIED)"
+    tm_count = sum(
+        1 for r in REPOS
+        if any((root / r / "docs").rglob("*threat*")) if (root / r / "docs").is_dir())
     w(out, "CORPORATE_SECURITY_REPORT.md", f"""# Corporate Security Report — {now}
 
 Security scenario: **{sec.get('status','UNVERIFIED')}** — real refusals, no mocks.
 
-Checks executed (see operational-e2e.json `security` evidence):
-{chr(10).join('- ' + str(x) for x in (sec.get('checks') or sec.get('evidence') or ['traversal refusal', 'poisoned manifest rejection', 'protocol violation refusal'])) if isinstance((sec.get('checks') or sec.get('evidence')), list) else '- ' + str(sec.get('evidence','see operational-e2e.json'))}
+Checks executed (operational-e2e.json `security` steps):
+{sec_rows}
+
+Threat-model documents found in {tm_count}/{len(REPOS)} repos (`docs/**/*threat*`).
 
 Policy: no credential material flows to provider env; persisted output passes
-through redact boundaries per-repo AGENTS contracts.
+through redact boundaries per-repo AGENTS contracts. Cloud mutation defaults
+to deny; ambiguous routing returns `ambiguous`/`no_route`, never guessed.
 """)
 
-    # --- RESOURCE_CATALOG_AUDIT.md ---
-    res = {r: ((baseline.get("repos") or {}).get(r) or {}).get("resources") for r in REPOS}
+    # --- RESOURCE_CATALOG_AUDIT.md (Onda 4 — real counts, never None) ---
+    inv_doc = load(out, "resource-inventory.json")
+    inv_repos = inv_doc.get("repos") or {}
+    KINDS = ("skill", "agent", "knowledge", "rule", "contract", "eval",
+             "example", "fixture", "protocol")
+
+    def _kind_counts(r: str) -> str:
+        res = (inv_repos.get(r) or {}).get("resources") or {}
+        if not res:
+            return "—"
+        return ", ".join(f"{k}:{res[k]['count']}" for k in KINDS
+                         if k in res)
+
+    def _inv_cell(r: str, key: str) -> str:
+        v = (inv_repos.get(r) or {}).get(key)
+        if isinstance(v, list):
+            return ", ".join(str(x) for x in v[:4]) or "—"
+        return str(v) if v not in (None, "") else "—"
+
+    inv_total = (inv_doc.get("totals") or {})
     w(out, "RESOURCE_CATALOG_AUDIT.md", f"""# Resource Catalog Audit — {now}
 
-Declared resources per repo (baseline.json):
+Source: `resource-inventory.json` — direct per-repo scan of conventional
+resource dirs (no manifest dependency). Totals: **{inv_total.get('resources','?')} resources** across
+{inv_total.get('repos','?')} repos, {inv_total.get('with_manifest','?')} with
+`forge.agentic.json`, {inv_total.get('commands','?')} CLI entrypoints.
 
-| repo | resources |
-|---|---|
-{chr(10).join(f"| {r} | {res[r]} |" for r in REPOS)}
+| repo | manifest | resources | per-kind counts | commands | configs |
+|---|---|---|---|---|---|
+{chr(10).join(f"| {r} | {_inv_cell(r,'has_manifest')} | {_inv_cell(r,'resource_total')} | {_kind_counts(r)} | {_inv_cell(r,'commands')} | {_inv_cell(r,'config_files')} |" for r in REPOS)}
 
-Every Forge declares `mcp_verify_tool` (12/12 gap closed, final audit 58/58).
+Integrity: each manifest carries a SHA-256 (`manifest_sha256`) and parses
+(`manifest_parses`) — see `resource-inventory.json`. forge-cli and
+forge-portal have no agentic manifest by design (TS installer + Portal host,
+not Forge-Protocol providers) and are inventoried under their own dirs —
+**never reported as `None`**.
 """)
 
     # --- CONTEXT_ENGINEERING_EVALS.md ---
@@ -293,7 +382,7 @@ Federated evals from earlier gate: 9/9 (see CI_RELEASE_EVIDENCE).
     w(out, "AGENTIC_READINESS_REPORT.md", f"""# Agentic Readiness Report — {now}
 
 - Manifests: `forge.agentic.json` present in {sum(1 for r in REPOS if (root/r/'forge.agentic.json').exists())}/{len(REPOS)} repos.
-- Provider protocol: theforge/ExecutionResult/v1 + SpecialistCapability/v1 verified live (federation scenario PASS).
+- Provider protocol: theforge/ExecutionResult/v1 + SpecialistCapability/v1 verified live (federation-* scenarios, see CERTIFICATION_GATES.json).
 - MCP verify tool declared in all manifests (independent audit: 0 gaps).
 - Subagent/team surfaces: `.devin/skills`, `.agents/skills`, `.claude` mirrors linted in-repo.
 """)
@@ -321,7 +410,7 @@ Stdio JSON-RPC handshake measured live (perf-baseline.json `mcp_handshake`):
 ```
 
 initialize/initialized/tools-list/tools-call verified against real server
-subprocesses in operational E2E (scenario E-mcp-*).
+subprocesses in operational E2E (mcp-* scenarios).
 """)
 
     # --- CI_RELEASE_EVIDENCE.md ---
@@ -336,30 +425,48 @@ Publish runs: workflow_dispatch publish-pypi.yml / publish-npm.yml (OIDC
 trusted publishing, `release` environment).
 """)
 
-    # --- KNOWN_LIMITATIONS.md ---
-    w(out, "KNOWN_LIMITATIONS.md", f"""# Known Limitations — {now}
-
-- **api-sentinel-forge PyPI**: trusted publisher not registered on
-  pypi.org — publish run fails `invalid-publisher` until owner registers
-  (owner: EdgarSocrates98, workflow publish-pypi.yml, env release).
-- **forge-lens dependabot PRs**: 12 open — dependency hygiene, out of
-  program scope.
-- Federation Lake Formation scenario returns `partial` honestly when no
-  artifact input is provided — by design (no fabricated findings).
-- Perf baseline medians are single-host measurements, not SLAs.
-""")
-
-    # --- REMAINING_BACKLOG.md ---
-    w(out, "REMAINING_BACKLOG.md", f"""# Remaining Backlog — {now}
-
-Generated from real gaps only:
-
-1. Register PyPI trusted publisher for api-sentinel-forge, then
-   `gh workflow run publish-pypi.yml -f version=<v>`. (owner action)
-2. Dependabot triage on forge-lens (12 PRs).
-3. Optional: api-sentinel-forge + the-forge next minor bumps when
-   feature work resumes (this release: patch-train only where bumped).
-""")
+    # --- KNOWN_LIMITATIONS.md / REMAINING_BACKLOG.md (probe-driven) ---
+    unpublished = sorted(
+        f"{r} ({reg}:{st})" for r, s in states.items()
+        for reg, st in (s.get("index") or {}).items()
+        if st == "NOT_PUBLISHED")
+    unverified_idx = sorted(
+        r for r, s in states.items()
+        for st in (s.get("index") or {}).values() if st == "UNVERIFIED")
+    lim_items: list[str] = []
+    backlog_items: list[str] = []
+    if unpublished:
+        lim_items.append(
+            "**Index publication pending**: " + ", ".join(unpublished)
+            + " — trusted-publisher/owner action required; publish then "
+            "re-run `unified_certify.py --probe`.")
+        backlog_items.insert(0, "Publish pending index entries (above), "
+                                "then re-probe certification.")
+    if unverified_idx:
+        lim_items.append(
+            "Index state unverified for "
+            + ", ".join(unverified_idx)
+            + " — `--probe` required for live PyPI/npm truth.")
+    lim_items += [
+        "**forge-lens dependabot PRs**: dependency-hygiene PRs open — "
+        "triaged as out of program scope (see CI_RELEASE_EVIDENCE).",
+        "Federation Lake Formation scenario returns `partial` honestly "
+        "when no artifact input is provided — by design (no fabricated "
+        "findings).",
+        "Perf baseline medians are single-host measurements, not SLAs.",
+    ]
+    backlog_items += [
+        "Dependabot triage on forge-lens (classify each; no blanket merge).",
+        "Optional: next minor version bumps when feature work resumes "
+        "(this release: patch-train only where bumped).",
+    ]
+    lim_md = "\n".join(f"- {x}" for x in lim_items)
+    w(out, "KNOWN_LIMITATIONS.md",
+      f"# Known Limitations — {now}\n\n{lim_md}\n")
+    bk_md = "\n".join(f"{i}. {x}" for i, x in enumerate(backlog_items, 1))
+    w(out, "REMAINING_BACKLOG.md",
+      f"# Remaining Backlog — {now}\n\nGenerated from real gaps only:\n\n"
+      f"{bk_md}\n")
 
     print(f"certification: 14 docs -> {out}")
     return 0

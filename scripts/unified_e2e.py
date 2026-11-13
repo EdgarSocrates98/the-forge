@@ -87,7 +87,8 @@ def venv_py(repo: str) -> str | None:
 
 
 def run_entry(repo: str, args: list[str], *, call: str | None = None,
-              timeout: int = TIMEOUT, cwd: Path | None = None) -> dict[str, Any]:
+              timeout: int = TIMEOUT, cwd: Path | None = None,
+              env_extra: dict[str, str] | None = None) -> dict[str, Any]:
     py = venv_py(repo)
     if not py:
         return {"rc": None, "error": "venv python missing", "cmd": None}
@@ -101,7 +102,8 @@ def run_entry(repo: str, args: list[str], *, call: str | None = None,
         "sys.exit(_r if isinstance(_r,int) else 0)"
     )
     cmd = [py, "-c", code, *args]
-    env = dict(os.environ, PYTHONIOENCODING="utf-8", PYTHONDONTWRITEBYTECODE="1")
+    env = dict(os.environ, PYTHONIOENCODING="utf-8", PYTHONDONTWRITEBYTECODE="1",
+               **(env_extra or {}))
     try:
         r = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout,
                            encoding="utf-8", errors="replace",
@@ -115,16 +117,27 @@ def run_entry(repo: str, args: list[str], *, call: str | None = None,
 
 
 def first_working(repo: str, verbs: list[list[str]]) -> dict[str, Any]:
-    """A verb 'works' when the CLI executes and emits a real report —
-    a doctor-style non-zero rc reporting an unhealthy/absent state is a
-    valid standalone execution, not a broken CLI. `rc` is recorded
-    honestly either way."""
+    """Standalone liveness probe ONLY (Onda 2.1 layered semantics).
+
+    Distinguishes the execution layers:
+    - ``rc is None``: the process never completed (missing venv, timeout) —
+      the CLI cannot be said to operate;
+    - ``rc != None`` WITH output: the CLI ran and emitted a real report —
+      a doctor-style non-zero rc reporting an absent/unhealthy state is a
+      legitimate standalone execution (it diagnosed, which is its job);
+    - ``rc != None`` with NO output: nothing observable happened — not
+      proof the CLI operates.
+
+    Domain capability is NEVER proven here: a `status`/`doctor`/`--help`
+    output cannot certify findings production. Domain proof lives in
+    ``scenario_domains`` semantic checks."""
     for v in verbs:
         r = run_entry(repo, v)
         if r.get("rc") is not None and (
             (r.get("stdout") or "").strip() or (r.get("stderr") or "").strip()):
             r["verb"] = " ".join(v)
             r["executed"] = True
+            r["layer"] = "cli-report" if r.get("rc") == 0 else "cli-diagnostic"
             return r
     return {"rc": None, "error": "no working verb", "tried": [" ".join(v) for v in verbs]}
 
@@ -306,7 +319,8 @@ def mcp_session(repo: str, extra_calls: list[dict[str, Any]] | None = None) -> d
 
 def scenario_standalone() -> None:
     """Onda 7 — every specialist operates standalone (real CLI verb)."""
-    steps, fails = [], []
+    steps: list[dict[str, Any]] = []
+    fails: list[str] = []
     for repo, verbs in STANDALONE.items():
         r = first_working(repo, verbs)
         ok = r.get("executed")
@@ -321,7 +335,8 @@ def scenario_standalone() -> None:
 
 def scenario_mcp() -> None:
     """Cenário N — MCP handshake + real tool call per forge."""
-    steps, fails = [], []
+    steps: list[dict[str, Any]] = []
+    fails: list[str] = []
     for repo in FORGES:
         try:
             r = mcp_session(repo)
@@ -337,31 +352,374 @@ def scenario_mcp() -> None:
     record("mcp", "PASS" if not fails else "FAIL", {"failed": fails}, steps)
 
 
+# ---------------------------------------------------------------------------
+# ONDA 2 — domain scenarios with SEMANTIC verifiers (P0-002).
+# A `status`/`doctor`/`--help` output never certifies a domain capability:
+# each case runs a real analysis on a checked-in fixture and the verifier
+# inspects the produced payload (facts/findings/incidents/symbols/traces).
+# ---------------------------------------------------------------------------
+
+
+def run_json(repo: str, args: list[str], *, timeout: int = TIMEOUT,
+             cwd: Path | None = None,
+             env_extra: dict[str, str] | None = None) -> dict[str, Any]:
+    """``run_entry`` + JSON extraction: parses the first ``{``..last ``}`` span
+    of stdout (CLIs may print banners before the JSON document)."""
+    r = run_entry(repo, args, timeout=timeout, cwd=cwd, env_extra=env_extra)
+    r["json"] = None
+    raw = (r.get("stdout") or "").strip()
+    try:
+        if raw.startswith("[") and "]" in raw:
+            r["json"] = json.loads(raw[:raw.rindex("]") + 1])
+        elif "{" in raw and "}" in raw:
+            r["json"] = json.loads(raw[raw.index("{"):raw.rindex("}") + 1])
+    except (ValueError, json.JSONDecodeError):
+        r["json"] = None
+    return r
+
+
+def _items_count(payload: dict[str, Any] | list[Any] | None) -> int:
+    """Items produced by an extractor/report payload (facts, findings,
+    entities) — handles top-level lists (incidents, traces) as well."""
+    if isinstance(payload, list):
+        return len(payload)
+    if not isinstance(payload, dict):
+        return 0
+    for key in ("total_count", "returned_count"):
+        v = payload.get(key)
+        if isinstance(v, int):
+            return v
+    for key in ("items", "facts", "findings", "entities", "incidents",
+                "symbols", "traces", "sessions", "results", "rows"):
+        v = payload.get(key)
+        if isinstance(v, list):
+            return len(v)
+    return 0
+
+
+def _fx(*parts: str) -> str:
+    """Fixture path inside the workspace (repo-relative absolute path)."""
+    return str(ROOT.joinpath(*parts))
+
+
+def _check(name: str, repo: str, args: list[str], want: str,
+           steps: list[dict[str, Any]], fails: list[str],
+           *, timeout: int = TIMEOUT, cwd: Path | None = None,
+           env_extra: dict[str, str] | None = None,
+           verifier: Any = None) -> bool:
+    """Run ``args`` in ``repo`` and apply the semantic ``want`` check.
+
+    ``want`` is one of: ``json-items`` (parsed payload emits >=1 item),
+    ``rc0-json`` (rc==0 and JSON parses), ``rc0`` (rc==0),
+    ``refusal`` (typed non-zero rc / refusal payload — correct denial).
+    A custom ``verifier(payload) -> (ok, detail)`` overrides ``want``.
+    """
+    r = run_json(repo, args, timeout=timeout, cwd=cwd, env_extra=env_extra)
+    payload = r.get("json")
+    rc = r.get("rc")
+    detail: Any = {}
+    ok = False
+    if verifier is not None:
+        ok, detail = verifier(payload, r)
+    elif want == "json-items":
+        n = _items_count(payload)
+        ok = rc == 0 and n >= 1
+        detail = {"items": n}
+    elif want == "rc0-json":
+        ok = rc == 0 and payload is not None
+    elif want == "rc0":
+        ok = rc == 0
+    elif want == "refusal":
+        refused = (isinstance(rc, int) and rc != 0) or (
+            isinstance(payload, dict)
+            and str(payload.get("status") or payload.get("verdict") or "")
+            .lower() in ("refused", "denied", "rejected", "ambiguous", "no_route"))
+        ok = bool(refused)
+    step = {"check": name, "repo": repo, "verb": " ".join(map(str, args)),
+            "rc": rc, "ok": bool(ok)}
+    if isinstance(detail, dict):
+        step.update({k: v for k, v in detail.items() if k not in step})
+    if not ok:
+        step["stdout_head"] = (r.get("stdout") or "")[:200]
+        step["stderr_head"] = (r.get("stderr") or "")[:200]
+        fails.append(f"{name}:{repo}")
+    steps.append(step)
+    return bool(ok)
+
+
 def scenario_domains() -> None:
-    """Cenários A–E — real domain verbs per specialist family."""
-    cases = {
-        "A-aws":    [("spark-forge-aws",
-                      [["playbook", "emr-infra-reviewer"], ["status"], ["sdd", "status"]]),
-                     ("data-sentinel-forge", [["status"]]),
-                     ("forge-doctor-data", [["doctor"], ["status"]])],
-        "B-azure":  [("spark-forge-azure", [["status"], ["parity"], ["sdd", "status"]])],
-        "C-api":    [("api-forge", [["status"], ["brief"], ["next-step"]]),
-                     ("forge-doctor-api", [["doctor"], ["status"]]),
-                     ("api-sentinel-forge", [["status"]]),
-                     ("code-atlas-forge", [["status"]])],
-        "D-platform":[("platform-forge", [["status"], ["inspect"]])],  # noqa: E501
-        "E-product":[("product-forge", [["status"], ["doctor"]])],
-    }
-    for name, calls in cases.items():
-        steps, fails = [], []
-        for repo, verbs in calls:
-            r = first_working(repo, verbs)
-            ok = r.get("executed")
-            steps.append({"repo": repo, "verb": r.get("verb"), "rc": r.get("rc"),
-                          "stdout_head": (r.get("stdout") or "")[:300]})
-            if not ok:
-                fails.append(repo)
-        record(name, "PASS" if not fails else "FAIL", {"failed": fails}, steps)
+    """Cenários A–I — real domain capability per specialist family, each
+    proven by fixture analysis output, never by a status verb."""
+
+    # -- A: AWS data-engineering domain -----------------------------------
+    steps: list[dict[str, Any]] = []
+    fails: list[str] = []
+    _check("aws-lakeformation-facts", "spark-forge-aws",
+           ["analyze", "lakeformation-grants", "--path",
+            _fx("spark-forge-aws", "fixtures", "lakeformation",
+                "conta_sem_full_table_access", "input")],
+           "json-items", steps, fails)
+    _check("aws-emr-facts", "spark-forge-aws",
+           ["analyze", "emr-cluster", "--path",
+            _fx("spark-forge-aws", "fixtures", "emr",
+                "all_spot_groups_maximize")],
+           "json-items", steps, fails)
+    _check("data-sentinel-emr-log", "data-sentinel-forge",
+           ["analyze", "--file",
+            _fx("data-sentinel-forge", "fixtures", "emr-ec2-failed-step.json"),
+            "--platform", "spark", "--json", "--no-persist"],
+           "rc0-json", steps, fails)
+    _check("doctor-data-inspect", "forge-doctor-data",
+           ["inspect", "catalog"],
+           "rc0", steps, fails)
+    record("A-aws", "PASS" if not fails else "FAIL", {"failed": fails}, steps)
+
+    # -- B: Azure data-engineering domain ----------------------------------
+    steps = []
+    fails = []
+    pyspark_fx = _fx("spark-forge-azure", "fixtures", "pyspark")
+    az_out = Path(tempfile.mkdtemp(prefix="forge-e2e-az-")) / "facts.json"
+    _check("azure-pyspark-facts", "spark-forge-azure",
+           ["analyze", "pyspark", "--path", pyspark_fx,
+            "--out", str(az_out)],
+           "json-items", steps, fails)
+    record("B-azure", "PASS" if not fails else "FAIL", {"failed": fails}, steps)
+
+    # -- C: API domain ------------------------------------------------------
+    steps = []
+    fails = []
+    api_case = Path(tempfile.mkdtemp(prefix="forge-e2e-api-"))
+    _check("apiforge-analyze", "api-forge",
+           ["analyze",
+            "--contract", _fx("api-forge", "tests", "fixtures", "openapi",
+                              "orders-v1-complete.yaml"),
+            "--project", _fx("api-forge", "tests", "fixtures",
+                             "fastapi_orders"),
+            "--out-dir", str(api_case)],
+           "rc0", steps, fails)
+    findings_file = api_case / "findings.json"
+    n_findings = 0
+    case_persisted = api_case.exists() and any(api_case.rglob("*.json"))
+    if findings_file.exists():
+        try:
+            n_findings = _items_count(json.loads(
+                findings_file.read_text(encoding="utf-8")))
+        except (json.JSONDecodeError, OSError):
+            n_findings = 0
+    ok = case_persisted and n_findings >= 1
+    steps.append({"check": "apiforge-case-persisted", "ok": ok,
+                  "findings": n_findings})
+    if not ok:
+        fails.append("apiforge-case:api-forge")
+    _check("doctor-api-verify-handoff", "forge-doctor-api",
+           ["contract", "inspect",
+            _fx("forge-doctor-api", "tests", "fixtures", "contracts",
+                "forge-contracts-1-handoff.json")],
+           "rc0", steps, fails)
+    record("C-api", "PASS" if not fails else "FAIL", {"failed": fails}, steps)
+    shutil.rmtree(api_case, ignore_errors=True)
+
+    # -- D: platform/IaC domain ---------------------------------------------
+    steps = []
+    fails = []
+    _check("platform-iac-facts", "platform-forge",
+           ["analyze", "iac",
+            _fx("code-atlas-forge", "tests", "fixtures", "terraform_infra"),
+            "--json", "--offline"],
+           "json-items", steps, fails)
+    record("D-platform", "PASS" if not fails else "FAIL",
+           {"failed": fails}, steps)
+
+    # -- E: product intelligence domain (PM/PA journey) ----------------------
+    # PRODUCT_FORGE_HOME isolates the scratch workspace; ids chain ws->prd.
+    steps = []
+    fails = []
+    prod = Path(tempfile.mkdtemp(prefix="forge-e2e-prod-"))
+    penv = {"PRODUCT_FORGE_HOME": str(prod)}
+    r = run_json("product-forge", ["workspace", "create", "e2e-ws"],
+                 env_extra=penv)
+    ws_id = (r.get("json") or {}).get("id")
+    steps.append({"check": "product-workspace-create", "rc": r.get("rc"),
+                  "workspace_id": ws_id, "ok": r.get("rc") == 0 and bool(ws_id)})
+    if not ws_id:
+        fails.append("product-workspace-create:product-forge")
+    prd_id = None
+    if ws_id:
+        r = run_json("product-forge", ["product", "create", ws_id,
+                                       "e2e-product"], env_extra=penv)
+        prd_id = (r.get("json") or {}).get("id")
+        steps.append({"check": "product-create", "rc": r.get("rc"),
+                      "product_id": prd_id,
+                      "ok": r.get("rc") == 0 and bool(prd_id)})
+        if not prd_id:
+            fails.append("product-create:product-forge")
+    doc = prod / "note.md"
+    doc.write_text("# E2E product note\n\nDomain evidence for import.\n",
+                   encoding="utf-8")
+    if prd_id:
+        r = run_json("product-forge",
+                     ["knowledge", "import", prd_id, str(doc)],
+                     env_extra=penv)
+        imp = r.get("json") or {}
+        doc_id = imp.get("document_id")
+        ok = r.get("rc") == 0 and bool(doc_id) and (imp.get("chunks") or 0) >= 1
+        steps.append({"check": "product-knowledge-import", "rc": r.get("rc"),
+                      "document_id": doc_id, "chunks": imp.get("chunks"),
+                      "receipt": (imp.get("receipt") or {}).get("receipt_id"),
+                      "ok": ok})
+        if not ok:
+            fails.append("product-knowledge-import:product-forge")
+        r = run_json("product-forge", ["knowledge", "query", prd_id,
+                                       "domain evidence"],
+                     env_extra=penv)
+        q = r.get("json") or {}
+        n_hits = _items_count(q) or len(q.get("chunks") or [])
+        steps.append({"check": "product-knowledge-query", "rc": r.get("rc"),
+                      "hits": n_hits, "ok": r.get("rc") == 0})
+    _check("product-status", "product-forge", ["status"],
+           "rc0", steps, fails, env_extra=penv)
+    record("E-product", "PASS" if not fails else "FAIL",
+           {"failed": fails}, steps)
+    shutil.rmtree(prod, ignore_errors=True)
+
+    # -- F: deterministic doctors -------------------------------------------
+    steps = []
+    fails = []
+    _check("doctor-data-fleet", "forge-doctor-data",
+           ["inspect", "cloud"], "rc0", steps, fails)
+    _check("doctor-api-diagnose", "forge-doctor-api",
+           ["diagnose", _fx("forge-doctor-api", "tests", "fixtures",
+                            "openapi")],
+           "rc0", steps, fails)
+    record("F-doctors", "PASS" if not fails else "FAIL",
+           {"failed": fails}, steps)
+
+    # -- G: sentinels (runtime intelligence) --------------------------------
+    # Real pipeline: service -> source -> JSONL batch -> ingest -> detect
+    # -> incidents. IDs chain from each response (svc_*/src_*), never guessed.
+    steps = []
+    fails = []
+    sent = Path(tempfile.mkdtemp(prefix="forge-e2e-sentinel-"))
+    r = run_json("api-sentinel-forge",
+                 ["services", "--register", "orders-api",
+                  "--workspace", str(sent), "--json"])
+    svc_id = (r.get("json") or {}).get("service_id")
+    steps.append({"check": "sentinel-register-service", "rc": r.get("rc"),
+                  "service_id": svc_id, "ok": r.get("rc") == 0 and bool(svc_id)})
+    if not svc_id:
+        fails.append("sentinel-register-service:api-sentinel-forge")
+    src_id = None
+    if svc_id:
+        r = run_json("api-sentinel-forge",
+                     ["sources", "--register", "jsonl",
+                      "--service-id", svc_id, "--workspace", str(sent),
+                      "--json"])
+        src_id = (r.get("json") or {}).get("source_id")
+        steps.append({"check": "sentinel-register-source", "rc": r.get("rc"),
+                      "source_id": src_id,
+                      "ok": r.get("rc") == 0 and bool(src_id)})
+        if not src_id:
+            fails.append("sentinel-register-source:api-sentinel-forge")
+    if svc_id and src_id:
+        batch = sent / "batch.jsonl"
+        rows = [{"schema": "api-sentinel/RuntimeObservation/v1",
+                 "observation_id": f"obs_{i:04d}", "service_id": svc_id,
+                 "source_id": src_id, "quality": "COMPLETE",
+                 "window": {"start": f"2026-01-01T00:{i:02d}:00Z",
+                            "end": f"2026-01-01T00:{i + 1:02d}:00Z"},
+                 "measurement": {"kind": "histogram", "unit": "ms",
+                                 "count": 100, "sum": 90000.0,
+                                 "buckets": [{"le": 50, "count": 2},
+                                             {"le": 100, "count": 10},
+                                             {"le": 200, "count": 20},
+                                             {"le": 500, "count": 40},
+                                             {"le": 1000, "count": 28},
+                                             {"le": "+Inf", "count": 100}]}}
+                for i in range(6)]
+        batch.write_text("\n".join(json.dumps(x) for x in rows),
+                         encoding="utf-8")
+        r = run_json("api-sentinel-forge",
+                     ["ingest", "--source-id", src_id, "--file", str(batch),
+                      "--workspace", str(sent), "--json"])
+        ing = r.get("json") or {}
+        accepted = ing.get("accepted", 0)
+        ok = r.get("rc") == 0 and accepted >= 1
+        steps.append({"check": "sentinel-ingest", "rc": r.get("rc"),
+                      "accepted": accepted, "quarantined": ing.get("quarantined"),
+                      "batch_id": ing.get("batch_id"), "ok": ok})
+        if not ok:
+            fails.append("sentinel-ingest:api-sentinel-forge")
+        r = run_json("api-sentinel-forge",
+                     ["detect", "--service-id", svc_id,
+                      "--workspace", str(sent), "--json"])
+        det = r.get("json") or {}
+        n_inc = len(det.get("incidents_created") or [])
+        n_anom = len(det.get("anomalies") or [])
+        ok = r.get("rc") == 0 and (n_inc >= 1 or n_anom >= 1)
+        steps.append({"check": "sentinel-detect", "rc": r.get("rc"),
+                      "incidents_created": n_inc, "anomalies": n_anom,
+                      "evaluations": len(det.get("evaluations") or []),
+                      "ok": ok})
+        if not ok:
+            fails.append("sentinel-detect:api-sentinel-forge")
+        r = run_json("api-sentinel-forge",
+                     ["incidents", "--workspace", str(sent), "--json"])
+        incs = r.get("json")
+        n_listed = len(incs) if isinstance(incs, list) else _items_count(incs)
+        ok = r.get("rc") == 0 and n_listed >= 1
+        steps.append({"check": "sentinel-incidents", "rc": r.get("rc"),
+                      "listed": n_listed, "ok": ok})
+        if not ok:
+            fails.append("sentinel-incidents:api-sentinel-forge")
+    # data-sentinel: real offline EMR artifact diagnosis (not live AWS)
+    _check("data-sentinel-emr", "data-sentinel-forge",
+           ["emr", "analyze", "-f",
+            _fx("data-sentinel-forge", "fixtures", "emr-ec2-failed-step.json"),
+            "--platform", "ec2", "--json"],
+           "rc0-json", steps, fails)
+    record("G-sentinels", "PASS" if not fails else "FAIL",
+           {"failed": fails}, steps)
+    shutil.rmtree(sent, ignore_errors=True)
+
+    # -- H: structural code intelligence ------------------------------------
+    # Real pipeline: index a fixture repo -> snapshot -> structural symbol
+    # search returns hits. `init --force` keeps it idempotent.
+    steps = []
+    fails = []
+    sample = _fx("code-atlas-forge", "tests", "fixtures", "sample_repo")
+    _check("atlas-index", "code-atlas-forge",
+           ["index", sample, "--full", "--json"],
+           "rc0-json", steps, fails)
+    _check("atlas-search", "code-atlas-forge",
+           ["search", "hello", "--root", sample, "--json"],
+           "json-items", steps, fails)
+    record("H-atlas", "PASS" if not fails else "FAIL",
+           {"failed": fails}, steps)
+
+    # -- I: agentic observability -------------------------------------------
+    # Real pipeline: ingest native+OTLP fixtures into a scratch store ->
+    # traces list returns stored traces; sessions is honest [] for fixtures
+    # without session_id (recorded as info, not a gate).
+    steps = []
+    fails = []
+    lens = Path(tempfile.mkdtemp(prefix="forge-e2e-lens-"))
+    db = str(lens / "lens.db")
+    _check("lens-ingest-native", "forge-lens",
+           ["ingest", _fx("forge-lens", "tests", "fixtures",
+                         "native-ingest.json"), "--db", db,
+            "--project", "e2e"],
+           "rc0", steps, fails)
+    _check("lens-ingest-otlp", "forge-lens",
+           ["ingest", _fx("forge-lens", "tests", "fixtures",
+                         "otlp-request.json"), "--db", db,
+            "--project", "e2e"],
+           "rc0", steps, fails)
+    _check("lens-traces-list", "forge-lens",
+           ["traces", "list", "--db", db, "--project", "e2e", "--json"],
+           "json-items", steps, fails)
+    record("I-lens", "PASS" if not fails else "FAIL",
+           {"failed": fails}, steps)
+    shutil.rmtree(lens, ignore_errors=True)
 
 
 def _adapter_call(repo: str, adapter_mod: str, op: str, payload: dict[str, Any],
@@ -386,7 +744,8 @@ def _adapter_call(repo: str, adapter_mod: str, op: str, payload: dict[str, Any],
 
 def scenario_security() -> None:
     """Cenário L — real protocol/contract refusals (executed, not simulated)."""
-    steps, fails = [], []
+    steps: list[dict[str, Any]] = []
+    fails: list[str] = []
 
     # 1) adapter refuses a request missing request_id (typed error)
     d = _adapter_call("spark-forge-aws", "theforge_sparkforge_aws", "describe",
@@ -542,108 +901,197 @@ def scenario_context() -> None:
         if m and m.exists():
             manifests.append((repo, len(m.read_bytes())))
     sizes = {n: sum(b for _, b in manifests[:n]) for n in (1, 3, 8, len(manifests))}
-    record("context", "PASS",
+    bounded = sizes.get(len(manifests), 0) < 2_000_000
+    status = "PASS" if manifests and bounded else "FAIL"
+    record("context", status,
            {"manifest_count": len(manifests),
             "catalog_bytes_by_forges": sizes,
-            "bounded": sizes[len(manifests)] < 2_000_000},
+            "bounded": bounded},
            [{"repo": r, "manifest_bytes": b} for r, b in manifests])
 
 
-def scenario_federation() -> None:
-    """Cenário O — discovery + routing + delegation + multidomain plan.
+def _federated_workspace() -> Path:
+    """Scratch theforge workspace with real federated inputs staged:
+    `artifacts/lakeformation/*.json` for spark-forge-aws and a Doctor API
+    handoff bundle for forge-doctor-api — the two providers a multi-domain
+    intent legitimately delegates to."""
+    ws = Path(tempfile.mkdtemp(prefix="forge-e2e-fed-"))
+    art = ws / "artifacts" / "lakeformation"
+    art.mkdir(parents=True, exist_ok=True)
+    fx = ROOT / "spark-forge-aws" / "fixtures" / "lakeformation" / \
+        "conta_sem_full_table_access" / "input"
+    for j in fx.glob("*.json"):
+        shutil.copy2(j, art / j.name)
+    shutil.copy2(
+        ROOT / "forge-doctor-api" / "tests" / "fixtures" / "contracts" /
+        "forge-contracts-1-handoff.json",
+        ws / "forge-contracts-1-handoff.json")
+    run_entry("the-forge", ["init", "--root", str(ws)], timeout=120)
+    return ws
 
-    Proves: (a) provider discovery/health, (b) a REAL routed `ask` (no
-    --use) producing a RoutingDecision with evaluated candidates —
-    'ambiguous' is a legitimate deterministic outcome, never a guess,
-    (c) delegated execution -> ExecutionResult/v1 + run_id, and (d) a
-    multidomain `orchestrate plan` reporting per-provider picks and
-    honest limitations."""
-    steps = []
-    r = run_entry("the-forge",
-                  ["providers", "health"], timeout=120)
-    steps.append({"cmd": "providers health", "rc": r.get("rc"),
-                  "out": (r.get("stdout") or "")[:600]})
-    # (b) routed ask — selection machinery must emit a RoutingDecision
-    r = run_entry(
-        "the-forge",
-        ["ask", "--json",
-         "--capability", "lakeformation.access-analysis",
-         "--action", "lakeformation-grants",
-         "--target", "../spark-forge-aws", "lake formation"],
-        timeout=300)
-    routed_ok = False
+
+def _ask(ws: Path, *args: str, timeout: int = 300) -> dict[str, Any]:
+    r = run_json("the-forge", ["ask", "--json", "--root", str(ws), *args],
+                 timeout=timeout)
+    return {"rc": r.get("rc"), "doc": r.get("json") or {},
+            "stdout": (r.get("stdout") or "")[:400],
+            "stderr": (r.get("stderr") or "")[:200]}
+
+
+def scenario_federation() -> None:
+    """ONDA 3 — operational federation, five independently proven parts.
+
+    P0-003 fix: `ambiguous`/`empty plan`/`rc!=0` never count as a passed
+    federation. Each sub-scenario asserts the semantics it actually proves:
+
+    - ``federation-routed``: a REAL routed ask (no --use) selects exactly
+      one provider and returns an ExecutionResult/v1 with a run_id;
+    - ``federation-delegated``: a --use ask executes a specialist action on
+      staged fixtures and returns real evidence items;
+    - ``federation-multidomain``: orchestrate run resolves >=2 providers
+      with plan_status 'planned', then each pick executes via governed ask
+      producing correlated run_ids under one correlation context;
+    - ``federation-ambiguous``: a deliberately unroutable intent is refused
+      as ambiguous — tested as CORRECT behaviour, never as a pass;
+    - ``federation-partial``: a provider without its declared input answers
+      honest 'partial' + named limitation, never a fabricated success.
+    """
+    ws = _federated_workspace()
     try:
-        d = json.loads((r.get("stdout") or "").strip())
-        routing = d.get("routing") or d.get("decision") or {}
-        cands = routing.get("candidates") or []
-        routed_ok = bool(cands) and d.get("status") in (
-            "ok", "partial", "ambiguous", "refused")
-        steps.append({"cmd": "ask (routed)", "rc": r.get("rc"),
+        # -- routed ask ----------------------------------------------------
+        steps: list[dict[str, Any]] = []
+        fails = []
+        r = run_json("the-forge", ["providers", "health"], timeout=120)
+        steps.append({"check": "providers-health", "rc": r.get("rc"),
+                      "out": (r.get("stdout") or "")[:400]})
+        a = _ask(ws, "--capability", "lakeformation.access-analysis",
+                 "--action", "lakeformation-grants", "lake formation")
+        d, res = a["doc"], (a["doc"].get("result") or {})
+        routed_ok = (
+            a["rc"] == 0
+            and d.get("status") in ("ok", "partial")
+            and res.get("schema") == "theforge/ExecutionResult/v1"
+            and bool(d.get("run_id"))
+            and (res.get("producer") or {}).get("id") == "spark-forge-aws")
+        steps.append({"check": "routed-ask", "rc": a["rc"],
                       "ask_status": d.get("status"),
-                      "candidates": len(cands),
-                      "run_id": d.get("run_id")})
-    except Exception as e:  # noqa: BLE001
-        steps.append({"cmd": "ask (routed)", "rc": r.get("rc"),
-                      "parse_error": str(e)[:200],
-                      "stdout": (r.get("stdout") or "")[:300]})
-    # (c) delegated execution — real subprocess call through the protocol
-    r = run_entry(
-        "the-forge",
-        ["ask", "--json", "--use", "spark-forge-aws",
-         "--capability", "lakeformation.access-analysis",
-         "--action", "lakeformation-grants",
-         "--target", "../spark-forge-aws", "lake formation"],
-        timeout=300)
-    ok = False
-    detail = {}
-    try:
-        d = json.loads((r.get("stdout") or "").strip())
-        res = d.get("result") or {}
-        detail = {
-            "run_id": d.get("run_id"),
-            "ask_status": d.get("status"),
-            "result_schema": res.get("schema"),
-            "producer": res.get("producer"),
-            "limitations": res.get("limitations"),
-        }
-        ok = (bool(d.get("run_id"))
-              and res.get("schema") == "theforge/ExecutionResult/v1"
-              and (res.get("producer") or {}).get("id") == "spark-forge-aws"
-              and d.get("status") in ("ok", "partial"))
-    except Exception as e:  # noqa: BLE001
-        detail = {"parse_error": str(e)[:200],
-                  "stdout": (r.get("stdout") or "")[:400],
-                  "stderr": (r.get("stderr") or "")[:200]}
-    steps.append({"cmd": "ask --use spark-forge-aws", "rc": r.get("rc"),
-                  **detail})
-    # (d) multidomain orchestration plan — discovery digest + per-provider
-    # verdicts + honest limitations (never fans out to all specialists)
-    r = run_entry(
-        "the-forge",
-        ["orchestrate", "plan", "--json",
-         "review spark glue job performance and api contract"],
-        timeout=300)
-    orch_ok = False
-    try:
-        raw = (r.get("stdout") or "").strip()
-        d = json.loads(raw[raw.index("{"):raw.rindex("}") + 1])
-        rep = d.get("report") or d
-        prov = rep.get("provenance") or {}
-        orch_ok = bool(prov.get("discovery_digest")) and rep.get("kind") == "plan"
-        steps.append({"cmd": "orchestrate plan (multidomain)",
-                      "rc": r.get("rc"),
+                      "run_id": d.get("run_id"),
+                      "producer": (res.get("producer") or {}).get("id"),
+                      "ok": routed_ok})
+        if not routed_ok:
+            fails.append("routed-ask")
+        record("federation-routed", "PASS" if not fails else "FAIL",
+               {"failed": fails}, steps)
+
+        # -- delegated execution --------------------------------------------
+        steps = []
+        fails = []
+        a = _ask(ws, "--use", "spark-forge-aws",
+                 "--capability", "lakeformation.access-analysis",
+                 "--action", "lakeformation-grants", "lake formation")
+        d, res = a["doc"], (a["doc"].get("result") or {})
+        n_evidence = len(res.get("evidence") or [])
+        del_ok = (a["rc"] == 0 and d.get("status") in ("ok", "partial")
+                  and res.get("schema") == "theforge/ExecutionResult/v1"
+                  and n_evidence >= 1 and bool(d.get("run_id")))
+        steps.append({"check": "delegated-execute", "rc": a["rc"],
+                      "ask_status": d.get("status"), "run_id": d.get("run_id"),
+                      "evidence_items": n_evidence,
+                      "status_result": res.get("status"), "ok": del_ok})
+        if not del_ok:
+            fails.append("delegated-execute")
+        record("federation-delegated", "PASS" if not fails else "FAIL",
+               {"failed": fails}, steps)
+
+        # -- multidomain plan + execution ------------------------------------
+        # `orchestrate run` mints the real correlation_id and executes picks
+        # through governed delegation (entries may be honestly `prepared` when
+        # a capability is Forge-Protocol-only — a named state, never faked).
+        steps = []
+        fails = []
+        p = run_json("the-forge",
+                     ["orchestrate", "run", "--json", "--root", str(ws),
+                      "lake formation verify api result"], timeout=300)
+        rep = (p.get("json") or {}).get("report") or (p.get("json") or {})
+        entries = rep.get("entries") or rep.get("picks") or []
+        providers = sorted({e.get("provider") for e in entries})
+        corr = rep.get("correlation_id")
+        plan_ok = (rep.get("plan_status") == "planned" and len(providers) >= 2
+                   and bool(corr))
+        steps.append({"check": "orchestrate-run", "rc": p.get("rc"),
                       "plan_status": rep.get("plan_status"),
-                      "entries": len(rep.get("entries") or []),
-                      "limitations": rep.get("limitations"),
-                      "discovery_digest": (prov.get("discovery_digest")
-                                           or "")[:12]})
-    except Exception as e:  # noqa: BLE001
-        steps.append({"cmd": "orchestrate plan (multidomain)",
-                      "rc": r.get("rc"), "parse_error": str(e)[:200],
-                      "stdout": (r.get("stdout") or "")[:300]})
-    record("federation",
-           "PASS" if (ok and routed_ok and orch_ok) else "FAIL",
-           {}, steps)
+                      "entries": len(entries), "providers": providers,
+                      "handoffs": len(rep.get("handoffs") or []),
+                      "correlation_id": corr, "ok": plan_ok})
+        if not plan_ok:
+            fails.append("orchestrate-run")
+        # execute BOTH picks through governed asks — real delegation results
+        exec_runs = 0
+        for use, cap, act, intent in (
+            ("spark-forge-aws", "lakeformation.access-analysis",
+             "lakeformation-grants", "lake formation"),
+            ("forge-doctor-api", "api.verify", "verify",
+             "verify api result"),
+        ):
+            a = _ask(ws, "--use", use, "--capability", cap,
+                     "--action", act, intent)
+            d, res = a["doc"], (a["doc"].get("result") or {})
+            ok = (a["rc"] == 0 and d.get("status") in ("ok", "partial")
+                  and res.get("schema") == "theforge/ExecutionResult/v1"
+                  and bool(d.get("run_id")))
+            exec_runs += int(ok)
+            steps.append({"check": f"execute:{use}", "rc": a["rc"],
+                          "ask_status": d.get("status"),
+                          "run_id": d.get("run_id"),
+                          "producer": (res.get("producer") or {}).get("id"),
+                          "ok": ok})
+            if not ok:
+                fails.append(f"execute:{use}")
+        steps.append({"check": "correlated-executions",
+                      "executed": exec_runs, "required": 2,
+                      "correlation_id": corr, "ok": exec_runs >= 2})
+        if exec_runs < 2:
+            fails.append("correlated-executions")
+        record("federation-multidomain", "PASS" if not fails else "FAIL",
+               {"failed": fails, "correlation_id": corr}, steps)
+
+        # -- ambiguity is a named refusal, never a fabricated plan -----------
+        steps = []
+        fails = []
+        a = _ask(ws, "completely unrelated intent xyzzy")
+        status = str(a["doc"].get("status") or "")
+        amb_ok = status in ("ambiguous", "no_route", "refused") or a["rc"] != 0
+        steps.append({"check": "ambiguous-refusal", "rc": a["rc"],
+                      "ask_status": status or None, "ok": amb_ok})
+        if not amb_ok:
+            fails.append("ambiguous-refusal")
+        record("federation-ambiguous", "PASS" if not fails else "FAIL",
+               {"failed": fails}, steps)
+
+        # -- partial honesty: missing input is named, not fabricated ---------
+        steps = []
+        fails = []
+        empty = Path(tempfile.mkdtemp(prefix="forge-e2e-empty-"))
+        run_entry("the-forge", ["init", "--root", str(empty)], timeout=120)
+        a = _ask(empty, "--use", "forge-doctor-api",
+                 "--capability", "api.verify", "--action", "verify",
+                 "verify api result")
+        d, res = a["doc"], (a["doc"].get("result") or {})
+        lims = res.get("limitations") or []
+        honest = (d.get("status") in ("partial", "refused")
+                  or (res.get("status") or "") in ("partial", "refused")
+                  or bool(lims))
+        steps.append({"check": "partial-honesty", "rc": a["rc"],
+                      "ask_status": d.get("status"),
+                      "res_status": res.get("status"),
+                      "limitations": lims, "ok": bool(honest)})
+        if not honest:
+            fails.append("partial-honesty")
+        record("federation-partial", "PASS" if not fails else "FAIL",
+               {"failed": fails}, steps)
+        shutil.rmtree(empty, ignore_errors=True)
+    finally:
+        shutil.rmtree(ws, ignore_errors=True)
 
 
 def scenario_portal() -> None:
@@ -677,17 +1125,42 @@ def scenario_portal() -> None:
         steps.append({"adapter": "error", "why": str(e)[:300]})
     dist = ROOT / "forge-portal" / "dist" / "forge-portal-app" / "browser" / "index.html"
     steps.append({"portal_build": dist.exists(), "path": str(dist)})
+    # Onda 7 — real browser E2E: drive Chromium through the served bundle.
+    browser_ok: bool | None = None
+    if dist.exists():
+        try:
+            from playwright.sync_api import sync_playwright  # noqa: F401
+            r = subprocess.run(
+                [sys.executable, "-m", "pytest", "e2e/test_browser_e2e.py",
+                 "-q", "-x", "--tb=short"],
+                capture_output=True, text=True, timeout=900,
+                encoding="utf-8", errors="replace",
+                cwd=str(ROOT / "forge-portal"))
+            tail = "\n".join((r.stdout + r.stderr).strip().splitlines()[-3:])
+            browser_ok = r.returncode == 0
+            steps.append({"call": "pytest e2e/test_browser_e2e.py",
+                          "rc": r.returncode, "tail": tail,
+                          "artifacts": "forge-portal/e2e/artifacts/"})
+        except subprocess.TimeoutExpired:
+            steps.append({"call": "browser-e2e", "ok": False,
+                          "refused": "timeout>900s"})
+            browser_ok = False
+        except ImportError:
+            steps.append({"call": "browser-e2e", "ok": False,
+                          "refused": "playwright not importable"})
+            browser_ok = None
     record("portal",
-           "PASS" if live else ("UNVERIFIED" if dist.exists() else "FAIL"),
+           "PASS" if (live and browser_ok is True)
+           else ("UNVERIFIED" if live or dist.exists() else "FAIL"),
            {}, steps)
 
 
 def main() -> int:
-    global ROOT
+    global ROOT, OUT
     argv = sys.argv[1:]
     if "--root" in argv:
         ROOT = Path(argv[argv.index("--root") + 1])
-        OUT.parent.mkdir(parents=True, exist_ok=True)
+        OUT = ROOT / "audits" / "unified-platform"  # keep OUT bound to --root
     OUT.mkdir(parents=True, exist_ok=True)
     for fn in (scenario_standalone, scenario_domains, scenario_mcp,
                scenario_security, scenario_lifecycle, scenario_context,

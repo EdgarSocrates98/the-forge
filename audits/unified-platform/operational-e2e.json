@@ -1,13 +1,14 @@
 {
-  "finished": 1794546302.5623639,
+  "finished": 1794575777.0783768,
   "kind": "forge/unified-e2e/1",
   "scenarios": {
     "A-aws": {
       "artifacts": [],
       "commands": [
-        "playbook emr-infra-reviewer",
-        "status",
-        "doctor"
+        "analyze lakeformation-grants --path E:\\projetos\\FORJAS\\spark-forge-aws\\fixtures\\lakeformation\\conta_sem_full_table_access\\input",
+        "analyze emr-cluster --path E:\\projetos\\FORJAS\\spark-forge-aws\\fixtures\\emr\\all_spot_groups_maximize",
+        "analyze --file E:\\projetos\\FORJAS\\data-sentinel-forge\\fixtures\\emr-ec2-failed-step.json --platform spark --json --no-persist",
+        "inspect catalog"
       ],
       "environment": {
         "workspace": "E:\\projetos\\FORJAS"
@@ -17,14 +18,14 @@
       },
       "limitations": [],
       "os": "win32",
-      "python": "3.12.13",
+      "python": "3.14.6",
       "repo_shas": {
         "api-forge": "8baee53",
-        "api-sentinel-forge": "340f9f6",
+        "api-sentinel-forge": "88d0a23",
         "code-atlas-forge": "34d9f91",
         "data-sentinel-forge": "13e1841",
         "forge-agent-bridge": "aef0531",
-        "forge-cli": "3acaa3a",
+        "forge-cli": "0a154fe",
         "forge-doctor-api": "c0601fb",
         "forge-doctor-data": "118158e",
         "forge-lens": "be7b610",
@@ -33,7 +34,7 @@
         "product-forge": "4bed3c0",
         "spark-forge-aws": "4811ed2",
         "spark-forge-azure": "2a39929",
-        "the-forge": "be0f377"
+        "the-forge": "ff65bd5"
       },
       "result": {
         "failed": []
@@ -41,22 +42,34 @@
       "status": "PASS",
       "steps": [
         {
+          "check": "aws-lakeformation-facts",
+          "items": 4,
+          "ok": true,
           "rc": 0,
           "repo": "spark-forge-aws",
-          "stdout_head": "{\n  \"coordinator\": \"emr-infra-reviewer\",\n  \"description\": \"Spark em Amazon EMR on EC2, Serverless ou on EKS com risco na infraestrutura e nao no codigo - instance fleets contra instance groups, purchasing option, managed scaling, Configurations em dois niveis, bootstrap actions, LogUri, capacidade p",
-          "verb": "playbook emr-infra-reviewer"
+          "verb": "analyze lakeformation-grants --path E:\\projetos\\FORJAS\\spark-forge-aws\\fixtures\\lakeformation\\conta_sem_full_table_access\\input"
         },
         {
-          "rc": 2,
+          "check": "aws-emr-facts",
+          "items": 16,
+          "ok": true,
+          "rc": 0,
+          "repo": "spark-forge-aws",
+          "verb": "analyze emr-cluster --path E:\\projetos\\FORJAS\\spark-forge-aws\\fixtures\\emr\\all_spot_groups_maximize"
+        },
+        {
+          "check": "data-sentinel-emr-log",
+          "ok": true,
+          "rc": 0,
           "repo": "data-sentinel-forge",
-          "stdout_head": "",
-          "verb": "status"
+          "verb": "analyze --file E:\\projetos\\FORJAS\\data-sentinel-forge\\fixtures\\emr-ec2-failed-step.json --platform spark --json --no-persist"
         },
         {
+          "check": "doctor-data-inspect",
+          "ok": true,
           "rc": 0,
           "repo": "forge-doctor-data",
-          "stdout_head": "forge-doctor-data doctor                                                       \n\u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n\u2502 Check           \u2502 Status \u2502 Detail                                           \u2502\n\u251c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u253c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u253c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500",
-          "verb": "doctor"
+          "verb": "inspect catalog"
         }
       ],
       "versions": {
@@ -80,7 +93,7 @@
     "B-azure": {
       "artifacts": [],
       "commands": [
-        "status"
+        "analyze pyspark --path E:\\projetos\\FORJAS\\spark-forge-azure\\fixtures\\pyspark --out C:\\Users\\edgar\\AppData\\Local\\Temp\\forge-e2e-az-a5va6bg6\\facts.json"
       ],
       "environment": {
         "workspace": "E:\\projetos\\FORJAS"
@@ -90,14 +103,14 @@
       },
       "limitations": [],
       "os": "win32",
-      "python": "3.12.13",
+      "python": "3.14.6",
       "repo_shas": {
         "api-forge": "8baee53",
-        "api-sentinel-forge": "340f9f6",
+        "api-sentinel-forge": "88d0a23",
         "code-atlas-forge": "34d9f91",
         "data-sentinel-forge": "13e1841",
         "forge-agent-bridge": "aef0531",
-        "forge-cli": "3acaa3a",
+        "forge-cli": "0a154fe",
         "forge-doctor-api": "c0601fb",
         "forge-doctor-data": "118158e",
         "forge-lens": "be7b610",
@@ -106,7 +119,7 @@
         "product-forge": "4bed3c0",
         "spark-forge-aws": "4811ed2",
         "spark-forge-azure": "2a39929",
-        "the-forge": "be0f377"
+        "the-forge": "ff65bd5"
       },
       "result": {
         "failed": []
@@ -114,10 +127,12 @@
       "status": "PASS",
       "steps": [
         {
-          "rc": 2,
+          "check": "azure-pyspark-facts",
+          "items": 65,
+          "ok": true,
+          "rc": 0,
           "repo": "spark-forge-azure",
-          "stdout_head": "",
-          "verb": "status"
+          "verb": "analyze pyspark --path E:\\projetos\\FORJAS\\spark-forge-azure\\fixtures\\pyspark --out C:\\Users\\edgar\\AppData\\Local\\Temp\\forge-e2e-az-a5va6bg6\\facts.json"
         }
       ],
       "versions": {
@@ -141,10 +156,8 @@
     "C-api": {
       "artifacts": [],
       "commands": [
-        "status",
-        "doctor",
-        "status",
-        "status"
+        "analyze --contract E:\\projetos\\FORJAS\\api-forge\\tests\\fixtures\\openapi\\orders-v1-complete.yaml --project E:\\projetos\\FORJAS\\api-forge\\tests\\fixtures\\fastapi_orders --out-dir C:\\Users\\edgar\\AppData\\Local\\Temp\\forge-e2e-api-gskl8390",
+        "contract inspect E:\\projetos\\FORJAS\\forge-doctor-api\\tests\\fixtures\\contracts\\forge-contracts-1-handoff.json"
       ],
       "environment": {
         "workspace": "E:\\projetos\\FORJAS"
@@ -154,14 +167,14 @@
       },
       "limitations": [],
       "os": "win32",
-      "python": "3.12.13",
+      "python": "3.14.6",
       "repo_shas": {
         "api-forge": "8baee53",
-        "api-sentinel-forge": "340f9f6",
+        "api-sentinel-forge": "88d0a23",
         "code-atlas-forge": "34d9f91",
         "data-sentinel-forge": "13e1841",
         "forge-agent-bridge": "aef0531",
-        "forge-cli": "3acaa3a",
+        "forge-cli": "0a154fe",
         "forge-doctor-api": "c0601fb",
         "forge-doctor-data": "118158e",
         "forge-lens": "be7b610",
@@ -170,7 +183,7 @@
         "product-forge": "4bed3c0",
         "spark-forge-aws": "4811ed2",
         "spark-forge-azure": "2a39929",
-        "the-forge": "be0f377"
+        "the-forge": "ff65bd5"
       },
       "result": {
         "failed": []
@@ -178,28 +191,23 @@
       "status": "PASS",
       "steps": [
         {
+          "check": "apiforge-analyze",
+          "ok": true,
           "rc": 0,
           "repo": "api-forge",
-          "stdout_head": "{\n  \"evidence_level\": \"unknown\",\n  \"gaps\": [\n    \"AF-ROOT-NOT-FOUND: project manifest was not discovered\",\n    \"AF-ROOT-NOT-FOUND: workspace manifest was not discovered\"\n  ],\n  \"graph\": null,\n  \"paths\": {\n    \"cache_root\": \"E:\\\\projetos\\\\FORJAS\\\\api-forge\\\\.apiforge\\\\cache\",\n    \"config_path\": null,",
-          "verb": "status"
+          "verb": "analyze --contract E:\\projetos\\FORJAS\\api-forge\\tests\\fixtures\\openapi\\orders-v1-complete.yaml --project E:\\projetos\\FORJAS\\api-forge\\tests\\fixtures\\fastapi_orders --out-dir C:\\Users\\edgar\\AppData\\Local\\Temp\\forge-e2e-api-gskl8390"
         },
         {
-          "rc": 2,
+          "check": "apiforge-case-persisted",
+          "findings": 5,
+          "ok": true
+        },
+        {
+          "check": "doctor-api-verify-handoff",
+          "ok": true,
+          "rc": 0,
           "repo": "forge-doctor-api",
-          "stdout_head": "",
-          "verb": "doctor"
-        },
-        {
-          "rc": 0,
-          "repo": "api-sentinel-forge",
-          "stdout_head": "workspace_initialized=True  database=absent  capabilities={'available': 13, 'declared': 1}  workspace_root=E:\\projetos\\FORJAS\\api-sentinel-forge\\.api-sentinel  version=0.1.2  integrations=[{'forge': 'api-forge', 'state': 'unverified', 'mode': 'handoff_file', 'reason': \"apiforge not importable \u2014 impl",
-          "verb": "status"
-        },
-        {
-          "rc": 0,
-          "repo": "code-atlas-forge",
-          "stdout_head": "root:       E:\\projetos\\FORJAS\\code-atlas-forge\nschema:     v12\ngit:        main@34d9f919b89a (clean)\nsnapshot:   #14 READY \u2014 1311 files\n",
-          "verb": "status"
+          "verb": "contract inspect E:\\projetos\\FORJAS\\forge-doctor-api\\tests\\fixtures\\contracts\\forge-contracts-1-handoff.json"
         }
       ],
       "versions": {
@@ -223,7 +231,7 @@
     "D-platform": {
       "artifacts": [],
       "commands": [
-        "status"
+        "analyze iac E:\\projetos\\FORJAS\\code-atlas-forge\\tests\\fixtures\\terraform_infra --json --offline"
       ],
       "environment": {
         "workspace": "E:\\projetos\\FORJAS"
@@ -233,14 +241,14 @@
       },
       "limitations": [],
       "os": "win32",
-      "python": "3.12.13",
+      "python": "3.14.6",
       "repo_shas": {
         "api-forge": "8baee53",
-        "api-sentinel-forge": "340f9f6",
+        "api-sentinel-forge": "88d0a23",
         "code-atlas-forge": "34d9f91",
         "data-sentinel-forge": "13e1841",
         "forge-agent-bridge": "aef0531",
-        "forge-cli": "3acaa3a",
+        "forge-cli": "0a154fe",
         "forge-doctor-api": "c0601fb",
         "forge-doctor-data": "118158e",
         "forge-lens": "be7b610",
@@ -249,7 +257,7 @@
         "product-forge": "4bed3c0",
         "spark-forge-aws": "4811ed2",
         "spark-forge-azure": "2a39929",
-        "the-forge": "be0f377"
+        "the-forge": "ff65bd5"
       },
       "result": {
         "failed": []
@@ -257,10 +265,12 @@
       "status": "PASS",
       "steps": [
         {
+          "check": "platform-iac-facts",
+          "items": 21,
+          "ok": true,
           "rc": 0,
           "repo": "platform-forge",
-          "stdout_head": "{\n  \"members\": [\n    \"platform-forge\"\n  ],\n  \"multi_repo\": false,\n  \"root\": \"E:\\\\projetos\\\\FORJAS\\\\platform-forge\",\n  \"store\": {\n    \"artifacts\": 0,\n    \"bytes\": 0\n  },\n  \"workspace\": \"platform-forge\"\n}\n",
-          "verb": "status"
+          "verb": "analyze iac E:\\projetos\\FORJAS\\code-atlas-forge\\tests\\fixtures\\terraform_infra --json --offline"
         }
       ],
       "versions": {
@@ -294,14 +304,14 @@
       },
       "limitations": [],
       "os": "win32",
-      "python": "3.12.13",
+      "python": "3.14.6",
       "repo_shas": {
         "api-forge": "8baee53",
-        "api-sentinel-forge": "340f9f6",
+        "api-sentinel-forge": "88d0a23",
         "code-atlas-forge": "34d9f91",
         "data-sentinel-forge": "13e1841",
         "forge-agent-bridge": "aef0531",
-        "forge-cli": "3acaa3a",
+        "forge-cli": "0a154fe",
         "forge-doctor-api": "c0601fb",
         "forge-doctor-data": "118158e",
         "forge-lens": "be7b610",
@@ -310,7 +320,7 @@
         "product-forge": "4bed3c0",
         "spark-forge-aws": "4811ed2",
         "spark-forge-azure": "2a39929",
-        "the-forge": "be0f377"
+        "the-forge": "ff65bd5"
       },
       "result": {
         "failed": []
@@ -318,10 +328,353 @@
       "status": "PASS",
       "steps": [
         {
+          "check": "product-workspace-create",
+          "ok": true,
+          "rc": 0,
+          "workspace_id": "ws_36adaadeea09"
+        },
+        {
+          "check": "product-create",
+          "ok": true,
+          "product_id": "prd_95c8a89be00f",
+          "rc": 0
+        },
+        {
+          "check": "product-knowledge-import",
+          "chunks": 1,
+          "document_id": "doc_7b52ffd4c6d9",
+          "ok": true,
+          "rc": 0,
+          "receipt": "receipt_bb8554eaf5d7"
+        },
+        {
+          "check": "product-knowledge-query",
+          "hits": 0,
+          "ok": true,
+          "rc": 0
+        },
+        {
+          "check": "product-status",
+          "ok": true,
           "rc": 0,
           "repo": "product-forge",
-          "stdout_head": "{\n  \"forge_id\": \"product-forge\",\n  \"version\": \"0.2.5\",\n  \"home\": \"C:\\\\Users\\\\edgar\\\\.productforge\",\n  \"home_exists\": true,\n  \"db\": \"C:\\\\Users\\\\edgar\\\\.productforge\\\\state\\\\productforge.db\",\n  \"db_exists\": true,\n  \"profile\": \"recommended\",\n  \"gateway_profile\": \"balanced\",\n  \"llm_provider\": \"none\",\n  ",
           "verb": "status"
+        }
+      ],
+      "versions": {
+        "api-forge": "0.3.6",
+        "api-sentinel-forge": "0.1.2",
+        "code-atlas-forge": "{ attr = \"code_atlas.__version__\" }",
+        "data-sentinel-forge": "0.5.5",
+        "forge-agent-bridge": "0.2.4",
+        "forge-cli": "0.5.3",
+        "forge-doctor-api": "0.3.4",
+        "forge-doctor-data": "1.1.4",
+        "forge-lens": "0.2.4",
+        "forge-portal": "1.1.3",
+        "platform-forge": "0.3.6",
+        "product-forge": "0.2.4",
+        "spark-forge-aws": "0.7.8",
+        "spark-forge-azure": "0.3.6",
+        "the-forge": "0.7.7"
+      }
+    },
+    "F-doctors": {
+      "artifacts": [],
+      "commands": [
+        "inspect cloud",
+        "diagnose E:\\projetos\\FORJAS\\forge-doctor-api\\tests\\fixtures\\openapi"
+      ],
+      "environment": {
+        "workspace": "E:\\projetos\\FORJAS"
+      },
+      "evidence": {
+        "failed": []
+      },
+      "limitations": [],
+      "os": "win32",
+      "python": "3.14.6",
+      "repo_shas": {
+        "api-forge": "8baee53",
+        "api-sentinel-forge": "88d0a23",
+        "code-atlas-forge": "34d9f91",
+        "data-sentinel-forge": "13e1841",
+        "forge-agent-bridge": "aef0531",
+        "forge-cli": "0a154fe",
+        "forge-doctor-api": "c0601fb",
+        "forge-doctor-data": "118158e",
+        "forge-lens": "be7b610",
+        "forge-portal": "83854c1",
+        "platform-forge": "6465652",
+        "product-forge": "4bed3c0",
+        "spark-forge-aws": "4811ed2",
+        "spark-forge-azure": "2a39929",
+        "the-forge": "ff65bd5"
+      },
+      "result": {
+        "failed": []
+      },
+      "status": "PASS",
+      "steps": [
+        {
+          "check": "doctor-data-fleet",
+          "ok": true,
+          "rc": 0,
+          "repo": "forge-doctor-data",
+          "verb": "inspect cloud"
+        },
+        {
+          "check": "doctor-api-diagnose",
+          "ok": true,
+          "rc": 0,
+          "repo": "forge-doctor-api",
+          "verb": "diagnose E:\\projetos\\FORJAS\\forge-doctor-api\\tests\\fixtures\\openapi"
+        }
+      ],
+      "versions": {
+        "api-forge": "0.3.6",
+        "api-sentinel-forge": "0.1.2",
+        "code-atlas-forge": "{ attr = \"code_atlas.__version__\" }",
+        "data-sentinel-forge": "0.5.5",
+        "forge-agent-bridge": "0.2.4",
+        "forge-cli": "0.5.3",
+        "forge-doctor-api": "0.3.4",
+        "forge-doctor-data": "1.1.4",
+        "forge-lens": "0.2.4",
+        "forge-portal": "1.1.3",
+        "platform-forge": "0.3.6",
+        "product-forge": "0.2.4",
+        "spark-forge-aws": "0.7.8",
+        "spark-forge-azure": "0.3.6",
+        "the-forge": "0.7.7"
+      }
+    },
+    "G-sentinels": {
+      "artifacts": [],
+      "commands": [
+        "emr analyze -f E:\\projetos\\FORJAS\\data-sentinel-forge\\fixtures\\emr-ec2-failed-step.json --platform ec2 --json"
+      ],
+      "environment": {
+        "workspace": "E:\\projetos\\FORJAS"
+      },
+      "evidence": {
+        "failed": []
+      },
+      "limitations": [],
+      "os": "win32",
+      "python": "3.14.6",
+      "repo_shas": {
+        "api-forge": "8baee53",
+        "api-sentinel-forge": "88d0a23",
+        "code-atlas-forge": "34d9f91",
+        "data-sentinel-forge": "13e1841",
+        "forge-agent-bridge": "aef0531",
+        "forge-cli": "0a154fe",
+        "forge-doctor-api": "c0601fb",
+        "forge-doctor-data": "118158e",
+        "forge-lens": "be7b610",
+        "forge-portal": "83854c1",
+        "platform-forge": "6465652",
+        "product-forge": "4bed3c0",
+        "spark-forge-aws": "4811ed2",
+        "spark-forge-azure": "2a39929",
+        "the-forge": "ff65bd5"
+      },
+      "result": {
+        "failed": []
+      },
+      "status": "PASS",
+      "steps": [
+        {
+          "check": "sentinel-register-service",
+          "ok": true,
+          "rc": 0,
+          "service_id": "svc_01M7AGHS2JW942QFVQKSH5C2T1"
+        },
+        {
+          "check": "sentinel-register-source",
+          "ok": true,
+          "rc": 0,
+          "source_id": "src_01M7AGHSTE296M9M53N2Z81RJQ"
+        },
+        {
+          "accepted": 6,
+          "batch_id": "batch_01M7AGHTKXY1Z8W9WT1WHNS7NE",
+          "check": "sentinel-ingest",
+          "ok": true,
+          "quarantined": 0,
+          "rc": 0
+        },
+        {
+          "anomalies": 2,
+          "check": "sentinel-detect",
+          "evaluations": 6,
+          "incidents_created": 2,
+          "ok": true,
+          "rc": 0
+        },
+        {
+          "check": "sentinel-incidents",
+          "listed": 2,
+          "ok": true,
+          "rc": 0
+        },
+        {
+          "check": "data-sentinel-emr",
+          "ok": true,
+          "rc": 0,
+          "repo": "data-sentinel-forge",
+          "verb": "emr analyze -f E:\\projetos\\FORJAS\\data-sentinel-forge\\fixtures\\emr-ec2-failed-step.json --platform ec2 --json"
+        }
+      ],
+      "versions": {
+        "api-forge": "0.3.6",
+        "api-sentinel-forge": "0.1.2",
+        "code-atlas-forge": "{ attr = \"code_atlas.__version__\" }",
+        "data-sentinel-forge": "0.5.5",
+        "forge-agent-bridge": "0.2.4",
+        "forge-cli": "0.5.3",
+        "forge-doctor-api": "0.3.4",
+        "forge-doctor-data": "1.1.4",
+        "forge-lens": "0.2.4",
+        "forge-portal": "1.1.3",
+        "platform-forge": "0.3.6",
+        "product-forge": "0.2.4",
+        "spark-forge-aws": "0.7.8",
+        "spark-forge-azure": "0.3.6",
+        "the-forge": "0.7.7"
+      }
+    },
+    "H-atlas": {
+      "artifacts": [],
+      "commands": [
+        "index E:\\projetos\\FORJAS\\code-atlas-forge\\tests\\fixtures\\sample_repo --full --json",
+        "search hello --root E:\\projetos\\FORJAS\\code-atlas-forge\\tests\\fixtures\\sample_repo --json"
+      ],
+      "environment": {
+        "workspace": "E:\\projetos\\FORJAS"
+      },
+      "evidence": {
+        "failed": []
+      },
+      "limitations": [],
+      "os": "win32",
+      "python": "3.14.6",
+      "repo_shas": {
+        "api-forge": "8baee53",
+        "api-sentinel-forge": "88d0a23",
+        "code-atlas-forge": "34d9f91",
+        "data-sentinel-forge": "13e1841",
+        "forge-agent-bridge": "aef0531",
+        "forge-cli": "0a154fe",
+        "forge-doctor-api": "c0601fb",
+        "forge-doctor-data": "118158e",
+        "forge-lens": "be7b610",
+        "forge-portal": "83854c1",
+        "platform-forge": "6465652",
+        "product-forge": "4bed3c0",
+        "spark-forge-aws": "4811ed2",
+        "spark-forge-azure": "2a39929",
+        "the-forge": "ff65bd5"
+      },
+      "result": {
+        "failed": []
+      },
+      "status": "PASS",
+      "steps": [
+        {
+          "check": "atlas-index",
+          "ok": true,
+          "rc": 0,
+          "repo": "code-atlas-forge",
+          "verb": "index E:\\projetos\\FORJAS\\code-atlas-forge\\tests\\fixtures\\sample_repo --full --json"
+        },
+        {
+          "check": "atlas-search",
+          "items": 3,
+          "ok": true,
+          "rc": 0,
+          "repo": "code-atlas-forge",
+          "verb": "search hello --root E:\\projetos\\FORJAS\\code-atlas-forge\\tests\\fixtures\\sample_repo --json"
+        }
+      ],
+      "versions": {
+        "api-forge": "0.3.6",
+        "api-sentinel-forge": "0.1.2",
+        "code-atlas-forge": "{ attr = \"code_atlas.__version__\" }",
+        "data-sentinel-forge": "0.5.5",
+        "forge-agent-bridge": "0.2.4",
+        "forge-cli": "0.5.3",
+        "forge-doctor-api": "0.3.4",
+        "forge-doctor-data": "1.1.4",
+        "forge-lens": "0.2.4",
+        "forge-portal": "1.1.3",
+        "platform-forge": "0.3.6",
+        "product-forge": "0.2.4",
+        "spark-forge-aws": "0.7.8",
+        "spark-forge-azure": "0.3.6",
+        "the-forge": "0.7.7"
+      }
+    },
+    "I-lens": {
+      "artifacts": [],
+      "commands": [
+        "ingest E:\\projetos\\FORJAS\\forge-lens\\tests\\fixtures\\native-ingest.json --db C:\\Users\\edgar\\AppData\\Local\\Temp\\forge-e2e-lens-4e72z9b_\\lens.db --project e2e",
+        "ingest E:\\projetos\\FORJAS\\forge-lens\\tests\\fixtures\\otlp-request.json --db C:\\Users\\edgar\\AppData\\Local\\Temp\\forge-e2e-lens-4e72z9b_\\lens.db --project e2e",
+        "traces list --db C:\\Users\\edgar\\AppData\\Local\\Temp\\forge-e2e-lens-4e72z9b_\\lens.db --project e2e --json"
+      ],
+      "environment": {
+        "workspace": "E:\\projetos\\FORJAS"
+      },
+      "evidence": {
+        "failed": []
+      },
+      "limitations": [],
+      "os": "win32",
+      "python": "3.14.6",
+      "repo_shas": {
+        "api-forge": "8baee53",
+        "api-sentinel-forge": "88d0a23",
+        "code-atlas-forge": "34d9f91",
+        "data-sentinel-forge": "13e1841",
+        "forge-agent-bridge": "aef0531",
+        "forge-cli": "0a154fe",
+        "forge-doctor-api": "c0601fb",
+        "forge-doctor-data": "118158e",
+        "forge-lens": "be7b610",
+        "forge-portal": "83854c1",
+        "platform-forge": "6465652",
+        "product-forge": "4bed3c0",
+        "spark-forge-aws": "4811ed2",
+        "spark-forge-azure": "2a39929",
+        "the-forge": "ff65bd5"
+      },
+      "result": {
+        "failed": []
+      },
+      "status": "PASS",
+      "steps": [
+        {
+          "check": "lens-ingest-native",
+          "ok": true,
+          "rc": 0,
+          "repo": "forge-lens",
+          "verb": "ingest E:\\projetos\\FORJAS\\forge-lens\\tests\\fixtures\\native-ingest.json --db C:\\Users\\edgar\\AppData\\Local\\Temp\\forge-e2e-lens-4e72z9b_\\lens.db --project e2e"
+        },
+        {
+          "check": "lens-ingest-otlp",
+          "ok": true,
+          "rc": 0,
+          "repo": "forge-lens",
+          "verb": "ingest E:\\projetos\\FORJAS\\forge-lens\\tests\\fixtures\\otlp-request.json --db C:\\Users\\edgar\\AppData\\Local\\Temp\\forge-e2e-lens-4e72z9b_\\lens.db --project e2e"
+        },
+        {
+          "check": "lens-traces-list",
+          "items": 2,
+          "ok": true,
+          "rc": 0,
+          "repo": "forge-lens",
+          "verb": "traces list --db C:\\Users\\edgar\\AppData\\Local\\Temp\\forge-e2e-lens-4e72z9b_\\lens.db --project e2e --json"
         }
       ],
       "versions": {
@@ -360,14 +713,14 @@
       },
       "limitations": [],
       "os": "win32",
-      "python": "3.12.13",
+      "python": "3.14.6",
       "repo_shas": {
         "api-forge": "8baee53",
-        "api-sentinel-forge": "340f9f6",
+        "api-sentinel-forge": "88d0a23",
         "code-atlas-forge": "34d9f91",
         "data-sentinel-forge": "13e1841",
         "forge-agent-bridge": "aef0531",
-        "forge-cli": "3acaa3a",
+        "forge-cli": "0a154fe",
         "forge-doctor-api": "c0601fb",
         "forge-doctor-data": "118158e",
         "forge-lens": "be7b610",
@@ -376,7 +729,7 @@
         "product-forge": "4bed3c0",
         "spark-forge-aws": "4811ed2",
         "spark-forge-azure": "2a39929",
-        "the-forge": "be0f377"
+        "the-forge": "ff65bd5"
       },
       "result": {
         "bounded": true,
@@ -461,28 +814,25 @@
         "the-forge": "0.7.7"
       }
     },
-    "federation": {
+    "federation-ambiguous": {
       "artifacts": [],
-      "commands": [
-        "providers health",
-        "ask (routed)",
-        "ask --use spark-forge-aws",
-        "orchestrate plan (multidomain)"
-      ],
+      "commands": [],
       "environment": {
         "workspace": "E:\\projetos\\FORJAS"
       },
-      "evidence": {},
+      "evidence": {
+        "failed": []
+      },
       "limitations": [],
       "os": "win32",
-      "python": "3.12.13",
+      "python": "3.14.6",
       "repo_shas": {
         "api-forge": "8baee53",
-        "api-sentinel-forge": "340f9f6",
+        "api-sentinel-forge": "88d0a23",
         "code-atlas-forge": "34d9f91",
         "data-sentinel-forge": "13e1841",
         "forge-agent-bridge": "aef0531",
-        "forge-cli": "3acaa3a",
+        "forge-cli": "0a154fe",
         "forge-doctor-api": "c0601fb",
         "forge-doctor-data": "118158e",
         "forge-lens": "be7b610",
@@ -491,48 +841,300 @@
         "product-forge": "4bed3c0",
         "spark-forge-aws": "4811ed2",
         "spark-forge-azure": "2a39929",
-        "the-forge": "be0f377"
+        "the-forge": "ff65bd5"
       },
-      "result": {},
+      "result": {
+        "failed": []
+      },
       "status": "PASS",
       "steps": [
         {
-          "cmd": "providers health",
+          "ask_status": "ambiguous",
+          "check": "ambiguous-refusal",
+          "ok": true,
+          "rc": 3
+        }
+      ],
+      "versions": {
+        "api-forge": "0.3.6",
+        "api-sentinel-forge": "0.1.2",
+        "code-atlas-forge": "{ attr = \"code_atlas.__version__\" }",
+        "data-sentinel-forge": "0.5.5",
+        "forge-agent-bridge": "0.2.4",
+        "forge-cli": "0.5.3",
+        "forge-doctor-api": "0.3.4",
+        "forge-doctor-data": "1.1.4",
+        "forge-lens": "0.2.4",
+        "forge-portal": "1.1.3",
+        "platform-forge": "0.3.6",
+        "product-forge": "0.2.4",
+        "spark-forge-aws": "0.7.8",
+        "spark-forge-azure": "0.3.6",
+        "the-forge": "0.7.7"
+      }
+    },
+    "federation-delegated": {
+      "artifacts": [],
+      "commands": [],
+      "environment": {
+        "workspace": "E:\\projetos\\FORJAS"
+      },
+      "evidence": {
+        "failed": []
+      },
+      "limitations": [],
+      "os": "win32",
+      "python": "3.14.6",
+      "repo_shas": {
+        "api-forge": "8baee53",
+        "api-sentinel-forge": "88d0a23",
+        "code-atlas-forge": "34d9f91",
+        "data-sentinel-forge": "13e1841",
+        "forge-agent-bridge": "aef0531",
+        "forge-cli": "0a154fe",
+        "forge-doctor-api": "c0601fb",
+        "forge-doctor-data": "118158e",
+        "forge-lens": "be7b610",
+        "forge-portal": "83854c1",
+        "platform-forge": "6465652",
+        "product-forge": "4bed3c0",
+        "spark-forge-aws": "4811ed2",
+        "spark-forge-azure": "2a39929",
+        "the-forge": "ff65bd5"
+      },
+      "result": {
+        "failed": []
+      },
+      "status": "PASS",
+      "steps": [
+        {
+          "ask_status": "ok",
+          "check": "delegated-execute",
+          "evidence_items": 4,
+          "ok": true,
+          "rc": 0,
+          "run_id": "20261113T131559Z-35ba3dda",
+          "status_result": "ok"
+        }
+      ],
+      "versions": {
+        "api-forge": "0.3.6",
+        "api-sentinel-forge": "0.1.2",
+        "code-atlas-forge": "{ attr = \"code_atlas.__version__\" }",
+        "data-sentinel-forge": "0.5.5",
+        "forge-agent-bridge": "0.2.4",
+        "forge-cli": "0.5.3",
+        "forge-doctor-api": "0.3.4",
+        "forge-doctor-data": "1.1.4",
+        "forge-lens": "0.2.4",
+        "forge-portal": "1.1.3",
+        "platform-forge": "0.3.6",
+        "product-forge": "0.2.4",
+        "spark-forge-aws": "0.7.8",
+        "spark-forge-azure": "0.3.6",
+        "the-forge": "0.7.7"
+      }
+    },
+    "federation-multidomain": {
+      "artifacts": [],
+      "commands": [],
+      "environment": {
+        "workspace": "E:\\projetos\\FORJAS"
+      },
+      "evidence": {
+        "correlation_id": "orch-0425d967a102",
+        "failed": []
+      },
+      "limitations": [],
+      "os": "win32",
+      "python": "3.14.6",
+      "repo_shas": {
+        "api-forge": "8baee53",
+        "api-sentinel-forge": "88d0a23",
+        "code-atlas-forge": "34d9f91",
+        "data-sentinel-forge": "13e1841",
+        "forge-agent-bridge": "aef0531",
+        "forge-cli": "0a154fe",
+        "forge-doctor-api": "c0601fb",
+        "forge-doctor-data": "118158e",
+        "forge-lens": "be7b610",
+        "forge-portal": "83854c1",
+        "platform-forge": "6465652",
+        "product-forge": "4bed3c0",
+        "spark-forge-aws": "4811ed2",
+        "spark-forge-azure": "2a39929",
+        "the-forge": "ff65bd5"
+      },
+      "result": {
+        "correlation_id": "orch-0425d967a102",
+        "failed": []
+      },
+      "status": "PASS",
+      "steps": [
+        {
+          "check": "orchestrate-run",
+          "correlation_id": "orch-0425d967a102",
+          "entries": 2,
+          "handoffs": 0,
+          "ok": true,
+          "plan_status": "planned",
+          "providers": [
+            "forge-doctor-api",
+            "spark-forge-aws"
+          ],
+          "rc": 1
+        },
+        {
+          "ask_status": "ok",
+          "check": "execute:spark-forge-aws",
+          "ok": true,
+          "producer": "spark-forge-aws",
+          "rc": 0,
+          "run_id": "20261113T131607Z-0d74aead"
+        },
+        {
+          "ask_status": "ok",
+          "check": "execute:forge-doctor-api",
+          "ok": true,
+          "producer": "forge-doctor-api",
+          "rc": 0,
+          "run_id": "20261113T131611Z-bf7b30a9"
+        },
+        {
+          "check": "correlated-executions",
+          "correlation_id": "orch-0425d967a102",
+          "executed": 2,
+          "ok": true,
+          "required": 2
+        }
+      ],
+      "versions": {
+        "api-forge": "0.3.6",
+        "api-sentinel-forge": "0.1.2",
+        "code-atlas-forge": "{ attr = \"code_atlas.__version__\" }",
+        "data-sentinel-forge": "0.5.5",
+        "forge-agent-bridge": "0.2.4",
+        "forge-cli": "0.5.3",
+        "forge-doctor-api": "0.3.4",
+        "forge-doctor-data": "1.1.4",
+        "forge-lens": "0.2.4",
+        "forge-portal": "1.1.3",
+        "platform-forge": "0.3.6",
+        "product-forge": "0.2.4",
+        "spark-forge-aws": "0.7.8",
+        "spark-forge-azure": "0.3.6",
+        "the-forge": "0.7.7"
+      }
+    },
+    "federation-partial": {
+      "artifacts": [],
+      "commands": [],
+      "environment": {
+        "workspace": "E:\\projetos\\FORJAS"
+      },
+      "evidence": {
+        "failed": []
+      },
+      "limitations": [],
+      "os": "win32",
+      "python": "3.14.6",
+      "repo_shas": {
+        "api-forge": "8baee53",
+        "api-sentinel-forge": "88d0a23",
+        "code-atlas-forge": "34d9f91",
+        "data-sentinel-forge": "13e1841",
+        "forge-agent-bridge": "aef0531",
+        "forge-cli": "0a154fe",
+        "forge-doctor-api": "c0601fb",
+        "forge-doctor-data": "118158e",
+        "forge-lens": "be7b610",
+        "forge-portal": "83854c1",
+        "platform-forge": "6465652",
+        "product-forge": "4bed3c0",
+        "spark-forge-aws": "4811ed2",
+        "spark-forge-azure": "2a39929",
+        "the-forge": "ff65bd5"
+      },
+      "result": {
+        "failed": []
+      },
+      "status": "PASS",
+      "steps": [
+        {
+          "ask_status": "partial",
+          "check": "partial-honesty",
+          "limitations": [
+            "no input: expected *.json"
+          ],
+          "ok": true,
+          "rc": 0,
+          "res_status": "partial"
+        }
+      ],
+      "versions": {
+        "api-forge": "0.3.6",
+        "api-sentinel-forge": "0.1.2",
+        "code-atlas-forge": "{ attr = \"code_atlas.__version__\" }",
+        "data-sentinel-forge": "0.5.5",
+        "forge-agent-bridge": "0.2.4",
+        "forge-cli": "0.5.3",
+        "forge-doctor-api": "0.3.4",
+        "forge-doctor-data": "1.1.4",
+        "forge-lens": "0.2.4",
+        "forge-portal": "1.1.3",
+        "platform-forge": "0.3.6",
+        "product-forge": "0.2.4",
+        "spark-forge-aws": "0.7.8",
+        "spark-forge-azure": "0.3.6",
+        "the-forge": "0.7.7"
+      }
+    },
+    "federation-routed": {
+      "artifacts": [],
+      "commands": [],
+      "environment": {
+        "workspace": "E:\\projetos\\FORJAS"
+      },
+      "evidence": {
+        "failed": []
+      },
+      "limitations": [],
+      "os": "win32",
+      "python": "3.14.6",
+      "repo_shas": {
+        "api-forge": "8baee53",
+        "api-sentinel-forge": "88d0a23",
+        "code-atlas-forge": "34d9f91",
+        "data-sentinel-forge": "13e1841",
+        "forge-agent-bridge": "aef0531",
+        "forge-cli": "0a154fe",
+        "forge-doctor-api": "c0601fb",
+        "forge-doctor-data": "118158e",
+        "forge-lens": "be7b610",
+        "forge-portal": "83854c1",
+        "platform-forge": "6465652",
+        "product-forge": "4bed3c0",
+        "spark-forge-aws": "4811ed2",
+        "spark-forge-azure": "2a39929",
+        "the-forge": "ff65bd5"
+      },
+      "result": {
+        "failed": []
+      },
+      "status": "PASS",
+      "steps": [
+        {
+          "check": "providers-health",
           "out": "api-forge            ok  surface:cfa892682ea1\napi-sentinel-forge   degraded  surface:8c39124b02aa\necho-forge           ok  surface:0a07cd12ff00\nforge-doctor-api     ok  surface:fc92609e8bcd\nforge-doctor-data    ok  surface:39cf2d922efe\nplatform-forge       ok  surface:4bb0aa837941\nspark-forge-aws      ok  surface:9b2b784674fb\nspark-forge-azure    ok  surface:ae70a7a9e6ab\n",
           "rc": 0
         },
         {
-          "ask_status": "partial",
-          "candidates": 1,
-          "cmd": "ask (routed)",
+          "ask_status": "ok",
+          "check": "routed-ask",
+          "ok": true,
+          "producer": "spark-forge-aws",
           "rc": 0,
-          "run_id": "20261113T050458Z-9adc1afa"
-        },
-        {
-          "ask_status": "partial",
-          "cmd": "ask --use spark-forge-aws",
-          "limitations": [
-            "no input: expected *artifacts/lakeformation/*.json"
-          ],
-          "producer": {
-            "id": "spark-forge-aws",
-            "version": "0.3.0"
-          },
-          "rc": 0,
-          "result_schema": "theforge/ExecutionResult/v1",
-          "run_id": "20261113T050500Z-fe5efda2"
-        },
-        {
-          "cmd": "orchestrate plan (multidomain)",
-          "discovery_digest": "11690d49ec41",
-          "entries": 0,
-          "limitations": [
-            "api-forge: not delegated \u2014 no declared intent matched the task (router never fans out to all specialists)",
-            "platform-forge: not delegated \u2014 no declared intent matched the task (router never fans out to all specialists)",
-            "spark-forge-azure: not delegated \u2014 no declared intent matched the task (router never fans out to all specialists)"
-          ],
-          "plan_status": "ambiguous",
-          "rc": 1
+          "run_id": "20261113T131555Z-9d9976b2"
         }
       ],
       "versions": {
@@ -560,18 +1162,18 @@
         "workspace": "E:\\projetos\\FORJAS"
       },
       "evidence": {
-        "scratch": "C:\\Users\\edgar\\AppData\\Local\\Temp\\forge-e2e-ws-x81s9_cx"
+        "scratch": "C:\\Users\\edgar\\AppData\\Local\\Temp\\forge-e2e-ws-e_677h3h"
       },
       "limitations": [],
       "os": "win32",
-      "python": "3.12.13",
+      "python": "3.14.6",
       "repo_shas": {
         "api-forge": "8baee53",
-        "api-sentinel-forge": "340f9f6",
+        "api-sentinel-forge": "88d0a23",
         "code-atlas-forge": "34d9f91",
         "data-sentinel-forge": "13e1841",
         "forge-agent-bridge": "aef0531",
-        "forge-cli": "3acaa3a",
+        "forge-cli": "0a154fe",
         "forge-doctor-api": "c0601fb",
         "forge-doctor-data": "118158e",
         "forge-lens": "be7b610",
@@ -580,10 +1182,10 @@
         "product-forge": "4bed3c0",
         "spark-forge-aws": "4811ed2",
         "spark-forge-azure": "2a39929",
-        "the-forge": "be0f377"
+        "the-forge": "ff65bd5"
       },
       "result": {
-        "scratch": "C:\\Users\\edgar\\AppData\\Local\\Temp\\forge-e2e-ws-x81s9_cx"
+        "scratch": "C:\\Users\\edgar\\AppData\\Local\\Temp\\forge-e2e-ws-e_677h3h"
       },
       "status": "PASS",
       "steps": [
@@ -615,7 +1217,7 @@
           "step": "I-install-apply"
         },
         {
-          "out": "{\n  \"checked_at\": \"2026-11-13T05:04:41Z\",\n  \"drift\": {\n    \"missing\": [],\n    \"modified\": [],\n    \"ok\": 362,\n    \"unsafe\": []\n  },\n  \"forge_id\": \"the-forge\",\n  \"forge_portal\": {\n    \"install_root\": null,\n    \"installed_at\": null,\n    \"locations\": [],\n    \"manifest\": null,\n    \"state\": \"vendored\"\n  }",
+          "out": "{\n  \"checked_at\": \"2026-11-13T13:13:02Z\",\n  \"drift\": {\n    \"missing\": [],\n    \"modified\": [],\n    \"ok\": 362,\n    \"unsafe\": []\n  },\n  \"forge_id\": \"the-forge\",\n  \"forge_portal\": {\n    \"install_root\": null,\n    \"installed_at\": null,\n    \"locations\": [],\n    \"manifest\": null,\n    \"state\": \"vendored\"\n  }",
           "rc": 0,
           "step": "I-install-status"
         },
@@ -662,14 +1264,14 @@
       },
       "limitations": [],
       "os": "win32",
-      "python": "3.12.13",
+      "python": "3.14.6",
       "repo_shas": {
         "api-forge": "8baee53",
-        "api-sentinel-forge": "340f9f6",
+        "api-sentinel-forge": "88d0a23",
         "code-atlas-forge": "34d9f91",
         "data-sentinel-forge": "13e1841",
         "forge-agent-bridge": "aef0531",
-        "forge-cli": "3acaa3a",
+        "forge-cli": "0a154fe",
         "forge-doctor-api": "c0601fb",
         "forge-doctor-data": "118158e",
         "forge-lens": "be7b610",
@@ -678,7 +1280,7 @@
         "product-forge": "4bed3c0",
         "spark-forge-aws": "4811ed2",
         "spark-forge-azure": "2a39929",
-        "the-forge": "be0f377"
+        "the-forge": "ff65bd5"
       },
       "result": {
         "failed": []
@@ -801,7 +1403,8 @@
       ],
       "commands": [
         "workspace_resources",
-        "detect_forge_portal"
+        "detect_forge_portal",
+        "pytest e2e/test_browser_e2e.py"
       ],
       "environment": {
         "workspace": "E:\\projetos\\FORJAS"
@@ -809,14 +1412,14 @@
       "evidence": {},
       "limitations": [],
       "os": "win32",
-      "python": "3.12.13",
+      "python": "3.14.6",
       "repo_shas": {
         "api-forge": "8baee53",
-        "api-sentinel-forge": "340f9f6",
+        "api-sentinel-forge": "88d0a23",
         "code-atlas-forge": "34d9f91",
         "data-sentinel-forge": "13e1841",
         "forge-agent-bridge": "aef0531",
-        "forge-cli": "3acaa3a",
+        "forge-cli": "0a154fe",
         "forge-doctor-api": "c0601fb",
         "forge-doctor-data": "118158e",
         "forge-lens": "be7b610",
@@ -825,7 +1428,7 @@
         "product-forge": "4bed3c0",
         "spark-forge-aws": "4811ed2",
         "spark-forge-azure": "2a39929",
-        "the-forge": "be0f377"
+        "the-forge": "ff65bd5"
       },
       "result": {},
       "status": "PASS",
@@ -849,6 +1452,12 @@
         {
           "path": "E:\\projetos\\FORJAS\\forge-portal\\dist\\forge-portal-app\\browser\\index.html",
           "portal_build": true
+        },
+        {
+          "artifacts": "forge-portal/e2e/artifacts/",
+          "call": "pytest e2e/test_browser_e2e.py",
+          "rc": 0,
+          "tail": "...................................s                                     [100%]\n35 passed, 1 skipped in 150.06s (0:02:30)"
         }
       ],
       "versions": {
@@ -880,14 +1489,14 @@
       },
       "limitations": [],
       "os": "win32",
-      "python": "3.12.13",
+      "python": "3.14.6",
       "repo_shas": {
         "api-forge": "8baee53",
-        "api-sentinel-forge": "340f9f6",
+        "api-sentinel-forge": "88d0a23",
         "code-atlas-forge": "34d9f91",
         "data-sentinel-forge": "13e1841",
         "forge-agent-bridge": "aef0531",
-        "forge-cli": "3acaa3a",
+        "forge-cli": "0a154fe",
         "forge-doctor-api": "c0601fb",
         "forge-doctor-data": "118158e",
         "forge-lens": "be7b610",
@@ -896,7 +1505,7 @@
         "product-forge": "4bed3c0",
         "spark-forge-aws": "4811ed2",
         "spark-forge-azure": "2a39929",
-        "the-forge": "be0f377"
+        "the-forge": "ff65bd5"
       },
       "result": {
         "failed": []
@@ -967,14 +1576,14 @@
       },
       "limitations": [],
       "os": "win32",
-      "python": "3.12.13",
+      "python": "3.14.6",
       "repo_shas": {
         "api-forge": "8baee53",
-        "api-sentinel-forge": "340f9f6",
+        "api-sentinel-forge": "88d0a23",
         "code-atlas-forge": "34d9f91",
         "data-sentinel-forge": "13e1841",
         "forge-agent-bridge": "aef0531",
-        "forge-cli": "3acaa3a",
+        "forge-cli": "0a154fe",
         "forge-doctor-api": "c0601fb",
         "forge-doctor-data": "118158e",
         "forge-lens": "be7b610",
@@ -983,7 +1592,7 @@
         "product-forge": "4bed3c0",
         "spark-forge-aws": "4811ed2",
         "spark-forge-azure": "2a39929",
-        "the-forge": "be0f377"
+        "the-forge": "ff65bd5"
       },
       "result": {
         "failed": []
@@ -994,14 +1603,14 @@
           "error": null,
           "rc": 0,
           "repo": "the-forge",
-          "stdout_head": "Workspace:  E:\\projetos\\FORJAS\\the-forge\nProviders:  api-forge, api-sentinel-forge, echo-forge, forge-doctor-api, forge-doctor-data, platform-forge, spark-forge-aws, spark-forge-azure\nRuns:       12 (",
+          "stdout_head": "Workspace:  E:\\projetos\\FORJAS\\the-forge\nProviders:  api-forge, api-sentinel-forge, echo-forge, forge-doctor-api, forge-doctor-data, platform-forge, spark-forge-aws, spark-forge-azure\nRuns:       17 (",
           "verb": "status"
         },
         {
           "error": null,
           "rc": 1,
           "repo": "spark-forge-aws",
-          "stdout_head": "{\n  \"checked_at\": \"2026-11-13T05:03:06Z\",\n  \"drift\": {\n    \"missing\": [],\n    \"modified\": [],\n    \"ok\": 0\n  },\n  \"forge_id\": \"spark-forge-aws\",\n  \"hosts\": {},\n  \"ledger_entries\": 0,\n  \"schema\": \"forge",
+          "stdout_head": "{\n  \"checked_at\": \"2026-11-13T13:10:42Z\",\n  \"drift\": {\n    \"missing\": [],\n    \"modified\": [],\n    \"ok\": 0\n  },\n  \"forge_id\": \"spark-forge-aws\",\n  \"hosts\": {},\n  \"ledger_entries\": 0,\n  \"schema\": \"forge",
           "verb": "status"
         },
         {
@@ -1101,8 +1710,8 @@
       }
     }
   },
-  "started": 1794546185.3977337,
+  "started": 1794575441.4787996,
   "summary": {
-    "PASS": 12
+    "PASS": 20
   }
 }
