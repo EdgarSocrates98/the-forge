@@ -1,11 +1,11 @@
 {
-  "finished": 1794526298.0651684,
+  "finished": 1794541478.1508312,
   "kind": "forge/unified-e2e/1",
   "scenarios": {
     "A-aws": {
       "env": {
         "os": "win32",
-        "python": "3.14.6"
+        "python": "3.12.13"
       },
       "evidence": {
         "failed": []
@@ -15,7 +15,7 @@
         {
           "rc": 0,
           "repo": "spark-forge-aws",
-          "stdout_head": "ns deste run. Ele prova\\n   **correspond\\u00eancia**, nunca autoria, e diz isso em `refused`. Passe o `now` da\\n   emiss\\u00e3o e, se houver, o transcript e o provider declarado. Quem receber o\\n   case confere com `sparkforge_aws_receipt_verify`: `not_rechecked` em `tools` ou\\n   `host` \\u00e9 font",
+          "stdout_head": "{\n  \"coordinator\": \"emr-infra-reviewer\",\n  \"description\": \"Spark em Amazon EMR on EC2, Serverless ou on EKS com risco na infraestrutura e nao no codigo - instance fleets contra instance groups, purchasing option, managed scaling, Configurations em dois niveis, bootstrap actions, LogUri, capacidade p",
           "verb": "playbook emr-infra-reviewer"
         },
         {
@@ -35,7 +35,7 @@
     "B-azure": {
       "env": {
         "os": "win32",
-        "python": "3.14.6"
+        "python": "3.12.13"
       },
       "evidence": {
         "failed": []
@@ -53,7 +53,7 @@
     "C-api": {
       "env": {
         "os": "win32",
-        "python": "3.14.6"
+        "python": "3.12.13"
       },
       "evidence": {
         "failed": []
@@ -75,13 +75,13 @@
         {
           "rc": 0,
           "repo": "api-sentinel-forge",
-          "stdout_head": "workspace_initialized=True  database=absent  capabilities={'available': 13, 'declared': 1}  workspace_root=E:\\projetos\\FORJAS\\api-sentinel-forge\\.api-sentinel  version=0.1.1  integrations=[{'forge': 'api-forge', 'state': 'unverified', 'mode': 'handoff_file', 'reason': \"apiforge not importable \u2014 impl",
+          "stdout_head": "workspace_initialized=True  database=absent  capabilities={'available': 13, 'declared': 1}  workspace_root=E:\\projetos\\FORJAS\\api-sentinel-forge\\.api-sentinel  version=0.1.2  integrations=[{'forge': 'api-forge', 'state': 'unverified', 'mode': 'handoff_file', 'reason': \"apiforge not importable \u2014 impl",
           "verb": "status"
         },
         {
           "rc": 0,
           "repo": "code-atlas-forge",
-          "stdout_head": "root:       E:\\projetos\\FORJAS\\code-atlas-forge\nschema:     v12\ngit:        main@ac37856657d5 (clean)\nsnapshot:   #14 READY \u2014 1311 files\n",
+          "stdout_head": "root:       E:\\projetos\\FORJAS\\code-atlas-forge\nschema:     v12\ngit:        main@34d9f919b89a (clean)\nsnapshot:   #14 READY \u2014 1311 files\n",
           "verb": "status"
         }
       ]
@@ -89,7 +89,7 @@
     "D-platform": {
       "env": {
         "os": "win32",
-        "python": "3.14.6"
+        "python": "3.12.13"
       },
       "evidence": {
         "failed": []
@@ -107,7 +107,7 @@
     "E-product": {
       "env": {
         "os": "win32",
-        "python": "3.14.6"
+        "python": "3.12.13"
       },
       "evidence": {
         "failed": []
@@ -117,7 +117,7 @@
         {
           "rc": 0,
           "repo": "product-forge",
-          "stdout_head": "{\n  \"forge_id\": \"product-forge\",\n  \"version\": \"0.2.4\",\n  \"home\": \"C:\\\\Users\\\\edgar\\\\.productforge\",\n  \"home_exists\": true,\n  \"db\": \"C:\\\\Users\\\\edgar\\\\.productforge\\\\state\\\\productforge.db\",\n  \"db_exists\": true,\n  \"profile\": \"recommended\",\n  \"gateway_profile\": \"balanced\",\n  \"llm_provider\": \"none\",\n  ",
+          "stdout_head": "{\n  \"forge_id\": \"product-forge\",\n  \"version\": \"0.2.5\",\n  \"home\": \"C:\\\\Users\\\\edgar\\\\.productforge\",\n  \"home_exists\": true,\n  \"db\": \"C:\\\\Users\\\\edgar\\\\.productforge\\\\state\\\\productforge.db\",\n  \"db_exists\": true,\n  \"profile\": \"recommended\",\n  \"gateway_profile\": \"balanced\",\n  \"llm_provider\": \"none\",\n  ",
           "verb": "status"
         }
       ]
@@ -125,15 +125,15 @@
     "context": {
       "env": {
         "os": "win32",
-        "python": "3.14.6"
+        "python": "3.12.13"
       },
       "evidence": {
         "bounded": true,
         "catalog_bytes_by_forges": {
           "1": 119671,
-          "3": 126905,
-          "8": 189844,
-          "13": 305748
+          "3": 126920,
+          "8": 189859,
+          "13": 305763
         },
         "manifest_count": 13
       },
@@ -144,7 +144,7 @@
           "repo": "api-forge"
         },
         {
-          "manifest_bytes": 1639,
+          "manifest_bytes": 1654,
           "repo": "api-sentinel-forge"
         },
         {
@@ -196,7 +196,7 @@
     "federation": {
       "env": {
         "os": "win32",
-        "python": "3.14.6"
+        "python": "3.12.13"
       },
       "evidence": {},
       "status": "PASS",
@@ -205,6 +205,13 @@
           "cmd": "providers health",
           "out": "api-forge            ok  surface:cfa892682ea1\napi-sentinel-forge   degraded  surface:8c39124b02aa\necho-forge           ok  surface:0a07cd12ff00\nforge-doctor-api     ok  surface:fc92609e8bcd\nforge-doctor-data    ok  surface:39cf2d922efe\nplatform-forge       ok  surface:4bb0aa837941\nspark-forge-aws      ok  surface:9b2b784674fb\nspark-forge-azure    ok  surface:ae70a7a9e6ab\n",
           "rc": 0
+        },
+        {
+          "ask_status": "partial",
+          "candidates": 1,
+          "cmd": "ask (routed)",
+          "rc": 0,
+          "run_id": "20261113T034431Z-b60e8f94"
         },
         {
           "ask_status": "partial",
@@ -218,17 +225,29 @@
           },
           "rc": 0,
           "result_schema": "theforge/ExecutionResult/v1",
-          "run_id": "20261112T233136Z-e851a0f0"
+          "run_id": "20261113T034433Z-50b935d0"
+        },
+        {
+          "cmd": "orchestrate plan (multidomain)",
+          "discovery_digest": "11690d49ec41",
+          "entries": 0,
+          "limitations": [
+            "api-forge: not delegated \u2014 no declared intent matched the task (router never fans out to all specialists)",
+            "platform-forge: not delegated \u2014 no declared intent matched the task (router never fans out to all specialists)",
+            "spark-forge-azure: not delegated \u2014 no declared intent matched the task (router never fans out to all specialists)"
+          ],
+          "plan_status": "ambiguous",
+          "rc": 1
         }
       ]
     },
     "lifecycle": {
       "env": {
         "os": "win32",
-        "python": "3.14.6"
+        "python": "3.12.13"
       },
       "evidence": {
-        "scratch": "C:\\Users\\edgar\\AppData\\Local\\Temp\\forge-e2e-ws-otp_szhg"
+        "scratch": "C:\\Users\\edgar\\AppData\\Local\\Temp\\forge-e2e-ws-owhyljhm"
       },
       "status": "PASS",
       "steps": [
@@ -251,15 +270,38 @@
           "step": "H-partial-corrupt"
         },
         {
-          "preserved": true,
-          "step": "I-user-file"
+          "rc": 0,
+          "result": {
+            "forge_id": "the-forge",
+            "scope": "workspace",
+            "status": "completed"
+          },
+          "step": "I-install-apply"
+        },
+        {
+          "out": "{\n  \"checked_at\": \"2026-11-13T03:44:13Z\",\n  \"drift\": {\n    \"missing\": [],\n    \"modified\": [],\n    \"ok\": 362,\n    \"unsafe\": []\n  },\n  \"forge_id\": \"the-forge\",\n  \"forge_portal\": {\n    \"install_root\": null,\n    \"installed_at\": null,\n    \"locations\": [],\n    \"manifest\": null,\n    \"state\": \"vendored\"\n  }",
+          "rc": 0,
+          "step": "I-install-status"
+        },
+        {
+          "out": "{\n  \"checks\": [\n    {\n      \"detail\": \"uccessfully built theforge-core\\nInstalling collected packages: theforge-core\\n  Attempting uninstall: theforge-core\\n    Found existing installation: theforge-core 0.7.7\\n    Uninstalling theforge-core-0.7.7:\\n      Successfully uninstalled theforge-core-0.7.7",
+          "rc": 0,
+          "step": "I-install-update"
+        },
+        {
+          "audit_ledger_preserved": true,
+          "managed_assets_removed": true,
+          "out": "{\n  \"checks\": [\n    {\n      \"detail\": \"361 removed, 0 kept\",\n      \"id\": \"uninstall\",\n      \"status\": \"PASS\"\n    },\n    {\n      \"detail\": \".forge/context uninstalled\",\n      \"id\": \"context-registry\",\n      \"status\": \"PASS\"\n    },\n    {\n      \"detail\": \"removed: 3 changed\",\n      \"id\": \"consumer-docs",
+          "rc": 0,
+          "step": "J-install-uninstall",
+          "user_file_preserved": true
         }
       ]
     },
     "mcp": {
       "env": {
         "os": "win32",
-        "python": "3.14.6"
+        "python": "3.12.13"
       },
       "evidence": {
         "failed": []
@@ -282,7 +324,7 @@
         },
         {
           "call_ok": true,
-          "excerpt": "{\"content\": [{\"text\": \"{\\\"database\\\": \\\"absent\\\", \\\"sentinel\\\": {}, \\\"state\\\": \\\"PARTIAL\\\", \\\"unknowns\\\": [\\\"database_absent\\\"], \\\"version\\\": \\\"0.1.1\\\", \\\"workspace_initialized\\\": true}\", \"type\": \"tex",
+          "excerpt": "{\"content\": [{\"text\": \"{\\\"database\\\": \\\"absent\\\", \\\"sentinel\\\": {}, \\\"state\\\": \\\"PARTIAL\\\", \\\"unknowns\\\": [\\\"database_absent\\\"], \\\"version\\\": \\\"0.1.2\\\", \\\"workspace_initialized\\\": true}\", \"type\": \"tex",
           "repo": "api-sentinel-forge",
           "tools": 4,
           "verify": "sentinel_health"
@@ -296,14 +338,14 @@
         },
         {
           "call_ok": true,
-          "excerpt": "{\"content\": [{\"text\": \"{\\\"engine\\\": \\\"data-sentinel-forge\\\", \\\"version\\\": \\\"0.5.4\\\", \\\"tools\\\": 22, \\\"analyzers\\\": 13, \\\"capabilities\\\": 15}\", \"type\": \"text\"}], \"isError\": false, \"structuredContent\": ",
+          "excerpt": "{\"content\": [{\"text\": \"{\\\"engine\\\": \\\"data-sentinel-forge\\\", \\\"version\\\": \\\"0.5.5\\\", \\\"tools\\\": 22, \\\"analyzers\\\": 13, \\\"capabilities\\\": 15}\", \"type\": \"text\"}], \"isError\": false, \"structuredContent\": ",
           "repo": "data-sentinel-forge",
           "tools": 22,
           "verify": "sentinel.status"
         },
         {
           "call_ok": true,
-          "excerpt": "{\"content\": [{\"type\": \"text\", \"text\": \"{\\\"server\\\": \\\"forge-agent-bridge\\\", \\\"version\\\": \\\"0.2.3\\\", \\\"protocol\\\": {\\\"supported_revisions\\\": [\\\"2026-07-28\\\", \\\"2025-11-25\\\", \\\"2025-06-18\\\", \\\"2025-03-2",
+          "excerpt": "{\"content\": [{\"type\": \"text\", \"text\": \"{\\\"server\\\": \\\"forge-agent-bridge\\\", \\\"version\\\": \\\"0.2.4\\\", \\\"protocol\\\": {\\\"supported_revisions\\\": [\\\"2026-07-28\\\", \\\"2025-11-25\\\", \\\"2025-06-18\\\", \\\"2025-03-2",
           "repo": "forge-agent-bridge",
           "tools": 7,
           "verify": "forge_health"
@@ -338,7 +380,7 @@
         },
         {
           "call_ok": true,
-          "excerpt": "{\"content\": [{\"type\": \"text\", \"text\": \"{\\\"forge_id\\\": \\\"product-forge\\\", \\\"version\\\": \\\"0.2.4\\\"}\"}]}",
+          "excerpt": "{\"content\": [{\"type\": \"text\", \"text\": \"{\\\"forge_id\\\": \\\"product-forge\\\", \\\"version\\\": \\\"0.2.5\\\"}\"}]}",
           "repo": "product-forge",
           "tools": 17,
           "verify": "productforge_status"
@@ -362,17 +404,29 @@
     "portal": {
       "env": {
         "os": "win32",
-        "python": "3.14.6"
+        "python": "3.12.13"
       },
       "evidence": {},
       "status": "PASS",
       "steps": [
         {
-          "adapter": "error",
-          "why": "'NoneType' object has no attribute '__dict__'"
+          "call": "workspace_resources",
+          "count": 1392,
+          "errors": [],
+          "forges": 14
         },
         {
-          "path": "forge-portal\\dist\\forge-portal-app\\browser\\index.html",
+          "call": "detect_forge_portal",
+          "keys": [
+            "install_root",
+            "installed_at",
+            "locations",
+            "manifest",
+            "state"
+          ]
+        },
+        {
+          "path": "E:\\projetos\\FORJAS\\forge-portal\\dist\\forge-portal-app\\browser\\index.html",
           "portal_build": true
         }
       ]
@@ -380,7 +434,7 @@
     "security": {
       "env": {
         "os": "win32",
-        "python": "3.14.6"
+        "python": "3.12.13"
       },
       "evidence": {
         "failed": []
@@ -412,7 +466,7 @@
     "standalone": {
       "env": {
         "os": "win32",
-        "python": "3.14.6"
+        "python": "3.12.13"
       },
       "evidence": {
         "failed": []
@@ -423,14 +477,14 @@
           "error": null,
           "rc": 0,
           "repo": "the-forge",
-          "stdout_head": "Workspace:  E:\\projetos\\FORJAS\\the-forge\nProviders:  api-forge, api-sentinel-forge, echo-forge, forge-doctor-api, forge-doctor-data, platform-forge, spark-forge-aws, spark-forge-azure\nRuns:       2 (l",
+          "stdout_head": "Workspace:  E:\\projetos\\FORJAS\\the-forge\nProviders:  api-forge, api-sentinel-forge, echo-forge, forge-doctor-api, forge-doctor-data, platform-forge, spark-forge-aws, spark-forge-azure\nRuns:       8 (l",
           "verb": "status"
         },
         {
           "error": null,
           "rc": 1,
           "repo": "spark-forge-aws",
-          "stdout_head": "{\n  \"checked_at\": \"2026-11-12T23:29:31Z\",\n  \"drift\": {\n    \"missing\": [],\n    \"modified\": [],\n    \"ok\": 0\n  },\n  \"forge_id\": \"spark-forge-aws\",\n  \"hosts\": {},\n  \"ledger_entries\": 0,\n  \"schema\": \"forge",
+          "stdout_head": "{\n  \"checked_at\": \"2026-11-13T03:42:40Z\",\n  \"drift\": {\n    \"missing\": [],\n    \"modified\": [],\n    \"ok\": 0\n  },\n  \"forge_id\": \"spark-forge-aws\",\n  \"hosts\": {},\n  \"ledger_entries\": 0,\n  \"schema\": \"forge",
           "verb": "status"
         },
         {
@@ -458,14 +512,14 @@
           "error": null,
           "rc": 0,
           "repo": "product-forge",
-          "stdout_head": "{\n  \"forge_id\": \"product-forge\",\n  \"version\": \"0.2.4\",\n  \"home\": \"C:\\\\Users\\\\edgar\\\\.productforge\",\n  \"home_exists\": true,\n  \"db\": \"C:\\\\Users\\\\edgar\\\\.productforge\\\\state\\\\productforge.db\",\n  \"db_exis",
+          "stdout_head": "{\n  \"forge_id\": \"product-forge\",\n  \"version\": \"0.2.5\",\n  \"home\": \"C:\\\\Users\\\\edgar\\\\.productforge\",\n  \"home_exists\": true,\n  \"db\": \"C:\\\\Users\\\\edgar\\\\.productforge\\\\state\\\\productforge.db\",\n  \"db_exis",
           "verb": "status"
         },
         {
           "error": null,
           "rc": 0,
           "repo": "code-atlas-forge",
-          "stdout_head": "root:       E:\\projetos\\FORJAS\\code-atlas-forge\nschema:     v12\ngit:        main@ac37856657d5 (clean)\nsnapshot:   #14 READY \u2014 1311 files\n",
+          "stdout_head": "root:       E:\\projetos\\FORJAS\\code-atlas-forge\nschema:     v12\ngit:        main@34d9f919b89a (clean)\nsnapshot:   #14 READY \u2014 1311 files\n",
           "verb": "status"
         },
         {
@@ -486,7 +540,7 @@
           "error": null,
           "rc": 0,
           "repo": "api-sentinel-forge",
-          "stdout_head": "workspace_initialized=True  database=absent  capabilities={'available': 13, 'declared': 1}  workspace_root=E:\\projetos\\FORJAS\\api-sentinel-forge\\.api-sentinel  version=0.1.1  integrations=[{'forge': '",
+          "stdout_head": "workspace_initialized=True  database=absent  capabilities={'available': 13, 'declared': 1}  workspace_root=E:\\projetos\\FORJAS\\api-sentinel-forge\\.api-sentinel  version=0.1.2  integrations=[{'forge': '",
           "verb": "status"
         },
         {
@@ -507,13 +561,13 @@
           "error": null,
           "rc": 0,
           "repo": "forge-agent-bridge",
-          "stdout_head": "{\n  \"version\": \"0.2.3\",\n  \"providers_detected\": 4,\n  \"providers\": [\n    {\n      \"id\": \"claude-code\",\n      \"installed\": true,\n      \"auth_state\": \"unauthenticated\"\n    },\n    {\n      \"id\": \"codex\",\n  ",
+          "stdout_head": "{\n  \"version\": \"0.2.4\",\n  \"providers_detected\": 4,\n  \"providers\": [\n    {\n      \"id\": \"claude-code\",\n      \"installed\": true,\n      \"auth_state\": \"unauthenticated\"\n    },\n    {\n      \"id\": \"codex\",\n  ",
           "verb": "status"
         }
       ]
     }
   },
-  "started": 1794526169.422424,
+  "started": 1794541358.4805765,
   "summary": {
     "PASS": 12
   }

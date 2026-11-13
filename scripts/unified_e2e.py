@@ -105,7 +105,7 @@ def run_entry(repo: str, args: list[str], *, call: str | None = None,
         r = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout,
                            encoding="utf-8", errors="replace",
                            cwd=str(cwd or ROOT / repo), env=env)
-        return {"rc": r.returncode, "stdout": r.stdout[-3000:],
+        return {"rc": r.returncode, "stdout": r.stdout,
                 "stderr": r.stderr[-1500:], "cmd": args}
     except subprocess.TimeoutExpired:
         return {"rc": None, "error": f"timeout>{timeout}s", "cmd": args}
@@ -397,11 +397,60 @@ def scenario_lifecycle() -> None:
         steps.append({"step": "H-partial-corrupt", "manifest_broken": True,
                       "other_files_intact": other.exists()})
         man.write_text(json.dumps(d))
-        # I/J: user file preserved across ops
-        user_file = dst / "USER_NOTES.md"
+        # I: real installer apply — governed install into the scratch workspace
+        ws = scratch / "ws"
+        ws.mkdir(exist_ok=True)
+        r = run_entry("the-forge",
+                      ["install", "apply", "--root", str(ws),
+                       "--scope", "workspace", "--yes", "--json"],
+                      timeout=180)
+        apply_ok = False
+        ap: dict = {}
+        try:
+            raw = (r.get("stdout") or "").strip()
+            ap = json.loads(raw[raw.index("{"):raw.rindex("}") + 1])
+            ver = (ap.get("verification") or {}).get("status")
+            apply_ok = r.get("rc") == 0 and (
+                ap.get("status") == "completed" or ver == "PASS")
+        except Exception:  # noqa: BLE001
+            ap = {"stdout": (r.get("stdout") or "")[:200]}
+        steps.append({"step": "I-install-apply", "rc": r.get("rc"),
+                      "result": {k: ap.get(k) for k in
+                                 ("status", "forge_id", "scope")
+                                 if k in ap}})
+        # ledger/health of what was just installed
+        r = run_entry("the-forge",
+                      ["install", "status", "--root", str(ws), "--json"],
+                      timeout=120)
+        steps.append({"step": "I-install-status", "rc": r.get("rc"),
+                      "out": (r.get("stdout") or "")[:300]})
+        # I: upgrade attempt — pinned runtime may honestly refuse; record verdict
+        r = run_entry("the-forge",
+                      ["install", "update", "--root", str(ws), "--json"],
+                      timeout=120)
+        steps.append({"step": "I-install-update", "rc": r.get("rc"),
+                      "out": (r.get("stdout") or "")[:300]})
+        # J: real uninstall — user file must be preserved, managed assets gone
+        user_file = ws / "USER_NOTES.md"
         user_file.write_text("mine")
-        steps.append({"step": "I-user-file", "preserved": user_file.read_text() == "mine"})
-        record("lifecycle", "PASS", {"scratch": str(scratch)}, steps)
+        r = run_entry("the-forge",
+                      ["install", "uninstall", "--root", str(ws),
+                       "--scope", "workspace", "--json"],
+                      timeout=180)
+        # managed assets are removed; .forge/install (the audit ledger) is
+        # intentionally preserved unless --purge — assert BOTH properties
+        assets_gone = not (ws / ".github" / "skills").exists()
+        ledger_kept = (ws / ".forge" / "install").exists()
+        steps.append({"step": "J-install-uninstall", "rc": r.get("rc"),
+                      "user_file_preserved": user_file.exists()
+                      and user_file.read_text() == "mine",
+                      "managed_assets_removed": assets_gone,
+                      "audit_ledger_preserved": ledger_kept,
+                      "out": (r.get("stdout") or "")[:300]})
+        lifecycle_ok = (apply_ok and assets_gone
+                        and steps[-1]["user_file_preserved"])
+        record("lifecycle", "PASS" if lifecycle_ok else "FAIL",
+               {"scratch": str(scratch)}, steps)
     except Exception as e:  # noqa: BLE001
         record("lifecycle", "FAIL", {"error": str(e)[:300]}, steps)
     finally:
@@ -426,15 +475,43 @@ def scenario_context() -> None:
 
 
 def scenario_federation() -> None:
-    """Cenário O — real delegated execution through the Forge Protocol:
-    theforge ask -> RoutingDecision/v1 -> provider subprocess ->
-    ExecutionResult/v1 with run_id. A 'partial' producer verdict still
-    proves discovery + selection + delegation + return."""
+    """Cenário O — discovery + routing + delegation + multidomain plan.
+
+    Proves: (a) provider discovery/health, (b) a REAL routed `ask` (no
+    --use) producing a RoutingDecision with evaluated candidates —
+    'ambiguous' is a legitimate deterministic outcome, never a guess,
+    (c) delegated execution -> ExecutionResult/v1 + run_id, and (d) a
+    multidomain `orchestrate plan` reporting per-provider picks and
+    honest limitations."""
     steps = []
     r = run_entry("the-forge",
                   ["providers", "health"], timeout=120)
     steps.append({"cmd": "providers health", "rc": r.get("rc"),
                   "out": (r.get("stdout") or "")[:600]})
+    # (b) routed ask — selection machinery must emit a RoutingDecision
+    r = run_entry(
+        "the-forge",
+        ["ask", "--json",
+         "--capability", "lakeformation.access-analysis",
+         "--action", "lakeformation-grants",
+         "--target", "../spark-forge-aws", "lake formation"],
+        timeout=300)
+    routed_ok = False
+    try:
+        d = json.loads((r.get("stdout") or "").strip())
+        routing = d.get("routing") or d.get("decision") or {}
+        cands = routing.get("candidates") or []
+        routed_ok = bool(cands) and d.get("status") in (
+            "ok", "partial", "ambiguous", "refused")
+        steps.append({"cmd": "ask (routed)", "rc": r.get("rc"),
+                      "ask_status": d.get("status"),
+                      "candidates": len(cands),
+                      "run_id": d.get("run_id")})
+    except Exception as e:  # noqa: BLE001
+        steps.append({"cmd": "ask (routed)", "rc": r.get("rc"),
+                      "parse_error": str(e)[:200],
+                      "stdout": (r.get("stdout") or "")[:300]})
+    # (c) delegated execution — real subprocess call through the protocol
     r = run_entry(
         "the-forge",
         ["ask", "--json", "--use", "spark-forge-aws",
@@ -464,33 +541,70 @@ def scenario_federation() -> None:
                   "stderr": (r.get("stderr") or "")[:200]}
     steps.append({"cmd": "ask --use spark-forge-aws", "rc": r.get("rc"),
                   **detail})
-    record("federation", "PASS" if ok else "FAIL", {}, steps)
+    # (d) multidomain orchestration plan — discovery digest + per-provider
+    # verdicts + honest limitations (never fans out to all specialists)
+    r = run_entry(
+        "the-forge",
+        ["orchestrate", "plan", "--json",
+         "review spark glue job performance and api contract"],
+        timeout=300)
+    orch_ok = False
+    try:
+        raw = (r.get("stdout") or "").strip()
+        d = json.loads(raw[raw.index("{"):raw.rindex("}") + 1])
+        rep = d.get("report") or d
+        prov = rep.get("provenance") or {}
+        orch_ok = bool(prov.get("discovery_digest")) and rep.get("kind") == "plan"
+        steps.append({"cmd": "orchestrate plan (multidomain)",
+                      "rc": r.get("rc"),
+                      "plan_status": rep.get("plan_status"),
+                      "entries": len(rep.get("entries") or []),
+                      "limitations": rep.get("limitations"),
+                      "discovery_digest": (prov.get("discovery_digest")
+                                           or "")[:12]})
+    except Exception as e:  # noqa: BLE001
+        steps.append({"cmd": "orchestrate plan (multidomain)",
+                      "rc": r.get("rc"), "parse_error": str(e)[:200],
+                      "stdout": (r.get("stdout") or "")[:300]})
+    record("federation",
+           "PASS" if (ok and routed_ok and orch_ok) else "FAIL",
+           {}, steps)
 
 
 def scenario_portal() -> None:
-    """Cenário K — portal adapter exercised live + build artifact."""
+    """Cenário K — real portal service calls against the workspace.
+
+    PASS requires the live resource service to return real data; a mere
+    frontend build artifact is NOT sufficient (Onda 13/K: 'operações
+    contra serviços reais')."""
     steps = []
+    live = False
     try:
-        import importlib.util
-        pf = ROOT / "the-forge" / "src" / "theforge" / "_forge_portal.py"
-        spec = importlib.util.spec_from_file_location("fp", pf)
-        mod = importlib.util.module_from_spec(spec)  # type: ignore[arg-type]
-        spec.loader.exec_module(mod)  # type: ignore[union-attr]
-        if hasattr(mod, "workspace_resources"):
-            res = mod.workspace_resources(str(ROOT))
-            steps.append({"call": "workspace_resources",
-                          "forges": len(res.get("forges", [])),
-                          "count": len(res.get("resources", [])),
-                          "errors": res.get("errors")})
-        else:
-            fns = [f for f in dir(mod) if not f.startswith("_")][:15]
-            steps.append({"call": "introspect", "functions": fns})
+        import sys as _sys
+        src = str(ROOT / "the-forge" / "src")
+        if src not in _sys.path:
+            _sys.path.insert(0, src)
+        from theforge._forge_portal import (
+            detect_forge_portal,
+            workspace_resources,
+        )
+        res = workspace_resources(str(ROOT))
+        n_res = len(res.get("resources", []))
+        live = n_res > 0
+        steps.append({"call": "workspace_resources",
+                      "forges": len(res.get("forges", [])),
+                      "count": n_res,
+                      "errors": res.get("errors")})
+        det = detect_forge_portal()
+        steps.append({"call": "detect_forge_portal",
+                      "keys": sorted(det.keys())[:12]})
     except Exception as e:  # noqa: BLE001
         steps.append({"adapter": "error", "why": str(e)[:300]})
     dist = ROOT / "forge-portal" / "dist" / "forge-portal-app" / "browser" / "index.html"
     steps.append({"portal_build": dist.exists(), "path": str(dist)})
-    ok = any(s.get("count", 0) > 0 for s in steps) or any(s.get("portal_build") for s in steps)
-    record("portal", "PASS" if ok else "UNVERIFIED", {}, steps)
+    record("portal",
+           "PASS" if live else ("UNVERIFIED" if dist.exists() else "FAIL"),
+           {}, steps)
 
 
 def main() -> int:
