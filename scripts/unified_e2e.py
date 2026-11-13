@@ -405,7 +405,7 @@ def scenario_lifecycle() -> None:
                        "--scope", "workspace", "--yes", "--json"],
                       timeout=180)
         apply_ok = False
-        ap: dict = {}
+        ap: dict[str, Any] = {}
         try:
             raw = (r.get("stdout") or "").strip()
             ap = json.loads(raw[raw.index("{"):raw.rindex("}") + 1])
