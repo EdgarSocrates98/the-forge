@@ -1,4 +1,4 @@
-# Corporate Security Report — 2026-11-13T05:23:18+00:00
+# Corporate Security Report — 2026-11-13T12:04:45+00:00
 
 Security scenario: **PASS** — real refusals, no mocks.
 

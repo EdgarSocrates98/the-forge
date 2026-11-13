@@ -1,4 +1,4 @@
-# CI + Release Evidence — 2026-11-13T05:23:18+00:00
+# CI + Release Evidence — 2026-11-13T12:04:45+00:00
 
 | repo | version | tag | release | index state |
 |---|---|---|---|---|
@@ -14,7 +14,7 @@
 | code-atlas-forge | 1.1.4 | v1.1.4 | v1.1.4 | {'pypi': 'PUBLISHED'} |
 | forge-lens | 0.2.4 | v0.2.4 | v0.2.4 | {'pypi': 'PUBLISHED'} |
 | data-sentinel-forge | 0.5.5 | v0.5.5 | v0.5.5 | {'pypi': 'PUBLISHED'} |
-| api-sentinel-forge | 0.1.2 | v0.1.2 | v0.1.2 | {'pypi': 'NOT_PUBLISHED'} |
+| api-sentinel-forge | 0.1.2 | v0.1.2 | v0.1.2 | {'pypi': 'PUBLISHED'} |
 | forge-doctor-api | 0.3.4 | v0.3.4 | v0.3.4 | {'pypi': 'PUBLISHED'} |
 | forge-doctor-data | 1.1.4 | v1.1.4 | v1.1.4 | {'pypi': 'PUBLISHED'} |
 

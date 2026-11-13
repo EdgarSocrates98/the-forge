@@ -1,7 +1,5 @@
 {
-  "blocked": [
-    "api-sentinel-forge: pypi 0.1.2 not on index"
-  ],
+  "blocked": [],
   "dimensions": {
     "ci_federated": "PASS",
     "contracts": "PASS",
@@ -10,7 +8,7 @@
     "final_versions_traceable": "PASS",
     "install_lifecycle": "PASS",
     "portal_real_services": "PASS",
-    "pypi_npm_publication": "BLOCKED",
+    "pypi_npm_publication": "PASS",
     "security_boundaries": "PASS",
     "specialists_standalone": "PASS"
   },
@@ -18,7 +16,7 @@
     "pass": 12,
     "total": 12
   },
-  "generated_at": "2026-11-13T05:23:18+00:00",
+  "generated_at": "2026-11-13T12:04:45+00:00",
   "kind": "forge/final-platform-certification/1",
   "probe": true,
   "repos": {
@@ -44,9 +42,9 @@
       "branch": "main",
       "dirty": false,
       "exists": true,
-      "head": "340f9f6459b8a2eac9e37ff9aafcc7ec61996e88",
+      "head": "88d0a23050f6dedb6a63aa1494573a7dd8df43d1",
       "index": {
-        "pypi": "NOT_PUBLISHED"
+        "pypi": "PUBLISHED"
       },
       "latest_release": "v0.1.2",
       "open_prs": 0,
@@ -116,7 +114,7 @@
       "branch": "main",
       "dirty": false,
       "exists": true,
-      "head": "3acaa3a750acf971fcb109161c0c86e222e2360f",
+      "head": "0a154fe5b7f8e40228979fc566e113f7ab26ffd4",
       "index": {
         "npm": "PUBLISHED"
       },
@@ -275,7 +273,7 @@
       "branch": "main",
       "dirty": false,
       "exists": true,
-      "head": "fbfd85506de61679a657225a30a991815aab4cda",
+      "head": "3151baf0c991c74176697139965a2d646597b4d9",
       "index": {
         "pypi": "PUBLISHED"
       },
@@ -291,5 +289,5 @@
     }
   },
   "unverified": [],
-  "verdict": "CONDITIONAL GO"
+  "verdict": "PRODUCTION READY"
 }
