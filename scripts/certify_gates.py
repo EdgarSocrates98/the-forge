@@ -218,7 +218,7 @@ def _e2e_freshness(e2e: dict[str, Any],
             seen.update({r: s for r, s in (sc.get("repo_shas") or {}).items()
                          if s})
     stale = sorted(r for r, s in seen.items()
-                   if lshas.get(r) and s != lshas[r])
+                   if lshas.get(r) and not str(lshas[r]).startswith(str(s)))
     missing = sorted(r for r in lshas if r not in seen)
     return [CheckResult("e2e:sha-binding", not stale,
                         f"scenarios ran on stale SHAs: {stale}"

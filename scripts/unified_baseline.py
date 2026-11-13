@@ -117,9 +117,15 @@ def declared_version(repo: Path) -> str | None:
             return m.group(1)
         m = re.search(r'\[tool\.hatch\.version\][^\[]*?path\s*=\s*"([^"]+)"', txt, re.S)
         candidates = [repo / m.group(1)] if m else []
+        # dynamic attr form: version = { attr = "pkg.mod.__version__" }
+        m2 = re.search(r'attr\s*=\s*"([A-Za-z0-9_.]+)\.__version__"', txt)
+        if m2:
+            rel = Path(*m2.group(1).split(".")[:-1]) / "__init__.py"
+            candidates += [repo / "src" / rel, repo / rel]
+        SKIP = {".venv", "vendor", "forge_agent_bridge", "build",
+                "dist", "node_modules", "__pycache__", ".tox"}
         candidates += [p for p in sorted(repo.rglob("__init__.py"))
-                       if ".venv" not in p.parts and "vendor" not in p.parts
-                       and "forge_agent_bridge" not in p.parts]
+                       if not (set(p.parts) & SKIP)]
         for init in candidates:
             if not init.exists():
                 continue
