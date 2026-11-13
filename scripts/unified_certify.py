@@ -134,20 +134,32 @@ FEDERATED_WORKFLOWS = ("ecosystem-real", "provider-surface-drift", "release-comp
 
 def ci_last_runs(root: Path) -> dict[str, Any]:
     """Collect the last completed run of each federated workflow — the
-    ci_federated gate consumes these as evidence, never a constant."""
+    ci_federated gate consumes these as evidence, never a constant.
+    P1-002: the full headSha is recorded so the gate can bind the run to
+    the exact locked commit; job names/conclusions prove real execution."""
     runs: dict[str, Any] = {}
     for wf in FEDERATED_WORKFLOWS:
         d = gh_json(root / "the-forge",
                     ["run", "list", "--workflow", f"{wf}.yml", "--limit", "1",
-                     "--json", "conclusion,headBranch,headSha,createdAt,status,event"])
-        if isinstance(d, list) and d:
-            r = d[0]
-            runs[wf] = {"conclusion": r.get("conclusion"),
-                        "status": r.get("status"),
-                        "ref": r.get("headBranch"),
-                        "sha": (r.get("headSha") or "")[:8],
-                        "createdAt": r.get("createdAt"),
-                        "event": r.get("event")}
+                     "--json", "conclusion,headBranch,headSha,createdAt,"
+                     "status,event,databaseId"])
+        if not (isinstance(d, list) and d):
+            continue
+        r = d[0]
+        jobs = gh_json(root / "the-forge",
+                       ["run", "view", str(r.get("databaseId") or ""),
+                        "--json", "jobs"])
+        job_states = ({
+            j.get("name"): j.get("conclusion") or j.get("status")
+            for j in jobs.get("jobs", [])} if isinstance(jobs, dict) else {})
+        runs[wf] = {"conclusion": r.get("conclusion"),
+                    "status": r.get("status"),
+                    "ref": r.get("headBranch"),
+                    "sha": r.get("headSha"),
+                    "run_id": r.get("databaseId"),
+                    "createdAt": r.get("createdAt"),
+                    "event": r.get("event"),
+                    "jobs": job_states}
     return runs
 
 
@@ -185,6 +197,7 @@ def main() -> int:
         "baseline": baseline, "e2e": e2e, "lock": lock,
         "inventory": load(out, "resource-inventory.json"),
         "states": states, "ci_runs": ci_runs, "probe": probe,
+        "release_verify": load(out, "release-verify.json"),
         "timestamp": now,
         "environment": {"os": platform.system(), "platform": platform.platform(),
                         "python": platform.python_version()},

@@ -82,6 +82,73 @@ def _top_level_units(base: Path, kind: str) -> int:
     return _count_files(base)
 
 
+def _units(base: Path, kind: str) -> list[Path]:
+    """Top-level resource units (one per skill/agent dir or top-level file)."""
+    if kind in ("skill", "agent"):
+        return [p for p in sorted(base.iterdir())
+                if (p.is_dir() and p.name not in SKIP_DIRS)
+                or (p.is_file() and p.suffix.lower() in TEXT_EXTS)]
+    return [p for p in sorted(base.rglob("*")) if p.is_file()
+            and not any(part in SKIP_DIRS for part in p.parts)
+            and (p.suffix.lower() in TEXT_EXTS or not p.suffix)]
+
+
+EMPTY_MARKERS = {"__init__.py", "__init__.pyi", ".keep", ".gitkeep",
+                 ".gitattributes", ".gitignore"}
+
+
+def _intentionally_empty(u: Path) -> bool:
+    """0-byte package markers / keepers / expected-empty goldens are valid
+    resource units — only non-marker empty files count as broken."""
+    return (u.name in EMPTY_MARKERS
+            or "expected" in u.parts and u.suffix in TEXT_EXTS)
+
+
+def _functional(d: Path, kind: str, dirs: list[Path]) -> dict[str, Any]:
+    """P1-005 — functional verification per resource unit:
+
+    every advertised unit must resolve inside the repo (no symlink
+    escape), be readable and non-empty; per-kind content digest makes
+    drift/recoverability auditable; duplicate unit ids across locations
+    are surfaced, never silently merged.
+    """
+    real_root = d.resolve()
+    seen: dict[str, list[str]] = {}
+    broken: list[str] = []
+    escaped: list[str] = []
+    verified = 0
+    for base in dirs:
+        for u in _units(base, kind):
+            rel = str(u.relative_to(d))
+            seen.setdefault(u.name, []).append(rel)
+            try:
+                resolved = u.resolve()
+                if not resolved.is_relative_to(real_root):
+                    escaped.append(rel)
+                    continue
+                if u.is_dir():
+                    if not any(u.iterdir()):
+                        broken.append(f"{rel} (empty dir)")
+                        continue
+                elif u.stat().st_size == 0 and not _intentionally_empty(u):
+                    broken.append(f"{rel} (0 bytes)")
+                    continue
+                if u.is_file():
+                    with u.open("rb") as fh:
+                        fh.read(1)
+                verified += 1
+            except OSError as exc:
+                broken.append(f"{rel} ({exc.__class__.__name__})")
+    dupes = {n: locs for n, locs in seen.items() if len(locs) > 1}
+    # mirror copies across host dirs (skills/, .claude/skills/, ...) are
+    # canonical by design — surfaced for audit, never merged silently.
+    return {"units_verified": verified,
+            "broken": broken[:50], "broken_total": len(broken),
+            "escaped": escaped[:50], "escaped_total": len(escaped),
+            "duplicate_ids": {k: v[:5] for k, v in
+                              sorted(dupes.items())} or {}}
+
+
 def _commands(root: Path, repo: str) -> dict[str, Any]:
     """Declared CLI entrypoints / npm bins / console scripts."""
     out: dict[str, Any] = {"console_scripts": [], "npm_bins": []}
@@ -154,7 +221,8 @@ def inventory_repo(root: Path, repo: str) -> dict[str, Any]:
             continue
         count = sum(_top_level_units(b, kind) for b in dirs)
         kinds[kind] = {"count": count,
-                       "locations": [str(b.relative_to(d)) for b in dirs]}
+                       "locations": [str(b.relative_to(d)) for b in dirs],
+                       "functional": _functional(d, kind, dirs)}
     entry["resources"] = kinds
     entry["resource_total"] = sum(v["count"] for v in kinds.values())
     cmds = _commands(d, repo)
@@ -194,6 +262,21 @@ def main() -> int:
         "resources": sum(e.get("resource_total", 0) for e in inv.values()),
         "commands": sum(len(e.get("commands") or [])
                         for e in inv.values()),
+        "units_verified": sum(
+            f.get("units_verified", 0)
+            for e in inv.values()
+            for f in ((k.get("functional") or {})
+                      for k in (e.get("resources") or {}).values())),
+        "units_broken": sum(
+            f.get("broken_total", 0)
+            for e in inv.values()
+            for f in ((k.get("functional") or {})
+                      for k in (e.get("resources") or {}).values())),
+        "units_escaped": sum(
+            f.get("escaped_total", 0)
+            for e in inv.values()
+            for f in ((k.get("functional") or {})
+                      for k in (e.get("resources") or {}).values())),
     }
     report = {
         "kind": "forge/resource-inventory/1",

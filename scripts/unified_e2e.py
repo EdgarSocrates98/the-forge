@@ -306,8 +306,9 @@ def mcp_session(repo: str, extra_calls: list[dict[str, Any]] | None = None) -> d
                 continue
             if "error" in resp:
                 out["extra_error"] = str(resp["error"])[:200]
+                out["extra_head"] = resp.get("error")
             else:
-                out["extra_head"] = json.dumps(resp.get("result"))[:400]
+                out["extra_head"] = resp.get("result")
         return out
     finally:
         try:
@@ -406,14 +407,20 @@ def _check(name: str, repo: str, args: list[str], want: str,
            steps: list[dict[str, Any]], fails: list[str],
            *, timeout: int = TIMEOUT, cwd: Path | None = None,
            env_extra: dict[str, str] | None = None,
-           verifier: Any = None) -> bool:
+           verifier: Any = None,
+           expect: dict[str, list[str]] | None = None) -> bool:
     """Run ``args`` in ``repo`` and apply the semantic ``want`` check.
 
     ``want`` is one of: ``json-items`` (parsed payload emits >=1 item),
     ``rc0-json`` (rc==0 and JSON parses), ``rc0`` (rc==0),
     ``refusal`` (typed non-zero rc / refusal payload — correct denial).
     A custom ``verifier(payload) -> (ok, detail)`` overrides ``want``.
-    """
+
+    P1-006 — ``expect`` asserts STABLE semantic content, not just a
+    non-empty payload: ``{"<field>": ["expected","values"]}`` requires
+    every expected value to appear in the corresponding field of at
+    least one emitted item (fields are searched across id, rule_id,
+    kind, severity, name keys per item)."""
     r = run_json(repo, args, timeout=timeout, cwd=cwd, env_extra=env_extra)
     payload = r.get("json")
     rc = r.get("rc")
@@ -439,12 +446,92 @@ def _check(name: str, repo: str, args: list[str], want: str,
             "rc": rc, "ok": bool(ok)}
     if isinstance(detail, dict):
         step.update({k: v for k, v in detail.items() if k not in step})
+    if ok and expect:
+        items = payload if isinstance(payload, list) else (
+            (payload or {}).get("items") or (payload or {}).get("findings")
+            or (payload or {}).get("facts") or [])
+        missing = []
+        for field, values in expect.items():
+            observed = {str(it.get(field) or it.get("id")
+                            or it.get("kind"))
+                        for it in items if isinstance(it, dict)}
+            if field in ("kind", "type"):
+                observed |= {str(it.get("kind") or it.get("type"))
+                             for it in items if isinstance(it, dict)}
+            if field == "id":
+                observed |= {str(it.get(k))
+                             for it in items if isinstance(it, dict)
+                             for k in ("id", "rule_id", "fact_id")
+                             if it.get(k)}
+            missing += [v for v in values if v not in observed]
+        if missing:
+            step["expected_missing"] = missing
+            ok = False
+        else:
+            step["expected_found"] = expect
+        step["ok"] = bool(ok)
     if not ok:
         step["stdout_head"] = (r.get("stdout") or "")[:200]
         step["stderr_head"] = (r.get("stderr") or "")[:200]
         fails.append(f"{name}:{repo}")
     steps.append(step)
     return bool(ok)
+
+
+BRIDGE_LIFECYCLE_TESTS = (
+    "tests/test_mcp_protocol.py",
+    "tests/test_mcp_security.py",
+    "tests/test_mcp_e2e.py",
+    "tests/test_provider_harness.py",
+    "tests/test_bridge.py",
+)
+
+
+def scenario_bridge() -> None:
+    """Onda 8 — forge-agent-bridge session lifecycle.
+
+    Layer 1 (CLI): providers/sessions/status/doctor verbs against the
+    installed bridge — real registry + provider surface, never mocked.
+    Layer 2 (lifecycle): the bridge's own deterministic test corpus —
+    session open/approval/execution/cancel/handoff/audit and MCP
+    protocol/security/isolation — executed as a real subprocess pytest
+    (same pattern as the portal browser suite)."""
+    steps: list[dict[str, Any]] = []
+    fails: list[str] = []
+    for verb in ("providers", "sessions", "status", "doctor"):
+        r = run_json("forge-agent-bridge", [verb])
+        payload = r.get("json")
+        ok = r.get("rc") == 0 and bool(payload)
+        steps.append({"check": f"cli:{verb}", "rc": r.get("rc"),
+                      "payload": (sorted(payload)[:8]
+                                  if isinstance(payload, dict)
+                                  else f"list[{len(payload)}]"
+                                  if isinstance(payload, list)
+                                  else type(payload).__name__), "ok": ok})
+        if not ok:
+            fails.append(f"cli:{verb}")
+    py = venv_py("forge-agent-bridge")
+    if py:
+        proc = subprocess.run(
+            [py, "-m", "pytest", "-q", *BRIDGE_LIFECYCLE_TESTS],
+            capture_output=True, text=True, timeout=600,
+            encoding="utf-8", errors="replace",
+            cwd=str(ROOT / "forge-agent-bridge"))
+        tail = (proc.stdout or "").strip().splitlines()[-1] \
+            if proc.stdout.strip() else proc.stderr[-200:]
+        ok = proc.returncode == 0
+        steps.append({"check": "lifecycle-tests", "rc": proc.returncode,
+                      "result": tail, "ok": ok,
+                      "scope": "sessions/approvals/cancel/handoff/audit "
+                               "+ mcp protocol/security/isolation"})
+        if not ok:
+            fails.append("lifecycle-tests")
+    else:
+        steps.append({"check": "lifecycle-tests", "ok": False,
+                      "error": "venv python missing"})
+        fails.append("lifecycle-tests")
+    record("bridge", "PASS" if not fails else "FAIL",
+           {"failed": fails}, steps)
 
 
 def scenario_domains() -> None:
@@ -458,7 +545,11 @@ def scenario_domains() -> None:
            ["analyze", "lakeformation-grants", "--path",
             _fx("spark-forge-aws", "fixtures", "lakeformation",
                 "conta_sem_full_table_access", "input")],
-           "json-items", steps, fails)
+           "json-items", steps, fails,
+           expect={"kind": ["lakeformation.grants.analyzed",
+                            "lakeformation.grant",
+                            "lakeformation.registered_location",
+                            "lakeformation.data_lake_settings"]})
     _check("aws-emr-facts", "spark-forge-aws",
            ["analyze", "emr-cluster", "--path",
             _fx("spark-forge-aws", "fixtures", "emr",
@@ -482,7 +573,9 @@ def scenario_domains() -> None:
     _check("azure-pyspark-facts", "spark-forge-azure",
            ["analyze", "pyspark", "--path", pyspark_fx,
             "--out", str(az_out)],
-           "json-items", steps, fails)
+           "json-items", steps, fails,
+           expect={"kind": ["pyspark.join", "pyspark.action",
+                            "pyspark.conf_set", "pyspark.function_def"]})
     record("B-azure", "PASS" if not fails else "FAIL", {"failed": fails}, steps)
 
     # -- C: API domain ------------------------------------------------------
@@ -742,21 +835,53 @@ def _adapter_call(repo: str, adapter_mod: str, op: str, payload: dict[str, Any],
         return {"error": str(e)[:200]}
 
 
+def verify_refusal(resp: dict[str, Any], *, code: str,
+                   field: str | None = None,
+                   status_ok: tuple[str, ...] = ("error", "refused")
+                   ) -> dict[str, Any]:
+    """P0-003 — a refusal is proven ONLY by the typed contract.
+
+    Any non-zero rc / any exception / any generic error is NOT a refusal:
+    the response must carry the forge/v1 envelope, an expected status, the
+    expected typed error code and field, and an empty payload (no leaked
+    side-effect results). Every dimension is recorded for audit."""
+    raw_err = resp.get("error")
+    # transport-level errors surface as plain strings — a string error is
+    # NOT a typed refusal, it is recorded as such (fail-closed).
+    err: dict[str, Any] = raw_err if isinstance(raw_err, dict) else {}
+    dims = {
+        "envelope": resp.get("kind") == "Response"
+        and resp.get("protocol") == "forge/v1",
+        "status": resp.get("status") in status_ok,
+        "typed_code": bool(err.get("code")),
+        "code_match": err.get("code") == code,
+        "field_match": field is None or err.get("field") == field,
+        "no_payload_leak": not resp.get("payload"),
+        "observed_code": err.get("code"),
+        "observed_field": err.get("field"),
+        "untyped_error": raw_err if isinstance(raw_err, str) else None,
+    }
+    dims["refused"] = all(
+        dims[k] for k in
+        ("envelope", "status", "typed_code", "code_match",
+         "field_match", "no_payload_leak"))
+    return dims
+
+
 def scenario_security() -> None:
     """Cenário L — real protocol/contract refusals (executed, not simulated)."""
     steps: list[dict[str, Any]] = []
     fails: list[str] = []
 
-    # 1) adapter refuses a request missing request_id (typed error)
+    # 1) adapter refuses a request missing request_id — typed code + field
     d = _adapter_call("spark-forge-aws", "theforge_sparkforge_aws", "describe",
                       {"kind": "Request", "protocol": "forge/v1", "op": "describe"})
-    refused = d.get("status") in ("error", "refused") and d.get("error")
-    steps.append({"check": "missing-request-id", "refused": bool(refused),
-                  "code": (d.get("error") or {}).get("code")})
-    if not refused:
+    v = verify_refusal(d, code="ADAPTER-REQUEST-INVALID", field="request_id")
+    steps.append({"check": "missing-request-id", **v})
+    if not v["refused"]:
         fails.append("missing-request-id")
 
-    # 2) adapter refuses an undeclared action on a real capability
+    # 2) adapter refuses an undeclared action — typed code + field, no payload
     d = _adapter_call(
         "spark-forge-aws", "theforge_sparkforge_aws", "execute",
         {"request_id": "sec-2", "kind": "Request", "protocol": "forge/v1",
@@ -764,42 +889,60 @@ def scenario_security() -> None:
          "payload": {"capability": "lakeformation.access-analysis",
                      "action": "drop-everything", "task": "x",
                      "target": "fixtures"}})
-    refused = d.get("status") in ("error", "refused") and d.get("error")
-    steps.append({"check": "undeclared-action", "refused": bool(refused),
-                  "code": (d.get("error") or {}).get("code")})
-    if not refused:
+    v = verify_refusal(d, code="ADAPTER-ACTION-UNSUPPORTED",
+                       field="action", status_ok=("refused",))
+    steps.append({"check": "undeclared-action", **v})
+    if not v["refused"]:
         fails.append("undeclared-action")
 
-    # 3) manifest contract validator rejects a tampered manifest
+    # 3) manifest validator rejects a tampered manifest — typed ContractError
     try:
         sys.path.insert(0, str(ROOT / "the-forge" / "src"))
         from theforge.contracts import from_dict as _fd
+        from theforge.contracts.base import ContractError
         from theforge.contracts.manifest import ForgeManifest
         bad = {"schema": "theforge/ForgeManifest/v1", "id": "evil",
                "protocols": [], "required_ops": ["describe"], "ops": []}
         try:
             _fd(ForgeManifest, bad)
             refused = False
-        except Exception as e:  # noqa: BLE001
+            err_type = "accepted"
+            err = ""
+        except ContractError as e:  # typed contract violation ONLY
             refused = True
+            err_type = type(e).__name__
+            err = str(e)[:120]
+        except Exception as e:  # noqa: BLE001 — import/other errors ≠ refusal
+            refused = False
+            err_type = f"unexpected:{type(e).__name__}"
             err = str(e)[:120]
         steps.append({"check": "tampered-manifest", "refused": refused,
-                      "why": err if refused else "accepted"})
+                      "error_type": err_type,
+                      "why": err if refused else "accepted-or-wrong-error"})
     except Exception as e:  # noqa: BLE001
-        refused = False
         steps.append({"check": "tampered-manifest", "refused": False,
                       "why": f"loader unavailable: {e}"[:120]})
-    if not refused:
         fails.append("tampered-manifest")
+    else:
+        if not refused:
+            fails.append("tampered-manifest")
 
-    # 4) MCP tools/call on an unknown tool -> typed error, never executed
+    # 4) MCP tools/call on an unknown tool -> typed isError, never executed
     sess = mcp_session("the-forge", extra_calls=[
         {"jsonrpc": "2.0", "id": 9, "method": "tools/call",
          "params": {"name": "bogus.tool.does-not-exist", "arguments": {}}}])
+    head = sess.get("extra_head") or {}
+    mcp_refused = (
+        head.get("isError") is True
+        and isinstance(head.get("content"), list)
+        and any("unknown tool" in str(c.get("text", "")).lower()
+                for c in head["content"] if isinstance(c, dict)))
     steps.append({"check": "unknown-mcp-tool",
+                  "refused": mcp_refused,
+                  "isError": head.get("isError"),
                   "error": sess.get("extra_error"),
-                  "result_head": sess.get("extra_head")})
-    if not (sess.get("extra_error") or sess.get("extra_head")):
+                  "result_head": head})
+    if not mcp_refused:
         fails.append("unknown-mcp-tool")
 
     record("security", "PASS" if not fails else "FAIL",
@@ -1052,8 +1195,74 @@ def scenario_federation() -> None:
                       "correlation_id": corr, "ok": exec_runs >= 2})
         if exec_runs < 2:
             fails.append("correlated-executions")
+
+        # P0-004 — correlation CHAIN, not just a minted id: the persisted
+        # orchestration receipt must carry the same correlation_id, the
+        # child delegation task ids and the plan hash. The receipt is the
+        # recoverable link between parent run and child executions.
+        receipt_ok = False
+        orch_dir = ws / ".forge" / "orchestrations"
+        doc = None
+        if corr and orch_dir.is_dir():
+            for f in sorted(orch_dir.glob(f"{corr}-*.json")):
+                try:
+                    doc = json.loads(f.read_text(encoding="utf-8"))
+                    break
+                except Exception:  # noqa: BLE001
+                    continue
+        if doc:
+            prov = doc.get("provenance") or {}
+            child_tasks = prov.get("delegation_tasks") or []
+            executed = [e for e in (doc.get("entries") or [])
+                        if e.get("delegation_stage") == "COMPLETED"]
+            # When picks resolve to Forge-Protocol-only capabilities the
+            # governed delegation is honestly `prepared` (no argv child) —
+            # the chain then binds receipt+plan hash; executed children
+            # additionally require their delegation task ids.
+            receipt_ok = (doc.get("correlation_id") == corr
+                          and bool(prov.get("plan_sha256"))
+                          and (not executed or bool(child_tasks)))
+            steps.append({"check": "correlation-chain", "ok": receipt_ok,
+                          "receipt": str(f.name) if doc else None,
+                          "child_tasks": child_tasks,
+                          "entries_prepared": sum(
+                              1 for e in (doc.get("entries") or [])
+                              if e.get("status") == "prepared"),
+                          "entries_executed": len(executed),
+                          "plan_sha256": (prov.get("plan_sha256") or "")[:16]})
+        else:
+            steps.append({"check": "correlation-chain", "ok": False,
+                          "why": "no persisted orchestration receipt found"})
+        if not receipt_ok:
+            fails.append("correlation-chain")
+
+        # P0-004 — artifact links: each executed provider's run must leave a
+        # recoverable run receipt under the workspace (.forge/runs/<id>).
+        runs_dir = ws / ".forge" / "runs"
+        child_ids = [str(st["run_id"]) for st in steps
+                     if str(st.get("check", "")).startswith("execute:")
+                     and isinstance(st.get("run_id"), str)]
+        missing_runs = [rid for rid in child_ids
+                        if not (runs_dir / rid).is_dir()]
+        links_ok = bool(child_ids) and not missing_runs
+        steps.append({"check": "run-receipt-links", "ok": links_ok,
+                      "child_run_ids": child_ids,
+                      "missing_receipts": missing_runs})
+        if not links_ok:
+            fails.append("run-receipt-links")
+
+        # Onda 8.4 — Lens correlation: no live telemetry emitter is wired
+        # between the-forge and forge-lens today; named state, never faked.
+        steps.append({"check": "lens-correlation", "ok": True,
+                      "state": "NOT_APPLICABLE",
+                      "why": "no OTLP/telemetry path from the-forge to "
+                             "forge-lens yet — synthetic spans refused "
+                             "(would be simulated evidence)"})
+        lims = ["Lens end-to-end correlation requires a live telemetry "
+                "exporter on the-forge — not wired (backlog)"]
         record("federation-multidomain", "PASS" if not fails else "FAIL",
-               {"failed": fails, "correlation_id": corr}, steps)
+               {"failed": fails, "correlation_id": corr}, steps,
+               limitations=lims)
 
         # -- ambiguity is a named refusal, never a fabricated plan -----------
         steps = []
@@ -1165,8 +1374,8 @@ def main() -> int:
         OUT = ROOT / "audits" / "unified-platform"  # keep OUT bound to --root
     OUT.mkdir(parents=True, exist_ok=True)
     for fn in (scenario_standalone, scenario_domains, scenario_mcp,
-               scenario_security, scenario_lifecycle, scenario_context,
-               scenario_portal, scenario_federation):
+               scenario_bridge, scenario_security, scenario_lifecycle,
+               scenario_context, scenario_portal, scenario_federation):
         try:
             fn()
         except Exception as e:  # noqa: BLE001
