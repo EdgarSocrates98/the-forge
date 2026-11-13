@@ -1,4 +1,4 @@
-# Known Limitations — 2026-11-13T05:23:18+00:00
+# Known Limitations — 2026-11-13T12:04:45+00:00
 
 - **api-sentinel-forge PyPI**: trusted publisher not registered on
   pypi.org — publish run fails `invalid-publisher` until owner registers
