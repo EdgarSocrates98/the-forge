@@ -33,7 +33,9 @@ from urllib.request import urlopen
 
 
 def _get(url: str, timeout: int = 30) -> bytes:
-    return urlopen(url, timeout=timeout).read()  # noqa: S310 — pinned index URLs
+    resp = urlopen(url, timeout=timeout)  # noqa: S310 — pinned index URLs
+    data: bytes = resp.read()
+    return data
 
 
 def _venv_bin(base: Path, name: str) -> Path:
