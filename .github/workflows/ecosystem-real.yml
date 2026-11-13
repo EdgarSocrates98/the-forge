@@ -10,7 +10,7 @@
 # skipping. See docs/real-providers.md.
 #
 # Secret hygiene: SIBLING_REPOS_TOKEN (read access to the sibling repos) is referenced only by
-# the four sibling checkout steps, is not persisted in .git/config, and never reaches env or run.
+# the six sibling checkout steps, is not persisted in .git/config, and never reaches env or run.
 name: ecosystem-real
 
 on:
@@ -32,6 +32,14 @@ on:
         default: "main"
       doctor_api_ref:
         description: "forge-doctor-api ref to test against (default: main)"
+        required: false
+        default: "main"
+      spark_azure_ref:
+        description: "spark-forge-azure ref to test against (default: main)"
+        required: false
+        default: "main"
+      platform_ref:
+        description: "platform-forge ref to test against (default: main)"
         required: false
         default: "main"
 
@@ -92,6 +100,24 @@ jobs:
           token: ${{ secrets.SIBLING_REPOS_TOKEN || github.token }}
           persist-credentials: false
 
+      - name: Checkout spark-forge-azure
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          repository: EdgarSocrates98/spark-forge-azure
+          ref: ${{ inputs.spark_azure_ref || 'main' }}
+          path: siblings/spark-forge-azure
+          token: ${{ secrets.SIBLING_REPOS_TOKEN || github.token }}
+          persist-credentials: false
+
+      - name: Checkout platform-forge
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          repository: EdgarSocrates98/platform-forge
+          ref: ${{ inputs.platform_ref || 'main' }}
+          path: siblings/platform-forge
+          token: ${{ secrets.SIBLING_REPOS_TOKEN || github.token }}
+          persist-credentials: false
+
       # 3.12 first, 3.11 last: the last setup-python is the default `python` (the core's).
       - name: Set up Python 3.12 (API Forge)
         id: py312
@@ -146,12 +172,32 @@ jobs:
           .venv-da/bin/python -m pip install ./siblings/forge-doctor-api ./adapters/doctorapi
           .venv-da/bin/python -c "import forge_doctor_api, theforge_doctorapi"
 
+      - name: Spark Forge Azure venv (3.11, sparkforge-azure + adapter)
+        env:
+          PY311: ${{ steps.py311.outputs.python-path }}
+        run: |
+          "$PY311" -m venv .venv-spark-azure
+          .venv-spark-azure/bin/python -m pip install --upgrade pip
+          .venv-spark-azure/bin/python -m pip install ./siblings/spark-forge-azure ./adapters/sparkforge_azure
+          .venv-spark-azure/bin/python -c "import sparkforge_azure, theforge_sparkforge_azure"
+
+      - name: Platform Forge venv (3.11, platformforge + adapter)
+        env:
+          PY311: ${{ steps.py311.outputs.python-path }}
+        run: |
+          "$PY311" -m venv .venv-platform
+          .venv-platform/bin/python -m pip install --upgrade pip
+          .venv-platform/bin/python -m pip install ./siblings/platform-forge ./adapters/platformforge
+          .venv-platform/bin/python -c "import platformforge, theforge_platformforge"
+
       - name: Export the real-provider environment contract
         run: |
           echo "THEFORGE_REAL_SPARKFORGE_AWS_PYTHON=$PWD/.venv-spark-aws/bin/python" >> "$GITHUB_ENV"
           echo "THEFORGE_REAL_APIFORGE_PYTHON=$PWD/.venv-api/bin/python" >> "$GITHUB_ENV"
           echo "THEFORGE_REAL_DOCTORDATA_PYTHON=$PWD/.venv-dd/bin/python" >> "$GITHUB_ENV"
           echo "THEFORGE_REAL_DOCTORAPI_PYTHON=$PWD/.venv-da/bin/python" >> "$GITHUB_ENV"
+          echo "THEFORGE_REAL_SPARKFORGE_AZURE_PYTHON=$PWD/.venv-spark-azure/bin/python" >> "$GITHUB_ENV"
+          echo "THEFORGE_REAL_PLATFORMFORGE_PYTHON=$PWD/.venv-platform/bin/python" >> "$GITHUB_ENV"
           echo "THEFORGE_REAL_PROVIDERS_REQUIRED=1" >> "$GITHUB_ENV"
 
       # The exit code is propagated as is: any failure, and an empty selection (exit 5), fails.

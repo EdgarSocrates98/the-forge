@@ -139,14 +139,16 @@ jobs:
           .venv-da/bin/python -m pip install ./siblings/forge-doctor-api ./adapters/doctorapi
 
       # theforge provider check -- <argv> — conformance over the live adapter.
+      # Absolute interpreter paths: execute/handoff/refusal checks spawn the
+      # provider from a fresh temp cwd, so a relative argv cannot be resolved.
       - name: Conformance — Spark Forge AWS adapter
-        run: python -m theforge provider check -- .venv-spark-aws/bin/python -m theforge_sparkforge_aws
+        run: python -m theforge provider check -- "$PWD/.venv-spark-aws/bin/python" -m theforge_sparkforge_aws
 
       - name: Conformance — API Forge adapter
-        run: python -m theforge provider check -- .venv-api/bin/python -m theforge_apiforge
+        run: python -m theforge provider check -- "$PWD/.venv-api/bin/python" -m theforge_apiforge
 
       - name: Conformance — Doctor Data adapter
-        run: python -m theforge provider check -- .venv-dd/bin/python -m theforge_doctordata
+        run: python -m theforge provider check -- "$PWD/.venv-dd/bin/python" -m theforge_doctordata
 
       - name: Conformance — Doctor API adapter
-        run: python -m theforge provider check -- .venv-da/bin/python -m theforge_doctorapi
+        run: python -m theforge provider check -- "$PWD/.venv-da/bin/python" -m theforge_doctorapi
