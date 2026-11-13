@@ -349,6 +349,49 @@ Limitations: none
 - Um span `ERROR` marca a etapa que lançou — o detalhe da falha está em `error`/`diagnostic` do run, não no span.
 - Run desconhecido é erro de uso (exit 2). Um run sem artefato `telemetry` reporta `no telemetry recorded` em `Limitations:` (exit 0). `--json` emite `run_id`, `status`, `kind`, `spans` e `limitations`.
 
+## `telemetry export`
+
+`theforge telemetry export` projeta a evidência persistida de um conjunto de
+runs — os artefatos `telemetry` (`RunTelemetry/v1`) mais os recibos de
+`.forge/orchestrations/` — num documento OTLP/HTTP JSON
+(`ExportTraceServiceRequest`), o formato que `forge-lens ingest` (ou
+`POST /v1/otlp/traces`) consome. É o caminho local-first de observabilidade
+federada: nenhum exporter vivo é necessário — o documento é re-derivado do
+que os runs já gravaram.
+
+```
+$ theforge telemetry export --correlation orch-08ecff961a12 --out otlp.json
+Exported 19 span(s) across 1 trace(s)
+  out:     otlp.json
+  sha256:  2a82b37a…
+  ingest:  forge-lens ingest otlp.json
+```
+
+- Seleção: `--run ID` (repetível), `--correlation ID` (todo run cuja telemetria
+  carrega o id + o recibo de orquestração persistido, quando existir) ou
+  `--last N`. Sem seleção é erro de uso (exit 2).
+- Correlação: runs que compartilham `correlation_id` (Wave W — `THEFORGE_
+  CORRELATION_ID`, ou herdada de nó de plano) viram **um único trace OTLP**;
+  runs sem correlação viram um trace cada. `session.id` do resource leva o id,
+  então `forge-lens traces list --session <corr>` recupera o grupo.
+- Hierarquia: o recibo de orquestração (quando persistido) vira o span raiz
+  `theforge.orchestrate` (atributos: intent, `plan_sha256`, `plan_status`,
+  contagem de `delegation_tasks`; um evento `delegation.entry` por pick); cada
+  run vira `theforge.<kind>` filho dele, e os spans locais do `RunTelemetry`
+  aninham sob o run. `parent_run` fora da exportação vira um `parentSpanId`
+  derivado deterministicamente — o store marca `MISSING_PARENT` até o pai ser
+  ingerido, nunca um id inventado.
+- Identidade e tempo determinísticos: `traceId`/`spanId` são `sha256` de ids
+  estáveis (re-exportar é byte-idêntico; re-ingerir deduplica). Os `start_ms`
+  do `RunTelemetry` são offsets monotônicos — o `t0` é ancorado no
+  `created_at` observado do artefato (`theforge.time_anchor=created_at`), com
+  fallback para o timestamp embutido no `run_id`; run sem nenhuma âncora vai
+  para `skipped`, nomeado — nenhum instante é inventado.
+- `--json` emite o recibo (`out`, `sha256`, `traces`, `spans`,
+  `runs_exported`, `skipped`, `warnings`); `--out -` escreve o documento
+  OTLP no stdout e o resumo no stderr. O `sha256` cobre os bytes exatos do
+  arquivo (UTF-8, LF) — o arquivo é a evidência.
+
 ## `lab`
 
 `theforge lab` é o coletor federado do Forge Lab ([ADR-0060](adr/0060-forge-lab-coordinator.md)): descobre os labs declarados no `forge.json` de cada forge registrada (ou em checkouts explícitos via `--repo`), invoca cada um sob os guardrails do §9.11 (ambiente sanitizado + `FORGE_LAB_SANDBOX=1`, timeout/repetições/jobs limitados, modo C recusado sem `--allow-external`) e normaliza o que volta em receipts `forge/BenchmarkResult/v1` estritos. O relatório Markdown + `results-<data>-<modo>.jsonl` vão para `docs/programs/ecosystem-2026/benchmarks/` (ou `--out DIR`).

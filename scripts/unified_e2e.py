@@ -1073,9 +1073,10 @@ def _federated_workspace() -> Path:
     return ws
 
 
-def _ask(ws: Path, *args: str, timeout: int = 300) -> dict[str, Any]:
+def _ask(ws: Path, *args: str, timeout: int = 300,
+         env_extra: dict[str, str] | None = None) -> dict[str, Any]:
     r = run_json("the-forge", ["ask", "--json", "--root", str(ws), *args],
-                 timeout=timeout)
+                 timeout=timeout, env_extra=env_extra)
     return {"rc": r.get("rc"), "doc": r.get("json") or {},
             "stdout": (r.get("stdout") or "")[:400],
             "stderr": (r.get("stderr") or "")[:200]}
@@ -1168,7 +1169,9 @@ def scenario_federation() -> None:
                       "correlation_id": corr, "ok": plan_ok})
         if not plan_ok:
             fails.append("orchestrate-run")
-        # execute BOTH picks through governed asks — real delegation results
+        # execute BOTH picks through governed asks — real delegation results,
+        # correlated to the orchestration via the Wave-W env mechanism
+        corr_env = {"THEFORGE_CORRELATION_ID": str(corr)} if corr else None
         exec_runs = 0
         for use, cap, act, intent in (
             ("spark-forge-aws", "lakeformation.access-analysis",
@@ -1177,7 +1180,7 @@ def scenario_federation() -> None:
              "verify api result"),
         ):
             a = _ask(ws, "--use", use, "--capability", cap,
-                     "--action", act, intent)
+                     "--action", act, intent, env_extra=corr_env)
             d, res = a["doc"], (a["doc"].get("result") or {})
             ok = (a["rc"] == 0 and d.get("status") in ("ok", "partial")
                   and res.get("schema") == "theforge/ExecutionResult/v1"
@@ -1251,18 +1254,88 @@ def scenario_federation() -> None:
         if not links_ok:
             fails.append("run-receipt-links")
 
-        # Onda 8.4 — Lens correlation: no live telemetry emitter is wired
-        # between the-forge and forge-lens today; named state, never faked.
-        steps.append({"check": "lens-correlation", "ok": True,
-                      "state": "NOT_APPLICABLE",
-                      "why": "no OTLP/telemetry path from the-forge to "
-                             "forge-lens yet — synthetic spans refused "
-                             "(would be simulated evidence)"})
-        lims = ["Lens end-to-end correlation requires a live telemetry "
-                "exporter on the-forge — not wired (backlog)"]
+        # Lens correlation — REAL path: `telemetry export` re-derives an OTLP
+        # document from the persisted run telemetry + orchestration receipt;
+        # `forge-lens ingest` stores it; `traces list --session` must find the
+        # correlation and `traces show` must expose the orch root + run ids.
+        lens_dir = Path(tempfile.mkdtemp(prefix="forge-e2e-lenscorr-"))
+        otlp_file = lens_dir / "otlp.json"
+        lens_db = lens_dir / "lens.db"
+        try:
+            e = run_json(
+                "the-forge",
+                ["telemetry", "export", "--root", str(ws),
+                 "--correlation", str(corr), "--out", str(otlp_file),
+                 "--json"], timeout=120)
+            exp = e.get("json") or {}
+            exp_ok = (e.get("rc") == 0 and otlp_file.is_file()
+                      and int(exp.get("spans") or 0) >= 3
+                      and set(exp.get("runs_exported") or [])
+                      >= set(child_ids))
+            steps.append({"check": "lens-export", "ok": exp_ok,
+                          "rc": e.get("rc"), "spans": exp.get("spans"),
+                          "runs_exported": exp.get("runs_exported"),
+                          "artifact": str(otlp_file)})
+            if not exp_ok:
+                fails.append("lens-export")
+            i = run_entry(
+                "forge-lens",
+                ["ingest", str(otlp_file), "--db", str(lens_db)],
+                timeout=120)
+            ingested = "ingested" in (i.get("stdout") or "")
+            steps.append({"check": "lens-ingest", "ok": ingested,
+                          "rc": i.get("rc"),
+                          "out": (i.get("stdout") or "")[:200]})
+            if not ingested:
+                fails.append("lens-ingest")
+            listed = run_json(
+                "forge-lens",
+                ["traces", "list", "--session", str(corr),
+                 "--db", str(lens_db), "--json"], timeout=60)
+            items = listed.get("json")
+            rows = items if isinstance(items, list) else []
+            hit = next((t for t in rows
+                        if isinstance(t, dict)
+                        and t.get("session_id") == corr), None)
+            steps.append({"check": "lens-traces-session", "ok": bool(hit),
+                          "rc": listed.get("rc"), "trace_id":
+                          (hit or {}).get("trace_id"),
+                          "span_count": (hit or {}).get("span_count")})
+            if not hit:
+                fails.append("lens-traces-session")
+            else:
+                show = run_json(
+                    "forge-lens",
+                    ["traces", "show", str(hit["trace_id"]),
+                     "--db", str(lens_db), "--json"], timeout=60)
+                doc = show.get("json") or {}
+                spans = doc.get("spans") or (
+                    doc.get("trace") or {}).get("spans") or []
+
+                def _sattr(s: dict[str, Any]) -> dict[str, Any]:
+                    return s.get("attributes") or {}
+
+                names = {s.get("name") for s in spans}
+                run_ids = {
+                    _sattr(s).get("theforge.run_id") for s in spans
+                } - {None}
+                corr_seen = {
+                    _sattr(s).get("theforge.correlation_id") for s in spans
+                } - {None}
+                shown_ok = ("theforge.orchestrate" in names
+                            and set(child_ids) <= run_ids
+                            and corr in corr_seen)
+                steps.append({"check": "lens-trace-shape",
+                              "ok": shown_ok,
+                              "root": "theforge.orchestrate" in names,
+                              "run_ids_found": sorted(run_ids),
+                              "correlation_found": sorted(corr_seen)})
+                if not shown_ok:
+                    fails.append("lens-trace-shape")
+        finally:
+            shutil.rmtree(lens_dir, ignore_errors=True)
         record("federation-multidomain", "PASS" if not fails else "FAIL",
-               {"failed": fails, "correlation_id": corr}, steps,
-               limitations=lims)
+               {"failed": fails, "correlation_id": corr}, steps)
 
         # -- ambiguity is a named refusal, never a fabricated plan -----------
         steps = []

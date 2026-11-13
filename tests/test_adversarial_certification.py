@@ -97,6 +97,15 @@ def _no_correlation() -> M:
     return _scenario("federation-multidomain", evidence={})
 
 
+def _no_lens_correlation() -> M:
+    """Correlation claimed but never verifiably ingested into forge-lens."""
+    return _scenario(
+        "federation-multidomain",
+        steps=[{"check": "execute:a", "ok": True},
+               {"check": "execute:b", "ok": True},
+               {"check": "lens-traces-session", "ok": False}])
+
+
 ADVERSARIAL: list[tuple[str, M, str]] = [
     # --- artifact absence (never vacuous PASS) ---
     ("baseline-deleted", _del("baseline"), "contracts"),
@@ -129,6 +138,8 @@ ADVERSARIAL: list[tuple[str, M, str]] = [
      "federated_operations"),
     ("multidomain-single-exec", _single_exec(), "federated_operations"),
     ("multidomain-no-correlation", _no_correlation(),
+     "federated_operations"),
+    ("multidomain-lens-unverified", _no_lens_correlation(),
      "federated_operations"),
     ("ambiguous-fail", _scenario("federation-ambiguous", status="FAIL"),
      "federated_operations"),

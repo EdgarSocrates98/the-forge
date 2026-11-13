@@ -61,6 +61,8 @@ def _full_e2e(status: str = "PASS") -> dict:
     sc["federation-multidomain"]["steps"] = [
         {"check": "execute:spark-forge-aws", "ok": True},
         {"check": "execute:forge-doctor-api", "ok": True},
+        {"check": "lens-traces-session", "ok": True},
+        {"check": "lens-trace-shape", "ok": True},
     ]
     sc["lifecycle"]["steps"] = [{"step": "I-install-apply"},
                                 {"step": "J-install-uninstall",

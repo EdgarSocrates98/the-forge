@@ -907,6 +907,34 @@ def build_parser() -> argparse.ArgumentParser:
     trace.add_argument("run_id")
     trace.set_defaults(handler=commands.cmd_trace)
 
+    telemetry = sub.add_parser(
+        "telemetry", help="telemetry export (OTLP)"
+    ).add_subparsers(dest="telemetry_command", required=True)
+    telemetry_export = telemetry.add_parser(
+        "export",
+        parents=[common],
+        help="persisted run telemetry -> OTLP/HTTP JSON (`forge-lens ingest` input)",
+    )
+    telemetry_export.add_argument(
+        "--run", action="append", metavar="RUN_ID", help="run to export (repeatable)"
+    )
+    telemetry_export.add_argument(
+        "--correlation",
+        dest="correlation_id",
+        metavar="ID",
+        help="every run carrying this correlation id + its orchestration receipt",
+    )
+    telemetry_export.add_argument(
+        "--last", type=int, metavar="N", help="the newest N runs"
+    )
+    telemetry_export.add_argument(
+        "--out",
+        required=True,
+        metavar="FILE",
+        help="OTLP JSON destination ('-' writes the document to stdout)",
+    )
+    telemetry_export.set_defaults(handler=commands.cmd_telemetry_export)
+
     memory = sub.add_parser("memory", help="engineering memory (.forge/memory/)").add_subparsers(
         dest="memory_command", required=True
     )
