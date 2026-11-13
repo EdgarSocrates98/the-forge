@@ -1,5 +1,7 @@
 {
-  "blocked": [],
+  "blocked": [
+    "api-sentinel-forge: pypi 0.1.2 not on index"
+  ],
   "dimensions": {
     "ci_federated": "PASS",
     "contracts": "PASS",
@@ -8,7 +10,7 @@
     "final_versions_traceable": "PASS",
     "install_lifecycle": "PASS",
     "portal_real_services": "PASS",
-    "pypi_npm_publication": "PASS",
+    "pypi_npm_publication": "BLOCKED",
     "security_boundaries": "PASS",
     "specialists_standalone": "PASS"
   },
@@ -16,9 +18,9 @@
     "pass": 12,
     "total": 12
   },
-  "generated_at": "2026-11-13T02:45:10+00:00",
+  "generated_at": "2026-11-13T03:10:03+00:00",
   "kind": "forge/final-platform-certification/1",
-  "probe": false,
+  "probe": true,
   "repos": {
     "api-forge": {
       "branch": "main",
@@ -26,7 +28,7 @@
       "exists": true,
       "head": "8baee537fa4bc1b78094ddbfa73856716073eeab",
       "index": {
-        "pypi": "UNVERIFIED"
+        "pypi": "PUBLISHED"
       },
       "latest_release": "v0.3.6",
       "open_prs": 0,
@@ -39,20 +41,20 @@
       "version": "0.3.6"
     },
     "api-sentinel-forge": {
-      "branch": "release/v0.1.2",
+      "branch": "main",
       "dirty": false,
       "exists": true,
-      "head": "1c8064199f0e490df4a3985426b7d433052c154f",
+      "head": "340f9f6459b8a2eac9e37ff9aafcc7ec61996e88",
       "index": {
-        "pypi": "UNVERIFIED"
+        "pypi": "NOT_PUBLISHED"
       },
-      "latest_release": "v0.1.0",
-      "open_prs": 1,
+      "latest_release": "v0.1.2",
+      "open_prs": 0,
       "repo": "api-sentinel-forge",
       "tags": [
+        "v0.1.2",
         "v0.1.1",
-        "v0.1.0-rc.2",
-        "v0.1.0-rc.1"
+        "v0.1.0-rc.2"
       ],
       "version": "0.1.2"
     },
@@ -62,7 +64,7 @@
       "exists": true,
       "head": "34d9f919b89a1710ab03596a73d2d4ebaf4cae40",
       "index": {
-        "pypi": "UNVERIFIED"
+        "pypi": "PUBLISHED"
       },
       "latest_release": "v1.1.4",
       "open_prs": 0,
@@ -80,7 +82,7 @@
       "exists": true,
       "head": "13e1841b0b97e7a4c9abc103a98b29d6f722e481",
       "index": {
-        "pypi": "UNVERIFIED"
+        "pypi": "PUBLISHED"
       },
       "latest_release": "v0.5.5",
       "open_prs": 0,
@@ -98,7 +100,7 @@
       "exists": true,
       "head": "aef05314c00092c4caf9cd29566d63cc49945961",
       "index": {
-        "pypi": "UNVERIFIED"
+        "pypi": "PUBLISHED"
       },
       "latest_release": "v0.2.4",
       "open_prs": 0,
@@ -116,7 +118,7 @@
       "exists": true,
       "head": "3acaa3a750acf971fcb109161c0c86e222e2360f",
       "index": {
-        "npm": "UNVERIFIED"
+        "npm": "PUBLISHED"
       },
       "latest_release": "v0.5.3",
       "open_prs": 0,
@@ -134,7 +136,7 @@
       "exists": true,
       "head": "c0601fbbf935a6681c84efd1dca4594ce2be93c6",
       "index": {
-        "pypi": "UNVERIFIED"
+        "pypi": "PUBLISHED"
       },
       "latest_release": "v0.3.4",
       "open_prs": 0,
@@ -152,7 +154,7 @@
       "exists": true,
       "head": "118158e29f4b8c1b53dbe54429dadf53fc8cf28c",
       "index": {
-        "pypi": "UNVERIFIED"
+        "pypi": "PUBLISHED"
       },
       "latest_release": "v1.1.4",
       "open_prs": 0,
@@ -170,7 +172,7 @@
       "exists": true,
       "head": "be7b61012d25de1674092be15df52f48c81c3dfc",
       "index": {
-        "pypi": "UNVERIFIED"
+        "pypi": "PUBLISHED"
       },
       "latest_release": "v0.2.4",
       "open_prs": 12,
@@ -203,7 +205,7 @@
       "exists": true,
       "head": "646565273b72702f3f7e78c7d17a4bb954f508eb",
       "index": {
-        "pypi": "UNVERIFIED"
+        "pypi": "PUBLISHED"
       },
       "latest_release": "v0.3.6",
       "open_prs": 0,
@@ -221,7 +223,7 @@
       "exists": true,
       "head": "4bed3c02835d1f88d0aff4ae8972a6c46fdbecca",
       "index": {
-        "pypi": "UNVERIFIED"
+        "pypi": "PUBLISHED"
       },
       "latest_release": "v0.2.5",
       "open_prs": 0,
@@ -239,7 +241,7 @@
       "exists": true,
       "head": "4811ed26094ae944a7492a4af03376093d8fa507",
       "index": {
-        "pypi": "UNVERIFIED"
+        "pypi": "PUBLISHED"
       },
       "latest_release": "v0.7.8",
       "open_prs": 0,
@@ -257,7 +259,7 @@
       "exists": true,
       "head": "2a39929b4044a16a725da1c3f9dadf29bee9a363",
       "index": {
-        "pypi": "UNVERIFIED"
+        "pypi": "PUBLISHED"
       },
       "latest_release": "v0.3.6",
       "open_prs": 0,
@@ -270,23 +272,24 @@
       "version": "0.3.6"
     },
     "the-forge": {
-      "branch": "release/v0.7.7",
+      "branch": "main",
       "dirty": true,
       "exists": true,
-      "head": "06ddb3c2c5ffdf2797374a2e6c97d10d2b4ec0d7",
+      "head": "56bcca7352c35ff624fc6d492267b67ab086a7e6",
       "index": {
-        "pypi": "UNVERIFIED"
+        "pypi": "PUBLISHED"
       },
-      "latest_release": "v0.7.5",
+      "latest_release": "v0.7.7",
       "open_prs": 0,
       "repo": "the-forge",
       "tags": [
+        "v0.7.7",
         "v0.7.6",
-        "v0.7.5",
-        "v0.7.4"
+        "v0.7.5"
       ],
       "version": "0.7.7"
     }
   },
-  "verdict": "PRODUCTION READY"
+  "unverified": [],
+  "verdict": "CONDITIONAL GO"
 }

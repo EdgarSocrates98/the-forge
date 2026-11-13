@@ -136,10 +136,13 @@ def main() -> int:
     scenarios = e2e.get("scenarios", {})
 
     blocked = []
+    unverified_indexes = []
     for r, s in states.items():
         for idx, st in (s.get("index") or {}).items():
             if st == "NOT_PUBLISHED":
                 blocked.append(f"{r}: {idx} {s.get('version')} not on index")
+            elif st == "UNVERIFIED":
+                unverified_indexes.append(f"{r}: {idx} probe not run")
 
     # --- FINAL_PLATFORM_CERTIFICATION.json ---
     dims = {
@@ -152,9 +155,15 @@ def main() -> int:
         "specialists_standalone": "PASS" if e2e_pass == e2e_total else "UNVERIFIED",
         "ci_federated": "PASS",
         "final_versions_traceable": "PASS",
-        "pypi_npm_publication": "BLOCKED" if blocked else "PASS",
+        "pypi_npm_publication": (
+            "BLOCKED" if blocked else "UNVERIFIED" if unverified_indexes else "PASS"
+        ),
     }
-    verdict = "CONDITIONAL GO" if blocked else "PRODUCTION READY"
+    verdict = (
+        "PRODUCTION READY"
+        if all(v == "PASS" for v in dims.values())
+        else "CONDITIONAL GO"
+    )
     cert = {
         "kind": "forge/final-platform-certification/1",
         "generated_at": now, "probe": probe,
@@ -162,6 +171,7 @@ def main() -> int:
         "dimensions": dims,
         "e2e": {"pass": e2e_pass, "total": e2e_total},
         "blocked": blocked,
+        "unverified": unverified_indexes,
         "repos": states,
     }
     w(out, "FINAL_PLATFORM_CERTIFICATION.json", json.dumps(cert, indent=2, sort_keys=True) + "\n")
@@ -191,10 +201,16 @@ def main() -> int:
 
 {chr(10).join('- ' + b for b in blocked) if blocked else '- none'}
 
+## Unverified evidence
+
+{chr(10).join('- ' + b for b in unverified_indexes) if unverified_indexes else '- none'}
+
 ## Limitations
 
-- `pypi_npm_publication` BLOCKED only where the index probe returned
-  NOT_PUBLISHED; everything else verified live.
+- `pypi_npm_publication` is BLOCKED where the index probe returned
+  NOT_PUBLISHED, UNVERIFIED where the probe was not run (`--probe` absent)
+  or the index could not be checked, and PASS only when every repo with a
+  package index entry was confirmed PUBLISHED live.
 - api-sentinel-forge PyPI publish requires manual trusted-publisher
   registration on pypi.org (workflow ready, OIDC configured).
 """)
