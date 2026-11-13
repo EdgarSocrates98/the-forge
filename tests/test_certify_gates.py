@@ -94,6 +94,12 @@ def _evidence(**over) -> dict:
                          "sha": "abc123", "jobs": {"core": "success"}}
                      for w in ("ecosystem-real", "provider-surface-drift",
                                "release-compat")},
+         "release_verify": {"checks": [
+             {"package": "api-sentinel-forge==0.1.2", "source": "pypi",
+              "status": "VERIFIED",
+              "artifact": {"sha256_match": True}},
+             {"package": "theforge-cli", "source": "npm",
+              "status": "VERIFIED"}]},
          "timestamp": TS, "environment": {}}
     e.update(over)
     return e

@@ -197,6 +197,7 @@ def main() -> int:
         "baseline": baseline, "e2e": e2e, "lock": lock,
         "inventory": load(out, "resource-inventory.json"),
         "states": states, "ci_runs": ci_runs, "probe": probe,
+        "release_verify": load(out, "release-verify.json"),
         "timestamp": now,
         "environment": {"os": platform.system(), "platform": platform.platform(),
                         "python": platform.python_version()},

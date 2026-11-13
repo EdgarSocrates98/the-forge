@@ -500,6 +500,29 @@ def evaluate_gates(evidence: dict[str, Any]) -> list[GateResult]:
             f"unverified (no probe): {unv}"))
     else:
         g.required_checks.append(CheckResult("index:probed", True))
+    # Onda 10 / P1-007 — index presence is not installability: the
+    # release-verify artifact must prove real clean installs (entrypoint
+    # executed, artifact sha256 == index digest) for the flagship dists.
+    rv = evidence.get("release_verify") or {}
+    rchecks = rv.get("checks")
+    if not isinstance(rchecks, list) or not rchecks:
+        g.required_checks.append(CheckResult(
+            "release:clean-install", False,
+            "release-verify.json absent — clean install never proven"))
+    else:
+        failed = [c.get("package") for c in rchecks
+                  if c.get("status") != "VERIFIED"]
+        no_sha = [c.get("package") for c in rchecks
+                  if c.get("source") == "pypi"
+                  and not ((c.get("artifact") or {}).get("sha256_match"))]
+        g.required_checks.append(CheckResult(
+            "release:clean-install", not failed,
+            f"not clean-install verified: {failed}"
+            if failed else f"{len(rchecks)} dists verified"))
+        g.required_checks.append(CheckResult(
+            "release:checksums", not no_sha,
+            f"checksum unverified: {no_sha}"
+            if no_sha else "artifact sha256 == index digest"))
     gates.append(g.finish())
 
     return gates

@@ -206,6 +206,14 @@ ADVERSARIAL: list[tuple[str, M, str]] = [
      lambda e: e["inventory"]["repos"][REPO]["resources"]["skill"]
          .pop("functional", None),
      "declared_resources"),
+    ("release-verify-absent", _del("release_verify"),
+     "pypi_npm_publication"),
+    ("release-install-failed",
+     lambda e: e["release_verify"]["checks"][0].update(
+         {"status": "FAILED"}), "pypi_npm_publication"),
+    ("release-checksum-mismatch",
+     lambda e: e["release_verify"]["checks"][0]["artifact"].update(
+         {"sha256_match": False}), "pypi_npm_publication"),
     # --- honesty ---
     ("summary-lies-pass", _summary_lie(), "specialists_standalone"),
 ]
