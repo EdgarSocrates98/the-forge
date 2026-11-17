@@ -28,6 +28,18 @@ ROOT = Path.cwd()
 OUT = ROOT / "audits" / "unified-platform"
 REPORT: dict[str, Any] = {"kind": "forge/unified-e2e/1", "scenarios": {}, "started": time.time()}
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
+from theforge.contracts.verdicts import Verdict, is_blocking  # noqa: E402
+
+
+def _blocking(status: Any) -> bool:
+    """Closed-taxonomy check: an off-taxonomy status is a contract
+    violation and must block, never pass silently."""
+    try:
+        return is_blocking(status)
+    except (ValueError, KeyError):
+        return True
+
 PY = ".venv/Scripts/python.exe"
 
 FORGES: dict[str, dict[str, Any]] = {
@@ -1453,7 +1465,7 @@ def main() -> int:
             fn()
         except Exception as e:  # noqa: BLE001
             REPORT["scenarios"][fn.__name__] = {
-                "status": "ERROR", "error": str(e)[:400],
+                "status": Verdict.ERROR, "error": str(e)[:400],
                 "os": sys.platform, "environment": {"workspace": str(ROOT)},
                 "limitations": ["scenario raised before record()"],
             }
@@ -1461,11 +1473,11 @@ def main() -> int:
     statuses = [s["status"] for s in REPORT["scenarios"].values()]
     REPORT["summary"] = {s: statuses.count(s) for s in set(statuses)}
     # Every scenario is mandatory: FAIL/ERROR block the run (exit != 0);
-    # BLOCKED/UNVERIFIED stay non-fatal — they report missing proof or a
-    # missing dependency, never a broken invariant.
+    # BLOCKED/SKIPPED/UNVERIFIED stay non-fatal — they report missing
+    # proof or a missing dependency, never a broken invariant.
     blocking = sorted(
         name for name, s in REPORT["scenarios"].items()
-        if s["status"] in ("FAIL", "ERROR")
+        if _blocking(s["status"])
     )
     REPORT["blocking"] = blocking
     (OUT / "operational-e2e.json").write_text(

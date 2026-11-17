@@ -174,6 +174,7 @@ FILE_MARKERS: dict[str, tuple[str, ...]] = {
     "test_control_plane_e2e.py": ("e2e", "integration"),
     "test_ui_experience.py": ("unit", "integration"),
     "test_vcs_marker.py": ("unit", "integration"),
+    "test_verdicts.py": ("contract",),
     "test_certify_gates.py": ("unit", "security"),
     "test_adversarial_certification.py": ("unit", "security"),
     "test_ui_kit_status_doc.py": ("unit",),
