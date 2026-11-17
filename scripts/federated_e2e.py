@@ -310,7 +310,8 @@ def main() -> int:
             plan = plan_context("spark glue job performance", orr, level3_budget=8000)
             o_rows.append({
                 "forges": len(orr.roots),
-                "l1_scanned": plan.metrics.get("l1_scanned", plan.level1_forges),
+                "l1_refs_scanned": plan.metrics.get("l1_refs_scanned",
+                                                    plan.level1_forges),
                 "l3_refs": len(plan.level3_refs),
                 "l3_est_bytes": plan.est_level3_bytes,
             })

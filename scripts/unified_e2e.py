@@ -1460,10 +1460,20 @@ def main() -> int:
     REPORT["finished"] = time.time()
     statuses = [s["status"] for s in REPORT["scenarios"].values()]
     REPORT["summary"] = {s: statuses.count(s) for s in set(statuses)}
+    # Every scenario is mandatory: FAIL/ERROR block the run (exit != 0);
+    # BLOCKED/UNVERIFIED stay non-fatal — they report missing proof or a
+    # missing dependency, never a broken invariant.
+    blocking = sorted(
+        name for name, s in REPORT["scenarios"].items()
+        if s["status"] in ("FAIL", "ERROR")
+    )
+    REPORT["blocking"] = blocking
     (OUT / "operational-e2e.json").write_text(
         json.dumps(REPORT, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     print("\nsummary:", REPORT["summary"])
-    return 0
+    if blocking:
+        print("blocking scenarios:", ", ".join(blocking))
+    return 1 if blocking else 0
 
 
 if __name__ == "__main__":
