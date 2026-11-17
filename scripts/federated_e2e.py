@@ -117,10 +117,10 @@ def make_workspace(ws_root: Path, forges: dict[str, Path], ids: list[str]) -> di
 
 
 def resolver_for(ws_dir: Path) -> ResourceResolver:
-    # Materialized dirs have no .git — checkout discovery (installkit
-    # `discover_projects`) intentionally only matches git repos. Non-git
-    # directories are discovered through the `explicit` source class —
-    # exactly the bundle/copied-workspace path the contract defines.
+    # Materialized dirs have no .git — installkit `discover_projects`
+    # matches them as checkout members via their forge.agentic.json
+    # marker (gitless members are first-class). `explicit` still pairs
+    # each dir with its id — dedup keeps one root per (fid, path).
     explicit = [
         (p.name, p) for p in sorted(ws_dir.iterdir())
         if p.is_dir() and (p / "forge.agentic.json").is_file()
