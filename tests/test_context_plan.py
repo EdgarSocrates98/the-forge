@@ -4,6 +4,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import pytest
+
 from theforge.context.plan import _terms, plan_context
 from theforge.context.resources import ResourceResolver, discover_roots
 
@@ -58,6 +60,11 @@ def test_plan_no_match_is_honest(tmp_path: Path) -> None:
     plan = plan_context("kubernetes gitops flux", _resolver(tmp_path))
     assert plan.level2_forge is None
     assert plan.level3_refs == []
+
+
+def test_plan_rejects_negative_l3_budget(tmp_path: Path) -> None:
+    with pytest.raises(ValueError):
+        plan_context("tune AWS Glue PySpark job", _resolver(tmp_path), level3_budget=-1)
 
 
 def test_terms_stopwords() -> None:

@@ -402,6 +402,16 @@ class ResourceResolver:
         window. ``integrity=True`` hashes the whole file when it fits the
         integrity cap, else the served window (flagged ``sha256_scope``).
         """
+        if max_bytes < 0:
+            raise ResourceFailure(
+                ResourceErrorKind.INVALID,
+                f"max_bytes must be >= 0, got {max_bytes}",
+            )
+        if offset < 0:
+            raise ResourceFailure(
+                ResourceErrorKind.INVALID,
+                f"offset must be >= 0, got {offset}",
+            )
         ref = self.describe(identity)
         target = self._resolve_safe(ref)
         if not target.exists():

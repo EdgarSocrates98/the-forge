@@ -72,6 +72,8 @@ def plan_context(
     embeddings (§10 contract). L2 picks the best-scoring forge plus
     auxiliaries with a non-zero score; L3 lists bounded retrieval refs.
     """
+    if level3_budget < 0:
+        raise ValueError(f"level3_budget must be >= 0, got {level3_budget}")
     terms = _terms(task)
     l1 = resolver.list()  # metadata-only scan — the L1 contract
     forge_scores: dict[str, int] = {}
