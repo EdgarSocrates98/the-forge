@@ -12,7 +12,10 @@ from __future__ import annotations
 
 import json
 import os
+import re
+import shutil
 import sys
+import time
 from pathlib import Path
 from typing import Any
 
@@ -951,6 +954,70 @@ def sync_provider_registry(
     )
 
 
+# Delegation argv — built ONLY from the manifest's declared install
+# surface, never fabricated. ``install_command`` templates resolve the
+# placeholder set below; anything else is an undeclared placeholder.
+_DELEGATION_PLACEHOLDERS = ("python", "checkout", "home", "install_root")
+_INSTALL_VERBS = frozenset({"install", "apply"})
+_APPROVAL_FLAGS = frozenset({"--yes", "-y", "--dry-run"})
+_CTRL_CHARS = re.compile(r"[\x00-\x1f\x7f-\x9f]")
+_SHELL_META = re.compile(r"[;&|><`$]")
+
+
+def _check_manifest_arg(raw: Any, fid: str) -> str:
+    """One manifest-declared argv token — refuses unsafe/invalid content
+    before it can reach exec."""
+    if not isinstance(raw, str) or not raw:
+        raise kit.InstallError(
+            kit.E_UNSUPPORTED, f"{fid}: delegation argv entries must be non-empty strings"
+        )
+    if _CTRL_CHARS.search(raw):
+        raise kit.InstallError(
+            kit.E_UNSAFE, f"{fid}: delegation argv has control characters: {raw!r}"
+        )
+    if _SHELL_META.search(raw):
+        raise kit.InstallError(
+            kit.E_UNSAFE, f"{fid}: delegation argv has shell syntax: {raw!r}"
+        )
+    return raw
+
+
+def _resolve_install_template(manifest: dict[str, Any]) -> list[str]:
+    """``install_command`` template → resolved argv prefix.
+
+    ``{python}`` → the forge's registered venv interpreter (this process's
+    interpreter when the venv is gone), ``{checkout}``/``{home}`` → the
+    registered source path, ``{install_root}`` → the registered install
+    root. Any other ``{name}`` is an undeclared placeholder — refused."""
+    fid = str(manifest.get("forge_id") or "?")
+    tpl = manifest.get("install_command")
+    if not isinstance(tpl, list) or not tpl:
+        raise kit.InstallError(
+            kit.E_UNSUPPORTED, f"{fid}: install_command must be a non-empty argv list"
+        )
+    py = providers.manifest_python(manifest)
+    checkout = str((manifest.get("source") or {}).get("path") or ".")
+    replacements = {
+        "python": py or sys.executable,
+        "checkout": checkout,
+        "home": checkout,
+        "install_root": str(manifest.get("install_root") or ""),
+    }
+    argv: list[str] = []
+    for raw in tpl:
+        raw = _check_manifest_arg(raw, fid)
+        arg = raw
+        for name in _DELEGATION_PLACEHOLDERS:
+            arg = arg.replace("{" + name + "}", replacements[name])
+        if "{" in arg or "}" in arg:
+            raise kit.InstallError(
+                kit.E_UNSUPPORTED,
+                f"{fid}: install_command has undeclared placeholder: {raw!r}",
+            )
+        argv.append(arg)
+    return argv
+
+
 def _delegated_cmd(
     manifest: dict[str, Any],
     scope: str,
@@ -960,45 +1027,160 @@ def _delegated_cmd(
     host: str = "all",
     profile: str = "recommended",
     components: tuple[str, ...] | None = None,
+    gateway_profile: str | None = None,
 ) -> list[str]:
-    """Argv for delegating ``install`` to a sibling forge. Most forges
-    expose ``<cli> install``; a manifest may instead carry
-    ``install_command`` — an argv template where ``{python}`` resolves to
-    the forge's registered venv interpreter and ``{checkout}`` to its
-    registered source path (used by forges whose package boundary forbids
-    the install engine, e.g. RC-locked CLIs that install via a script)."""
-    tpl = manifest.get("install_command")
-    if tpl:
-        py = providers.manifest_python(manifest)
-        checkout = str((manifest.get("source") or {}).get("path") or ".")
-        replacements = {
-            "python": py or sys.executable,
-            "checkout": checkout,
-            "home": checkout,
-            "install_root": str(manifest.get("install_root") or ""),
-        }
-        argv = [
-            a.replace("{python}", replacements["python"])
-            .replace("{checkout}", replacements["checkout"])
-            .replace("{home}", replacements["home"])
-            .replace("{install_root}", replacements["install_root"])
-            for a in tpl
-        ]
+    """Argv for delegating ``install`` to a sibling forge — built from the
+    manifest's DECLARED install surface, never fabricated:
+
+    - ``install_command``: the forge's own installer entry (argv template).
+      When the template already carries the install/apply verb — or bakes
+      flags like ``--yes`` — the orchestrator never appends a duplicate.
+    - ``cli``: the ``forge/* v1`` contract CLI — ``<cli> install`` accepts
+      the standard flag family.
+    - neither → ``E_UNSUPPORTED``: no honest argv exists.
+
+    ``--scope``/``--root`` are the delegation request itself — always
+    appended. ``--host``/``--profile``/``--components``/``--gateway-profile``
+    and the approval flag are appended only when the template did not
+    already declare them. Raises ``InstallError`` on invalid manifests —
+    callers mark the forge, never exec a bad argv.
+    """
+    fid = str(manifest.get("forge_id") or "?")
+    if manifest.get("install_command") is not None:
+        argv = _resolve_install_template(manifest)
     else:
-        cli = providers.manifest_cli(manifest) or str(manifest.get("forge_id"))
-        argv = [cli]
-    command = argv + [
-        "install",
-        "--scope",
-        scope,
-        "--root",
-        str(target),
-    ]
-    command.extend(["--host", host, "--profile", profile])
-    if components is not None:
-        command.extend(["--components", ",".join(components)])
-    command.append("--dry-run" if dry_run else "--yes")
-    return command
+        cli = providers.manifest_cli(manifest)
+        if not cli:
+            raise kit.InstallError(
+                kit.E_UNSUPPORTED,
+                f"{fid}: manifest declares no cli/install_command — "
+                "delegation unsupported",
+            )
+        argv = [_check_manifest_arg(cli, fid)]
+    declared = set(argv)
+    if not (declared & _INSTALL_VERBS):
+        argv.append("install")
+        declared.add("install")
+    argv += ["--scope", scope, "--root", str(target)]
+    if "--host" not in declared:
+        argv += ["--host", host]
+    if "--profile" not in declared:
+        argv += ["--profile", profile]
+    if components is not None and "--components" not in declared:
+        argv += ["--components", ",".join(components)]
+    if gateway_profile is not None and "--gateway-profile" not in declared:
+        argv += ["--gateway-profile", gateway_profile]
+    if dry_run:
+        if "--dry-run" not in declared:
+            argv.append("--dry-run")
+    elif not (declared & _APPROVAL_FLAGS):
+        argv.append("--yes")
+    for arg in argv:
+        if not arg or _CTRL_CHARS.search(arg):
+            raise kit.InstallError(
+                kit.E_UNSAFE, f"{fid}: delegation argv failed validation: {arg!r}"
+            )
+    return argv
+
+
+def _exe_resolvable(exe: str) -> bool:
+    """``argv[0]`` must resolve before we exec — PATH names via
+    ``shutil.which``, path-like entries must exist on disk."""
+    if Path(exe).is_absolute() or os.sep in exe:
+        return Path(exe).exists()
+    return shutil.which(exe) is not None
+
+
+def _valid_child_receipt(doc: Any, fid: str) -> bool:
+    return (
+        isinstance(doc, dict)
+        and doc.get("schema") == kit.SCHEMA_RECEIPT
+        and doc.get("forge_id") == fid
+        and doc.get("operation") == "install"
+    )
+
+
+def _receipt_from_stdout(text: str, fid: str) -> dict[str, Any] | None:
+    text = (text or "").strip()
+    if not text:
+        return None
+    try:
+        doc = json.loads(text)
+    except json.JSONDecodeError:
+        doc = None
+    if _valid_child_receipt(doc, fid):
+        return doc
+    for line in reversed(text.splitlines()):
+        line = line.strip()
+        if not line.startswith("{"):
+            continue
+        try:
+            doc = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if _valid_child_receipt(doc, fid):
+            return doc
+    return None
+
+
+def _receipt_dirs(target: Path) -> list[Path]:
+    """Candidate receipts dirs a child install may have written — the
+    ``.<state>/receipts`` convention, including nested ``.<state>/install/``."""
+    dirs: list[Path] = []
+    try:
+        hidden = sorted(p for p in target.glob(".*") if p.is_dir() and not p.is_symlink())
+    except OSError:
+        return dirs
+    for d in hidden:
+        for cand in (d / kit.RECEIPTS_DIR, d / "install" / kit.RECEIPTS_DIR):
+            if cand.is_dir():
+                dirs.append(cand)
+    return dirs
+
+
+def _child_install_receipt(
+    fid: str, target: Path, stdout: str, since: float
+) -> dict[str, Any] | None:
+    """The delegated child's ``forge/InstallReceipt/v1`` — stdout JSON
+    first, then the newest receipt file under ``<target>/.<state>/receipts``
+    written after ``since``. A returncode of 0 without a receipt is NOT
+    evidence of success."""
+    doc = _receipt_from_stdout(stdout, fid)
+    if doc is not None:
+        return doc
+    newest: tuple[float, dict[str, Any]] | None = None
+    for rdir in _receipt_dirs(target):
+        try:
+            files = sorted(rdir.glob("*.json"))
+        except OSError:
+            continue
+        for path in files:
+            try:
+                mtime = path.stat().st_mtime
+            except OSError:
+                continue
+            if mtime < since - 1.0:
+                continue
+            doc = kit._load_json(path, None)
+            if _valid_child_receipt(doc, fid) and (newest is None or mtime > newest[0]):
+                newest = (mtime, doc)
+    return newest[1] if newest else None
+
+
+def _delegation_verdict(returncode: int, receipt: dict[str, Any] | None) -> tuple[str, str]:
+    """(forge status, check status) — only a valid child receipt reporting
+    ``completed`` + ``PASS`` counts as success; rc==0 alone is unverified."""
+    if returncode != 0:
+        return "failed", "FAIL"
+    if receipt is None:
+        return "unverified", "UNVERIFIED"
+    status = str(receipt.get("status") or "")
+    verification = str((receipt.get("verification") or {}).get("status") or "")
+    if status == "completed" and verification == "PASS":
+        return "completed", "PASS"
+    if status in ("completed", "planned"):
+        return "unverified", "UNVERIFIED"
+    return "failed", "FAIL"
 
 
 def install_auto(
@@ -1095,30 +1277,29 @@ def install_auto(
                 }
             )
             continue
-        cmd = _delegated_cmd(
-            manifest,
-            scope,
-            target,
-            dry_run,
-            host=host,
-            profile=profile,
-            components=components,
-        )
         if not (yes or dry_run):
             results.append({"forge_id": fid, "status": "refused", "detail": "sem --yes"})
             checks.append(
                 {"id": f"forge:{fid}", "status": "BLOCKED", "detail": "approval gate — sem --yes"}
             )
             continue
-        import shutil
-
+        try:
+            cmd = _delegated_cmd(
+                manifest,
+                scope,
+                target,
+                dry_run,
+                host=host,
+                profile=profile,
+                components=components,
+                gateway_profile=gateway_profile,
+            )
+        except kit.InstallError as exc:
+            results.append({"forge_id": fid, "status": "unsupported", "detail": str(exc)})
+            checks.append({"id": f"forge:{fid}", "status": "BLOCKED", "detail": str(exc)})
+            continue
         exe = cmd[0]
-        probe_ok = (
-            Path(exe).exists()
-            if Path(exe).is_absolute() or os.sep in exe
-            else shutil.which(exe) is not None
-        )
-        if not probe_ok:
+        if not _exe_resolvable(exe):
             results.append({"forge_id": fid, "status": "blocked", "detail": f"{exe} nao resolvido"})
             checks.append(
                 {"id": f"forge:{fid}", "status": "BLOCKED", "detail": f"{exe} nao encontrado"}
@@ -1130,21 +1311,24 @@ def install_auto(
             continue
         import subprocess
 
+        started = time.time()
         proc = subprocess.run(  # delegation to the forge's own governed CLI
             cmd, capture_output=True, text=True, timeout=600, check=False
         )
-        ok = proc.returncode == 0
-        results.append(
-            {
-                "forge_id": fid,
-                "status": "completed" if ok else "failed",
-                "returncode": proc.returncode,
-            }
-        )
+        receipt = _child_install_receipt(fid, target, proc.stdout, started)
+        verdict, check_status = _delegation_verdict(proc.returncode, receipt)
+        row: dict[str, Any] = {
+            "forge_id": fid,
+            "status": verdict,
+            "returncode": proc.returncode,
+        }
+        if receipt and receipt.get("receipt_id"):
+            row["receipt_id"] = receipt["receipt_id"]
+        results.append(row)
         checks.append(
             {
                 "id": f"forge:{fid}",
-                "status": "PASS" if ok else "FAIL",
+                "status": check_status,
                 "detail": (proc.stdout or proc.stderr)[-200:],
             }
         )
@@ -1217,6 +1401,7 @@ def install_auto(
             host=host,
             profile=profile,
             components=components,
+            gateway_profile=gateway_profile,
         )
     return receipt
 
@@ -1232,12 +1417,14 @@ def _workspace_report(
     host: str = "all",
     profile: str = "recommended",
     components: tuple[str, ...] | None = None,
+    gateway_profile: str | None = None,
 ) -> dict[str, Any]:
     """Member discovery + precedence + the ``forge/WorkspaceInstall/v1``
     manifest for ``install auto --scope workspace``.
 
-    Members = independent ``.git`` checkouts under the root (never
-    assumed to be a monorepo). A member already project-installed for a
+    Members = independent project roots under the root — ``.git`` or a
+    project manifest marker, never assumed to be a monorepo. A member
+    already project-installed for a
     forge (own ``.mcp.json`` key or ``<tag>:managed`` marker block) keeps
     project precedence — workspace assets specialize, never widen.
     ``members`` names subprojects (relative paths) for explicit
@@ -1292,18 +1479,40 @@ def _workspace_report(
             fid = manifest.get("forge_id", "?")
             if fid == FORGE_ID:
                 continue  # self already installed at workspace root
-            cmd = _delegated_cmd(
-                manifest,
-                "project",
-                member_dir,
-                dry_run,
-                host=host,
-                profile=profile,
-                components=components,
-            )
             if not (approved or dry_run):
                 member_results.append(
                     {"member": rel, "forge_id": fid, "status": "refused", "detail": "approval gate"}
+                )
+                continue
+            try:
+                cmd = _delegated_cmd(
+                    manifest,
+                    "project",
+                    member_dir,
+                    dry_run,
+                    host=host,
+                    profile=profile,
+                    components=components,
+                    gateway_profile=gateway_profile,
+                )
+            except kit.InstallError as exc:
+                member_results.append(
+                    {
+                        "member": rel,
+                        "forge_id": fid,
+                        "status": "unsupported",
+                        "detail": str(exc),
+                    }
+                )
+                continue
+            if not _exe_resolvable(cmd[0]):
+                member_results.append(
+                    {
+                        "member": rel,
+                        "forge_id": fid,
+                        "status": "blocked",
+                        "detail": f"{cmd[0]} nao resolvido",
+                    }
                 )
                 continue
             if dry_run:
@@ -1313,13 +1522,16 @@ def _workspace_report(
                 continue
             import subprocess
 
+            started = time.time()
             proc = subprocess.run(cmd, capture_output=True, text=True, timeout=600, check=False)
+            receipt = _child_install_receipt(fid, member_dir, proc.stdout, started)
+            verdict, _check_status = _delegation_verdict(proc.returncode, receipt)
             member_results.append(
                 {
                     "member": rel,
                     "forge_id": fid,
-                    "status": ("completed" if proc.returncode == 0 else "failed"),
-                    "receipt_id": f"{rel}/{fid}",
+                    "status": verdict,
+                    "receipt_id": (receipt or {}).get("receipt_id") or f"{rel}/{fid}",
                 }
             )
 
