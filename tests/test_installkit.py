@@ -80,6 +80,29 @@ def test_scope_unknown_refuses(tmp_path):
     assert e.value.kind == kit.E_SCOPE
 
 
+def test_resolve_scope_explicit_root_never_climbs(tmp_path):
+    """--root is authoritative: a workspace marker in an ANCESTOR must not
+    pull the resolved workspace root above the explicit --root."""
+    ws = tmp_path / "ws"
+    member = ws / "member"
+    member.mkdir(parents=True)
+    (ws / ".forge-workspace").touch()  # ancestor marker — must not win
+    spec = _spec()
+    assert kit.resolve_scope(spec, "workspace", member, member) == member
+    # without --root the marker walk still finds the workspace root
+    assert kit.resolve_scope(spec, "workspace", member, None) == ws.resolve()
+
+
+def test_resolve_scope_workspace_marker_itself_is_root(tmp_path):
+    ws = tmp_path / "ws"
+    (ws / "nested" / "leaf").mkdir(parents=True)
+    (ws / "forge.workspace.json").touch()
+    spec = _spec()
+    assert kit.resolve_scope(spec, "workspace", ws / "nested" / "leaf", None) == ws.resolve()
+    # explicit --root equal to the marker dir resolves to itself
+    assert kit.resolve_scope(spec, "workspace", ws, ws) == ws
+
+
 def test_profile_unknown_raises(tmp_path):
     ctx = _ctx(tmp_path)
     ctx.profile = "bogus"

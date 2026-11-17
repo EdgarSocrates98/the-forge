@@ -36,7 +36,7 @@ from dataclasses import dataclass, field
 from pathlib import Path, PurePosixPath
 from typing import Any
 
-_INSTALLKIT_VERSION = "1.0.4"
+_INSTALLKIT_VERSION = "1.0.5"
 # Filled by the vendor step (scripts/installkit/vendor.py) — the sha256 of
 # the canonical source body, so drift checks can compare vendored copies.
 _SOURCE_SHA256 = "canonical"
@@ -612,13 +612,16 @@ def resolve_scope(spec: ForgeSpec, scope: str, cwd: Path, explicit: Path | None)
         raise InstallError(E_SCOPE, f"scope {scope!r} — expected {SCOPES}")
     if scope == "user":
         return _home()
-    root = explicit or _find_vcs_root(cwd)
     if scope == "workspace":
-        ws = _find_workspace_root(explicit or cwd)
-        return ws or (explicit or _find_vcs_root(cwd) or cwd)
-    if root is None:
-        if explicit:
+        if explicit is not None:
+            # --root is authoritative: a marker may only confirm the explicit
+            # root is a workspace root — the ancestor walk can never return a
+            # root ABOVE it.
             return explicit
+        ws = _find_workspace_root(cwd)
+        return ws or (_find_vcs_root(cwd) or cwd)
+    root = explicit or _find_vcs_root(cwd)
+    if root is None:
         state_root = _find_state_root(spec, cwd)
         if state_root is not None:
             return state_root
