@@ -297,6 +297,9 @@ FILE_MARKERS: dict[str, tuple[str, ...]] = {
     "test_forgecontext_txn.py": ("unit", "contract", "integration"),
     # lf-0040 §9: 5-forge wheel matrix — real installs in every order
     "test_multi_forge_e2e.py": ("e2e", "integration", "slow"),
+    # cycle-16 install-2.1: WorkspaceInstallation/v2, consolidated plan,
+    # cross-forge ownership inventory, typed delegation (ADR-0065)
+    "test_workspace_installation.py": ("unit", "contract", "integration"),
 }
 
 
