@@ -10,9 +10,12 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import os
 import sys
 import types
 from pathlib import Path
+
+import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 BOOTSTRAP_PATH = ROOT / "scripts" / "installkit" / "forge_bootstrap.py"
@@ -721,6 +724,7 @@ def test_persist_failure_is_named_refusal(tmp_path, monkeypatch, capsys):
     assert stage["kind"] == "FORGE-ENV-PERSISTENCE-FAILED"
 
 
+@pytest.mark.skipif(os.name == "nt", reason="POSIX venv python symlink scenario")
 def test_environment_contract_keeps_venv_python_launcher(tmp_path, monkeypatch):
     """POSIX ``<venv>/bin/python`` is a symlink to the base interpreter —
     ``.resolve()`` would persist the base path and delegated
