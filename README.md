@@ -62,13 +62,22 @@ explícito para quem já instalou uma Forge antes dessa automação. A sincroniz
 registra o adapter do provider; a configuração MCP continua sendo feita pela CLI
 da própria Forge quando `--components mcp` e um host são selecionados.
 
+Desde o install-2.1 ([ADR 0065](https://github.com/EdgarSocrates98/the-forge/blob/main/docs/adr/0065-workspace-installation-consolidated.md)),
+`install auto` planeja a família inteira antes de qualquer escrita, resolve
+conflitos de paths cross-forge com winner/loser explícito e só confia no receipt
+`forge/InstallReceipt/v1` da CLI filha — nunca no exit code. A confirmação
+interativa de apply passa a default **Não**. Arquitetura e operação:
+[workspace-installation-2.1.md](https://github.com/EdgarSocrates98/the-forge/blob/main/docs/installation/workspace-installation-2.1.md);
+o que muda para quem já usava a v1:
+[migration-2.1.md](https://github.com/EdgarSocrates98/the-forge/blob/main/docs/installation/migration-2.1.md).
+
 ## Primeiros passos
 
 Os comandos abaixo assumem o venv ativado (`source .venv/bin/activate`; no Windows, `.venv\Scripts\activate`). Sem ativar, chame `.venv/bin/theforge` (Windows: `.venv\Scripts\theforge`).
 
 ```bash
 theforge doctor
-theforge init
+theforge init               # .forge/ + o marcador forge.workspace.yaml (idempotente)
 theforge capabilities list
 theforge ask "eco olá" --capability demo.echo
 theforge explain <run_id>   # o run_id é impresso por `ask`
