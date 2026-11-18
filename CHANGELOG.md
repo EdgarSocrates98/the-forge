@@ -56,6 +56,17 @@ existing cycle without intentionally breaking the Forge Protocol.
 - `theforge init` now writes `forge.workspace.yaml` — the marker the
   installkit's workspace-root search recognizes, closing the
   `init` → `install --scope workspace` round-trip.
+- Gitless workspace members are first-class: member discovery counts a
+  directory carrying any of `.git`, `forge.json`, `forge.agentic.json`,
+  `pyproject.toml` or `package.json` (depth ≤ 2, symlinks/junctions never
+  followed, no descent into a discovered member).
+- Closed verdict taxonomy (`theforge.contracts.verdicts`): `PASS`, `FAIL`,
+  `BLOCKED`, `SKIPPED`, `NOT_APPLICABLE`, `UNVERIFIED`, `ERROR` as a
+  StrEnum — `parse` is case/separator-insensitive, off-set values are a
+  contract violation — plus `ACCEPTANCE`, the single table deciding what
+  a verdict means for a gate (`PASS` → success, `FAIL`/`ERROR` →
+  blocking, the rest → unverified). Both E2E aggregators emit and gate
+  through it.
 - Signals gain optional classification axes (`platform`, `service`,
   `language`, `artifact_type`) plus `axes_index()` — indexing/discovery
   labels only, never routing inputs.
@@ -65,6 +76,22 @@ existing cycle without intentionally breaking the Forge Protocol.
 - Interactive apply confirmation defaults to **No** (`approve_plan`,
   wizard): writes require an explicit `y`; an empty Enter aborts. Dry-run
   remains approval-free.
+- `install auto` sibling success is receipt-verified: only a child
+  `forge/InstallReceipt/v1` reporting `completed` + `PASS` counts —
+  a green exit code alone now reports `unverified`, never success.
+
+### Fixed
+
+- `install auto --scope workspace --root <dir>`: an explicit root can no
+  longer be overridden by an ancestor workspace marker — markers may
+  only confirm the directory the walk reaches without `--root`.
+- Context retrieval rejects negative windows up front: `resources get`
+  `max_bytes`/`offset` < 0 → typed `INVALID`; `plan_context`
+  `level3_budget` < 0 → `ValueError` (previously the L3 budget check
+  could never fire). Zero stays a legal empty window.
+- `unified_e2e` exits non-zero on FAIL/ERROR scenarios (mandatory
+  scenarios now carry `blocking[]`); `federated_e2e` reads the real
+  `l1_refs_scanned` metric key.
 
 ## [0.7.6] - 2026-11-12
 
