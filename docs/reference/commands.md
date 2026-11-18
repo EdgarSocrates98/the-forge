@@ -747,7 +747,12 @@ theforge init [root] [json] [debug]
 | `debug` | no | — | on error, print the redacted diagnostic (never a traceback) |
 
 <!-- keep:start -->
-_free notes — errors, examples, next steps (hand-written, preserved)_
+`init` também escreve `forge.workspace.yaml` — o marcador que a busca de
+workspace-root do installkit reconhece (install-2.1). É o que fecha o
+round-trip `theforge init` → `theforge install --scope workspace`: sem o
+marcador, o escopo `workspace` não resolve uma raiz a partir do diretório.
+O arquivo é criado uma única vez — editá-lo ou apagá-lo desmarca o
+diretório; `init` nunca sobrescreve um marcador existente.
 <!-- keep:end -->
 
 ## install

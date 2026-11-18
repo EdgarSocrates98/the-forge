@@ -45,6 +45,59 @@
       }
     },
     "installation_method": {"enum": ["git-checkout", "wheel", "pypi", "pypi-wheel"]},
+    "installation_kind": {
+      "enum": ["content", "service", "control-tool"],
+      "description": "install-2.1: what the forge installs — host assets (content), a runtime service surface (service) or orchestration/control-plane tooling (control-tool)"
+    },
+    "install": {
+      "type": "object",
+      "description": "install-2.1: declared install surface — the orchestrator's typed argv builder only sends what is declared; absent keeps the v1 standard flag family",
+      "properties": {
+        "operations": {
+          "type": "array",
+          "items": {"enum": ["plan", "apply", "status", "doctor", "repair",
+                             "update", "uninstall", "auto", "mcp-verify"]}
+        },
+        "flags": {
+          "type": "array",
+          "items": {"type": "string", "pattern": "^--[a-z0-9-]+$"}
+        },
+        "hosts": {
+          "type": "array",
+          "items": {"enum": ["claude", "devin", "codex", "copilot"]}
+        },
+        "scopes": {
+          "type": "array",
+          "items": {"enum": ["project", "workspace", "user"]}
+        },
+        "profiles": {
+          "type": "array",
+          "items": {"enum": ["minimal", "recommended", "full"]}
+        },
+        "approval": {"type": "string"},
+        "update_policy": {"type": "string"},
+        "security": {
+          "type": "object",
+          "properties": {
+            "requires_network": {"type": "boolean"},
+            "requires_credentials": {"type": "boolean"},
+            "spawn_allowed": {"type": "boolean"},
+            "notes": {"type": "string"}
+          }
+        }
+      }
+    },
+    "depends_on": {
+      "type": "array",
+      "description": "install-2.1: forge_ids that must install first — the consolidated plan topological-orders them",
+      "items": {"type": "string", "pattern": "^[a-z0-9-]+$"}
+    },
+    "install_command": {
+      "type": "array",
+      "description": "alternate install entrypoint (argv template; {python}/{checkout}/{home}/{install_root} resolved by the delegator)",
+      "items": {"type": "string"}
+    },
+    "environment": {"type": "object"},
     "mcp": {
       "type": "object",
       "required": ["server_name", "command", "verified"],

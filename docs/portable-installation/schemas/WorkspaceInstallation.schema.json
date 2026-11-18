@@ -1,0 +1,126 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "forge/WorkspaceInstallation/v2",
+  "title": "ForgeWorkspaceInstallation",
+  "description": "install-2.1 (ADR-0065): the consolidated workspace installation document — install order, per-forge declared surface + classification + ownership inventory, cross-forge path conflicts and member list. Extends forge/WorkspaceInstall/v1 via its `installation` block.",
+  "type": "object",
+  "required": ["schema", "workspace_root", "scope", "order", "forges",
+               "conflicts", "verification", "created_at", "updated_at"],
+  "properties": {
+    "schema": {"const": "forge/WorkspaceInstallation/v2"},
+    "workspace_root": {"type": "string"},
+    "scope": {"enum": ["project", "workspace", "user"]},
+    "order": {
+      "type": "array",
+      "items": {"type": "string", "pattern": "^[a-z0-9-]+$"},
+      "description": "install order — depends_on topological, undeclared on the stable default (control-tool -> service -> content, then forge_id)"
+    },
+    "order_note": {"type": ["string", "null"]},
+    "forges": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["forge_id", "installation_kind", "verification"],
+        "properties": {
+          "forge_id": {"type": "string", "pattern": "^[a-z0-9-]+$"},
+          "installation_kind": {"enum": ["content", "service", "control-tool"]},
+          "version": {"type": ["string", "null"]},
+          "cli": {"type": ["string", "null"]},
+          "install_command": {"type": "array", "items": {"type": "string"}},
+          "depends_on": {
+            "type": "array",
+            "items": {"type": "string", "pattern": "^[a-z0-9-]+$"}
+          },
+          "surface": {
+            "type": "object",
+            "properties": {
+              "operations": {"type": "array", "items": {"enum": [
+                "plan", "apply", "status", "doctor", "repair", "update",
+                "uninstall", "auto", "mcp-verify"
+              ]}},
+              "flags": {"type": "array", "items": {"type": "string"}},
+              "hosts": {"type": "array", "items": {"enum": [
+                "claude", "devin", "codex", "copilot"
+              ]}},
+              "scopes": {"type": "array", "items": {"enum": [
+                "project", "workspace", "user"
+              ]}},
+              "profiles": {"type": "array", "items": {"enum": [
+                "minimal", "recommended", "full"
+              ]}},
+              "approval": {"type": "string"}
+            }
+          },
+          "resources": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["id", "kind", "location"],
+              "properties": {
+                "id": {"type": "string",
+                  "description": "<forge_id>:<path> — collision-proof qualified id"},
+                "kind": {"enum": [
+                  "managed-file", "managed-block", "managed-key", "service",
+                  "config", "state"
+                ]},
+                "location": {"type": "string"},
+                "sha256": {"type": ["string", "null"]},
+                "owner": {"type": ["string", "null"]},
+                "policy": {"type": ["string", "null"]}
+              }
+            }
+          },
+          "owned_paths": {"type": "array", "items": {"type": "string"}},
+          "ownership": {"enum": [
+            "forge-owned", "shared", "managed-block", "managed-key",
+            "user", "foreign"
+          ]},
+          "ownership_source": {"enum": [
+            "ledger", "receipt", "registry", "manifest", "inventory", "plan"
+          ], "description": "evidence provenance — 'plan' = dry-run projection, nothing written yet"},
+          "security": {
+            "type": "object",
+            "properties": {
+              "requires_network": {"type": ["boolean", "null"]},
+              "requires_credentials": {"type": ["boolean", "null"]},
+              "spawn_allowed": {"type": ["boolean", "null"]},
+              "notes": {"type": ["string", "null"]}
+            }
+          },
+          "verification": {"enum": [
+            "PASS", "FAIL", "BLOCKED", "UNVERIFIED", "NOT_APPLICABLE"
+          ]},
+          "classification": {"enum": [
+            "new", "updated", "reused", "preserved", "conflict",
+            "unsupported-capability", null
+          ]},
+          "classification_detail": {"type": "string"}
+        }
+      }
+    },
+    "conflicts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["path", "claimants", "winner", "loser"],
+        "properties": {
+          "path": {"type": "string"},
+          "claimants": {"type": "array", "items": {"type": "string"}},
+          "winner": {"type": "string"},
+          "loser": {"type": "string"},
+          "resolution": {"type": ["string", "null"],
+            "description": "null on plan-only; skipped | overwritten — plan violation | unverified — …"},
+          "detail": {"type": "string"}
+        }
+      }
+    },
+    "members": {"type": "array", "items": {"type": "string"}},
+    "notes": {"type": "array", "items": {"type": "string"}},
+    "verification": {"enum": [
+      "PASS", "FAIL", "BLOCKED", "UNVERIFIED", "NOT_APPLICABLE"
+    ]},
+    "created_at": {"type": "string"},
+    "updated_at": {"type": "string"}
+  },
+  "additionalProperties": false
+}

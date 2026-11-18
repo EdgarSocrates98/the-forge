@@ -18,6 +18,9 @@ writes — never uncontrolled file copies.
   versioned JSON documents every Forge emits and consumes (manifest,
   receipt, health, workspace, registry). The interop layer — the-forge
   discovers installed specialists through it; no specialist imports theforge.
+  Install-2.1 (ADR-0065) adds `forge/WorkspaceInstallation/v2`: the
+  consolidated plan + cross-forge ownership inventory carried under the v1
+  manifest's `installation` block.
 - [bootstrap.md](bootstrap.md) — the `setup.sh` / `setup.ps1` →
   `scripts/forge_bootstrap.py` reference implementation and how each repo
   vendors it.
