@@ -2,9 +2,9 @@
   "schema": "forge/CommandInventory/v1",
   "forge_id": "the-forge",
   "cli": "theforge",
-  "generated_at": "2026-11-04T10:57:57Z",
+  "generated_at": "2026-11-18T00:20:38Z",
   "generated_by": "doc_inventory.py/1",
-  "command_count": 97,
+  "command_count": 108,
   "commands": [
     {
       "path": "init",
@@ -278,6 +278,88 @@
           "choices": null,
           "positional": false,
           "help": "on error, print the redacted diagnostic (never a traceback)"
+        }
+      ]
+    },
+    {
+      "path": "mcp",
+      "help": "The Forge MCP server (stdio by default; Streamable HTTP is opt-in)",
+      "arguments": [],
+      "group": true
+    },
+    {
+      "path": "mcp serve",
+      "help": "serve The Forge tools to an MCP host",
+      "arguments": [
+        {
+          "name": "root",
+          "flags": [
+            "--root"
+          ],
+          "required": false,
+          "default": ".",
+          "choices": null,
+          "positional": false,
+          "help": "workspace root (default: current dir)"
+        },
+        {
+          "name": "json",
+          "flags": [
+            "--json"
+          ],
+          "required": false,
+          "default": "False",
+          "choices": null,
+          "positional": false,
+          "help": "machine-readable JSON output"
+        },
+        {
+          "name": "debug",
+          "flags": [
+            "--debug"
+          ],
+          "required": false,
+          "default": "False",
+          "choices": null,
+          "positional": false,
+          "help": "on error, print the redacted diagnostic (never a traceback)"
+        },
+        {
+          "name": "transport",
+          "flags": [
+            "--transport"
+          ],
+          "required": false,
+          "default": "stdio",
+          "choices": [
+            "stdio",
+            "streamable-http",
+            "http"
+          ],
+          "positional": false,
+          "help": "stdio for local hosts; streamable-http/http for a local HTTP endpoint"
+        },
+        {
+          "name": "host",
+          "flags": [
+            "--host"
+          ],
+          "required": false,
+          "default": "127.0.0.1",
+          "choices": null,
+          "positional": false,
+          "help": null
+        },
+        {
+          "name": "port",
+          "flags": [
+            "--port"
+          ],
+          "required": false,
+          "default": "8000",
+          "choices": null,
+          "positional": false,
+          "help": null
         }
       ]
     },
@@ -813,6 +895,370 @@
           "default": null,
           "choices": null,
           "positional": true,
+          "help": null
+        }
+      ]
+    },
+    {
+      "path": "resources",
+      "help": "typed resource catalog: search, describe, retrieve (Onda 04)",
+      "arguments": [],
+      "group": true
+    },
+    {
+      "path": "resources list",
+      "help": null,
+      "arguments": [
+        {
+          "name": "root",
+          "flags": [
+            "--root"
+          ],
+          "required": false,
+          "default": ".",
+          "choices": null,
+          "positional": false,
+          "help": "workspace root (default: current dir)"
+        },
+        {
+          "name": "json",
+          "flags": [
+            "--json"
+          ],
+          "required": false,
+          "default": "False",
+          "choices": null,
+          "positional": false,
+          "help": "machine-readable JSON output"
+        },
+        {
+          "name": "debug",
+          "flags": [
+            "--debug"
+          ],
+          "required": false,
+          "default": "False",
+          "choices": null,
+          "positional": false,
+          "help": "on error, print the redacted diagnostic (never a traceback)"
+        },
+        {
+          "name": "forge",
+          "flags": [
+            "--forge"
+          ],
+          "required": false,
+          "default": null,
+          "choices": null,
+          "positional": false,
+          "help": null
+        },
+        {
+          "name": "kind",
+          "flags": [
+            "--kind"
+          ],
+          "required": false,
+          "default": null,
+          "choices": null,
+          "positional": false,
+          "help": null
+        },
+        {
+          "name": "resource_class",
+          "flags": [
+            "--resource-class"
+          ],
+          "required": false,
+          "default": null,
+          "choices": null,
+          "positional": false,
+          "help": null
+        },
+        {
+          "name": "availability",
+          "flags": [
+            "--availability"
+          ],
+          "required": false,
+          "default": null,
+          "choices": null,
+          "positional": false,
+          "help": null
+        }
+      ]
+    },
+    {
+      "path": "resources search",
+      "help": null,
+      "arguments": [
+        {
+          "name": "root",
+          "flags": [
+            "--root"
+          ],
+          "required": false,
+          "default": ".",
+          "choices": null,
+          "positional": false,
+          "help": "workspace root (default: current dir)"
+        },
+        {
+          "name": "json",
+          "flags": [
+            "--json"
+          ],
+          "required": false,
+          "default": "False",
+          "choices": null,
+          "positional": false,
+          "help": "machine-readable JSON output"
+        },
+        {
+          "name": "debug",
+          "flags": [
+            "--debug"
+          ],
+          "required": false,
+          "default": "False",
+          "choices": null,
+          "positional": false,
+          "help": "on error, print the redacted diagnostic (never a traceback)"
+        },
+        {
+          "name": "term",
+          "flags": [],
+          "required": true,
+          "default": null,
+          "choices": null,
+          "positional": true,
+          "help": null
+        },
+        {
+          "name": "forge",
+          "flags": [
+            "--forge"
+          ],
+          "required": false,
+          "default": null,
+          "choices": null,
+          "positional": false,
+          "help": null
+        },
+        {
+          "name": "kind",
+          "flags": [
+            "--kind"
+          ],
+          "required": false,
+          "default": null,
+          "choices": null,
+          "positional": false,
+          "help": null
+        },
+        {
+          "name": "limit",
+          "flags": [
+            "--limit"
+          ],
+          "required": false,
+          "default": "50",
+          "choices": null,
+          "positional": false,
+          "help": null
+        }
+      ]
+    },
+    {
+      "path": "resources describe",
+      "help": null,
+      "arguments": [
+        {
+          "name": "root",
+          "flags": [
+            "--root"
+          ],
+          "required": false,
+          "default": ".",
+          "choices": null,
+          "positional": false,
+          "help": "workspace root (default: current dir)"
+        },
+        {
+          "name": "json",
+          "flags": [
+            "--json"
+          ],
+          "required": false,
+          "default": "False",
+          "choices": null,
+          "positional": false,
+          "help": "machine-readable JSON output"
+        },
+        {
+          "name": "debug",
+          "flags": [
+            "--debug"
+          ],
+          "required": false,
+          "default": "False",
+          "choices": null,
+          "positional": false,
+          "help": "on error, print the redacted diagnostic (never a traceback)"
+        },
+        {
+          "name": "identity",
+          "flags": [],
+          "required": true,
+          "default": null,
+          "choices": null,
+          "positional": true,
+          "help": "<forge-id>:<resource-id>"
+        }
+      ]
+    },
+    {
+      "path": "resources get",
+      "help": "bounded, contained, redacted resource read",
+      "arguments": [
+        {
+          "name": "root",
+          "flags": [
+            "--root"
+          ],
+          "required": false,
+          "default": ".",
+          "choices": null,
+          "positional": false,
+          "help": "workspace root (default: current dir)"
+        },
+        {
+          "name": "json",
+          "flags": [
+            "--json"
+          ],
+          "required": false,
+          "default": "False",
+          "choices": null,
+          "positional": false,
+          "help": "machine-readable JSON output"
+        },
+        {
+          "name": "debug",
+          "flags": [
+            "--debug"
+          ],
+          "required": false,
+          "default": "False",
+          "choices": null,
+          "positional": false,
+          "help": "on error, print the redacted diagnostic (never a traceback)"
+        },
+        {
+          "name": "identity",
+          "flags": [],
+          "required": true,
+          "default": null,
+          "choices": null,
+          "positional": true,
+          "help": "<forge-id>:<resource-id>"
+        },
+        {
+          "name": "max_bytes",
+          "flags": [
+            "--max-bytes"
+          ],
+          "required": false,
+          "default": "262144",
+          "choices": null,
+          "positional": false,
+          "help": null
+        },
+        {
+          "name": "offset",
+          "flags": [
+            "--offset"
+          ],
+          "required": false,
+          "default": "0",
+          "choices": null,
+          "positional": false,
+          "help": null
+        },
+        {
+          "name": "integrity",
+          "flags": [
+            "--integrity"
+          ],
+          "required": false,
+          "default": "False",
+          "choices": null,
+          "positional": false,
+          "help": "hash the full file when it fits the integrity cap"
+        }
+      ]
+    },
+    {
+      "path": "context",
+      "help": "progressive context routing (Onda 08)",
+      "arguments": [],
+      "group": true
+    },
+    {
+      "path": "context plan",
+      "help": "L1 metadata → L2 specialist → L3 bounded refs routing plan",
+      "arguments": [
+        {
+          "name": "root",
+          "flags": [
+            "--root"
+          ],
+          "required": false,
+          "default": ".",
+          "choices": null,
+          "positional": false,
+          "help": "workspace root (default: current dir)"
+        },
+        {
+          "name": "json",
+          "flags": [
+            "--json"
+          ],
+          "required": false,
+          "default": "False",
+          "choices": null,
+          "positional": false,
+          "help": "machine-readable JSON output"
+        },
+        {
+          "name": "debug",
+          "flags": [
+            "--debug"
+          ],
+          "required": false,
+          "default": "False",
+          "choices": null,
+          "positional": false,
+          "help": "on error, print the redacted diagnostic (never a traceback)"
+        },
+        {
+          "name": "task",
+          "flags": [],
+          "required": true,
+          "default": null,
+          "choices": null,
+          "positional": true,
+          "help": "task description to route"
+        },
+        {
+          "name": "budget",
+          "flags": [
+            "--budget"
+          ],
+          "required": false,
+          "default": "8000",
+          "choices": null,
+          "positional": false,
           "help": null
         }
       ]
@@ -3187,7 +3633,7 @@
         {
           "name": "ARGV",
           "flags": [],
-          "required": false,
+          "required": true,
           "default": null,
           "choices": null,
           "positional": true,
@@ -3880,6 +4326,95 @@
           "choices": null,
           "positional": true,
           "help": null
+        }
+      ]
+    },
+    {
+      "path": "telemetry",
+      "help": "telemetry export (OTLP)",
+      "arguments": [],
+      "group": true
+    },
+    {
+      "path": "telemetry export",
+      "help": "persisted run telemetry -> OTLP/HTTP JSON (`forge-lens ingest` input)",
+      "arguments": [
+        {
+          "name": "root",
+          "flags": [
+            "--root"
+          ],
+          "required": false,
+          "default": ".",
+          "choices": null,
+          "positional": false,
+          "help": "workspace root (default: current dir)"
+        },
+        {
+          "name": "json",
+          "flags": [
+            "--json"
+          ],
+          "required": false,
+          "default": "False",
+          "choices": null,
+          "positional": false,
+          "help": "machine-readable JSON output"
+        },
+        {
+          "name": "debug",
+          "flags": [
+            "--debug"
+          ],
+          "required": false,
+          "default": "False",
+          "choices": null,
+          "positional": false,
+          "help": "on error, print the redacted diagnostic (never a traceback)"
+        },
+        {
+          "name": "RUN_ID",
+          "flags": [
+            "--run"
+          ],
+          "required": false,
+          "default": null,
+          "choices": null,
+          "positional": false,
+          "help": "run to export (repeatable)"
+        },
+        {
+          "name": "ID",
+          "flags": [
+            "--correlation"
+          ],
+          "required": false,
+          "default": null,
+          "choices": null,
+          "positional": false,
+          "help": "every run carrying this correlation id + its orchestration receipt"
+        },
+        {
+          "name": "N",
+          "flags": [
+            "--last"
+          ],
+          "required": false,
+          "default": null,
+          "choices": null,
+          "positional": false,
+          "help": "the newest N runs"
+        },
+        {
+          "name": "FILE",
+          "flags": [
+            "--out"
+          ],
+          "required": true,
+          "default": null,
+          "choices": null,
+          "positional": false,
+          "help": "OTLP JSON destination ('-' writes the document to stdout)"
         }
       ]
     },
@@ -5018,7 +5553,7 @@
         {
           "name": "PATH",
           "flags": [],
-          "required": false,
+          "required": true,
           "default": null,
           "choices": null,
           "positional": true,

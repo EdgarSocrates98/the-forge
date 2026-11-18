@@ -2,13 +2,14 @@
 
 Generated from the real CLI parser by `doc_inventory.py` + `doc_reference.py`. Do not hand-edit generated sections — write between `keep:start`/`keep:end` markers. `por que`/`quando` lines come from the curated `command-rationale.json` — edit rationale there, never here. Status vocabulary: `available` unless marked otherwise.
 
-Rationale coverage: **34/34** first-level groups curated in `command-rationale.json`.
+Rationale coverage: **38/38** first-level groups curated in `command-rationale.json`.
 
 ## Groups
 
 - [`agents`](#agents) — 3 command(s)
 - [`ask`](#ask) — 1 command(s)
 - [`capabilities`](#capabilities) — 5 command(s)
+- [`context`](#context) — 2 command(s)
 - [`decisions`](#decisions) — 1 command(s)
 - [`doctor`](#doctor) — 1 command(s)
 - [`economy`](#economy) — 3 command(s)
@@ -22,6 +23,7 @@ Rationale coverage: **34/34** first-level groups curated in `command-rationale.j
 - [`installations`](#installations) — 2 command(s)
 - [`knowledge`](#knowledge) — 4 command(s)
 - [`lab`](#lab) — 4 command(s)
+- [`mcp`](#mcp) — 2 command(s)
 - [`memory`](#memory) — 7 command(s)
 - [`orchestrate`](#orchestrate) — 3 command(s)
 - [`plan`](#plan) — 1 command(s)
@@ -31,12 +33,14 @@ Rationale coverage: **34/34** first-level groups curated in `command-rationale.j
 - [`registry`](#registry) — 5 command(s)
 - [`remote`](#remote) — 3 command(s)
 - [`replay`](#replay) — 1 command(s)
+- [`resources`](#resources) — 5 command(s)
 - [`resume`](#resume) — 1 command(s)
 - [`setup`](#setup) — 1 command(s)
 - [`specialists`](#specialists) — 4 command(s)
 - [`status`](#status) — 1 command(s)
 - [`targets`](#targets) — 3 command(s)
 - [`task`](#task) — 4 command(s)
+- [`telemetry`](#telemetry) — 2 command(s)
 - [`trace`](#trace) — 1 command(s)
 - [`verify`](#verify) — 3 command(s)
 - [`workspace`](#workspace) — 2 command(s)
@@ -252,6 +256,50 @@ theforge capabilities search [root] [json] [debug] <query>
 | `json` | no | — | machine-readable JSON output |
 | `debug` | no | — | on error, print the redacted diagnostic (never a traceback) |
 | `query` | yes | — | — |
+
+<!-- keep:start -->
+_free notes — errors, examples, next steps (hand-written, preserved)_
+<!-- keep:end -->
+
+## context
+
+### `context`
+
+**para que:** progressive context routing (Onda 08)
+
+- **por que:** roteamento progressivo de contexto L0→L3: metadata → seleção determinística → refs bounded
+- **quando usar:** planejar qual especialista e quais refs uma tarefa precisa antes de carregar conteúdo
+
+**Syntax**
+
+```text
+theforge context
+```
+
+<!-- keep:start -->
+_free notes — errors, examples, next steps (hand-written, preserved)_
+<!-- keep:end -->
+
+### `context plan`
+
+**para que:** L1 metadata → L2 specialist → L3 bounded refs routing plan
+
+- **por que:** roteamento progressivo de contexto L0→L3: metadata → seleção determinística → refs bounded
+- **quando usar:** planejar qual especialista e quais refs uma tarefa precisa antes de carregar conteúdo
+
+**Syntax**
+
+```text
+theforge context plan [root] [json] [debug] <task> [budget]
+```
+
+| argument/flag | required | default | description |
+|---|---|---|---|
+| `root` | no | — | workspace root (default: current dir) |
+| `json` | no | — | machine-readable JSON output |
+| `debug` | no | — | on error, print the redacted diagnostic (never a traceback) |
+| `task` | yes | — | task description to route |
+| `budget` | no | — | — |
 
 <!-- keep:start -->
 _free notes — errors, examples, next steps (hand-written, preserved)_
@@ -1236,6 +1284,51 @@ theforge lab list [root] [json] [debug] [CHECKOUT] [PATH]
 _free notes — errors, examples, next steps (hand-written, preserved)_
 <!-- keep:end -->
 
+## mcp
+
+### `mcp`
+
+**para que:** The Forge MCP server (stdio by default; Streamable HTTP is opt-in)
+
+- **por que:** expõe as tools do The Forge via MCP para hosts que falam o protocolo
+- **quando usar:** conectar um host MCP (stdio default; HTTP streamable opt-in) — não é um provider
+
+**Syntax**
+
+```text
+theforge mcp
+```
+
+<!-- keep:start -->
+_free notes — errors, examples, next steps (hand-written, preserved)_
+<!-- keep:end -->
+
+### `mcp serve`
+
+**para que:** serve The Forge tools to an MCP host
+
+- **por que:** expõe as tools do The Forge via MCP para hosts que falam o protocolo
+- **quando usar:** conectar um host MCP (stdio default; HTTP streamable opt-in) — não é um provider
+
+**Syntax**
+
+```text
+theforge mcp serve [root] [json] [debug] [transport] [host] [port]
+```
+
+| argument/flag | required | default | description |
+|---|---|---|---|
+| `root` | no | — | workspace root (default: current dir) |
+| `json` | no | — | machine-readable JSON output |
+| `debug` | no | — | on error, print the redacted diagnostic (never a traceback) |
+| `transport` | no | — | stdio for local hosts; streamable-http/http for a local HTTP endpoint |
+| `host` | no | — | — |
+| `port` | no | — | — |
+
+<!-- keep:start -->
+_free notes — errors, examples, next steps (hand-written, preserved)_
+<!-- keep:end -->
+
 ## memory
 
 ### `memory`
@@ -1593,7 +1686,7 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 **Syntax**
 
 ```text
-theforge provider check [root] [json] [debug] [ARGV]
+theforge provider check [root] [json] [debug] <ARGV>
 ```
 
 | argument/flag | required | default | description |
@@ -1601,7 +1694,7 @@ theforge provider check [root] [json] [debug] [ARGV]
 | `root` | no | — | workspace root (default: current dir) |
 | `json` | no | — | machine-readable JSON output |
 | `debug` | no | — | on error, print the redacted diagnostic (never a traceback) |
-| `ARGV` | no | — | the provider argv (prefix with -- when it starts with a dash) |
+| `ARGV` | yes | — | the provider argv (prefix with -- when it starts with a dash) |
 
 <!-- keep:start -->
 _free notes — errors, examples, next steps (hand-written, preserved)_
@@ -1900,6 +1993,124 @@ theforge replay [root] [json] [debug] <run_id> <mode> [allow_unverified] [CAPABI
 | `mode` | yes | — | — |
 | `allow_unverified` | no | — | — |
 | `CAPABILITY` | no | — | approve a capability for the re-execution (repeatable) |
+
+<!-- keep:start -->
+_free notes — errors, examples, next steps (hand-written, preserved)_
+<!-- keep:end -->
+
+## resources
+
+### `resources`
+
+**para que:** typed resource catalog: search, describe, retrieve (Onda 04)
+
+- **por que:** catálogo tipado de recursos: search/describe/get com leitura bounded, contida e redactada
+- **quando usar:** inspecionar ou ler recursos do workspace sob budget — a fonte L3 do plano de contexto
+
+**Syntax**
+
+```text
+theforge resources
+```
+
+<!-- keep:start -->
+_free notes — errors, examples, next steps (hand-written, preserved)_
+<!-- keep:end -->
+
+### `resources describe`
+
+- **por que:** catálogo tipado de recursos: search/describe/get com leitura bounded, contida e redactada
+- **quando usar:** inspecionar ou ler recursos do workspace sob budget — a fonte L3 do plano de contexto
+
+**Syntax**
+
+```text
+theforge resources describe [root] [json] [debug] <identity>
+```
+
+| argument/flag | required | default | description |
+|---|---|---|---|
+| `root` | no | — | workspace root (default: current dir) |
+| `json` | no | — | machine-readable JSON output |
+| `debug` | no | — | on error, print the redacted diagnostic (never a traceback) |
+| `identity` | yes | — | <forge-id>:<resource-id> |
+
+<!-- keep:start -->
+_free notes — errors, examples, next steps (hand-written, preserved)_
+<!-- keep:end -->
+
+### `resources get`
+
+**para que:** bounded, contained, redacted resource read
+
+- **por que:** catálogo tipado de recursos: search/describe/get com leitura bounded, contida e redactada
+- **quando usar:** inspecionar ou ler recursos do workspace sob budget — a fonte L3 do plano de contexto
+
+**Syntax**
+
+```text
+theforge resources get [root] [json] [debug] <identity> [max_bytes] [offset] [integrity]
+```
+
+| argument/flag | required | default | description |
+|---|---|---|---|
+| `root` | no | — | workspace root (default: current dir) |
+| `json` | no | — | machine-readable JSON output |
+| `debug` | no | — | on error, print the redacted diagnostic (never a traceback) |
+| `identity` | yes | — | <forge-id>:<resource-id> |
+| `max_bytes` | no | — | — |
+| `offset` | no | — | — |
+| `integrity` | no | — | hash the full file when it fits the integrity cap |
+
+<!-- keep:start -->
+_free notes — errors, examples, next steps (hand-written, preserved)_
+<!-- keep:end -->
+
+### `resources list`
+
+- **por que:** catálogo tipado de recursos: search/describe/get com leitura bounded, contida e redactada
+- **quando usar:** inspecionar ou ler recursos do workspace sob budget — a fonte L3 do plano de contexto
+
+**Syntax**
+
+```text
+theforge resources list [root] [json] [debug] [forge] [kind] [resource_class] [availability]
+```
+
+| argument/flag | required | default | description |
+|---|---|---|---|
+| `root` | no | — | workspace root (default: current dir) |
+| `json` | no | — | machine-readable JSON output |
+| `debug` | no | — | on error, print the redacted diagnostic (never a traceback) |
+| `forge` | no | — | — |
+| `kind` | no | — | — |
+| `resource_class` | no | — | — |
+| `availability` | no | — | — |
+
+<!-- keep:start -->
+_free notes — errors, examples, next steps (hand-written, preserved)_
+<!-- keep:end -->
+
+### `resources search`
+
+- **por que:** catálogo tipado de recursos: search/describe/get com leitura bounded, contida e redactada
+- **quando usar:** inspecionar ou ler recursos do workspace sob budget — a fonte L3 do plano de contexto
+
+**Syntax**
+
+```text
+theforge resources search [root] [json] [debug] <term> [forge] [kind] [limit]
+```
+
+| argument/flag | required | default | description |
+|---|---|---|---|
+| `root` | no | — | workspace root (default: current dir) |
+| `json` | no | — | machine-readable JSON output |
+| `debug` | no | — | on error, print the redacted diagnostic (never a traceback) |
+| `term` | yes | — | — |
+| `forge` | no | — | — |
+| `kind` | no | — | — |
+| `limit` | no | — | — |
 
 <!-- keep:start -->
 _free notes — errors, examples, next steps (hand-written, preserved)_
@@ -2250,6 +2461,52 @@ theforge task run [root] [json] [debug] <intent> [target] [provider] [workflow] 
 _free notes — errors, examples, next steps (hand-written, preserved)_
 <!-- keep:end -->
 
+## telemetry
+
+### `telemetry`
+
+**para que:** telemetry export (OTLP)
+
+- **por que:** exporta telemetria persistida de runs para OTLP/HTTP JSON — entrada do `forge-lens ingest`
+- **quando usar:** alimentar observabilidade externa com evidência determinística (re-export é idêntico)
+
+**Syntax**
+
+```text
+theforge telemetry
+```
+
+<!-- keep:start -->
+_free notes — errors, examples, next steps (hand-written, preserved)_
+<!-- keep:end -->
+
+### `telemetry export`
+
+**para que:** persisted run telemetry -> OTLP/HTTP JSON (`forge-lens ingest` input)
+
+- **por que:** exporta telemetria persistida de runs para OTLP/HTTP JSON — entrada do `forge-lens ingest`
+- **quando usar:** alimentar observabilidade externa com evidência determinística (re-export é idêntico)
+
+**Syntax**
+
+```text
+theforge telemetry export [root] [json] [debug] [RUN_ID] [ID] [N] <FILE>
+```
+
+| argument/flag | required | default | description |
+|---|---|---|---|
+| `root` | no | — | workspace root (default: current dir) |
+| `json` | no | — | machine-readable JSON output |
+| `debug` | no | — | on error, print the redacted diagnostic (never a traceback) |
+| `RUN_ID` | no | — | run to export (repeatable) |
+| `ID` | no | — | every run carrying this correlation id + its orchestration receipt |
+| `N` | no | — | the newest N runs |
+| `FILE` | yes | — | OTLP JSON destination ('-' writes the document to stdout) |
+
+<!-- keep:start -->
+_free notes — errors, examples, next steps (hand-written, preserved)_
+<!-- keep:end -->
+
 ## trace
 
 ### `trace`
@@ -2305,7 +2562,7 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 **Syntax**
 
 ```text
-theforge verify plan [root] [json] [debug] [PATH] [risk] [NAME] [FILE]
+theforge verify plan [root] [json] [debug] <PATH> [risk] [NAME] [FILE]
 ```
 
 | argument/flag | required | default | description |
@@ -2313,7 +2570,7 @@ theforge verify plan [root] [json] [debug] [PATH] [risk] [NAME] [FILE]
 | `root` | no | — | workspace root (default: current dir) |
 | `json` | no | — | machine-readable JSON output |
 | `debug` | no | — | on error, print the redacted diagnostic (never a traceback) |
-| `PATH` | no | — | changed paths to impact-select against (default: full sweep floor) |
+| `PATH` | yes | — | changed paths to impact-select against (default: full sweep floor) |
 | `risk` | no | — | sweep floor: micro/low = impacted only, medium adds developer evals, high runs the whole catalog |
 | `NAME` | no | — | declare an input name the caller will supply at run time |
 | `FILE` | no | — | write the plan document for `verify run --plan <file>` |

@@ -12,6 +12,7 @@ de cada ForgeKnowledge/v1). Em dúvida: `theforge knowledge list` e
 | Se o seu problema é… | Use | Não use para… |
 |---|---|---|
 | API design and review: REST, OpenAPI, AsyncAPI, GraphQL, gRPC; contract evolution, versioning and breaking-change analysis; API architecture, testing strategy and upstream fact intake (apiforge/upstream-facts/v1) | **api-forge** | Spark/data engineering — route to the spark-engineering family; platform/IDP or CI/CD estate analysis — route to platform-forge; independent verification of API |
+| runtime observation of API services from ingested telemetry (metrics, traces, health probes); SLO/SLI assessment and error-budget posture; anomaly detection and incident investigation from runtime evidence; deployment-co | **api-sentinel-forge** | producing API code or contracts — it is an observer/diagnostician, not a producer; static source review of a repository — route to api-forge or forge-doctor-api |
 | symbol and dependency discovery; bounded context preparation; impact and graph analysis | **code-atlas-forge** | editing source files; executing untrusted repository code; provider authentication |
 | runtime failure diagnosis of Spark/Glue/EMR jobs from event logs, plans and run dumps; SQL and Spark physical-plan analysis; importing forge-doctor-data handoff bundles for independent diagnosis | **data-sentinel-forge** | producing Spark code or pipelines — it is a diagnostician, not a producer; static source review of a repository — route to spark-forge-* or forge-doctor-data; a |
 | session lifecycle; provider event replay; approval and cancellation handoff | **forge-agent-bridge** | choosing specialist capabilities; granting permissions; persisting bearer tokens in browser storage |
@@ -31,7 +32,7 @@ API engineering specialist: REST/OpenAPI, AsyncAPI, GraphQL, gRPC, contract evol
 
 **Intents declarados:** `api design`, `openapi spec`, `graphql schema`, `grpc service`, `asyncapi`, `contract evolution`, `breaking change`, `api versioning`
 
-**Compõe com:** `forge-doctor-api`, `platform-forge`
+**Compõe com:** `forge-doctor-api`, `api-sentinel-forge`, `platform-forge`
 
 **Limite honesto:** Interpreter-locked to Python 3.12: describe refuses with a named reason on anything else. Cross-forge intake requires apiforge post-PR-34 main or a published >=0.1 carrying upstream-facts/v1.
 
@@ -40,6 +41,22 @@ review this OpenAPI spec for breaking changes
 ```
 
 - pacote: `apiforge-af>=0.1,<0.2` · binário: `apiforge` · python `>=3.12,<3.13`
+
+### API Sentinel (`api-sentinel-forge`)
+
+Local-first API reliability, runtime intelligence and incident investigation: runtime observation, SLO assessment, anomaly detection, incident investigation and deployment correlation over real telemetry. Diagnoses from runtime evidence; it is not an engineering producer.
+
+**Intents declarados:** `api runtime diagnosis`, `api incident investigation`, `api slo assessment`, `api anomaly detection`, `sentinel api`, `is my api healthy`
+
+**Compõe com:** `api-forge`, `forge-doctor-api`
+
+**Limite honesto:** Diagnostics require runtime evidence (telemetry batches, run dumps, SLO windows): the orchestration lane refuses to force a sentinel diagnosis when the caller declares no such inputs. Profile `local` works fully offline; `aws`/`opentelemetry` profiles degrade to honest unavailable states without their collectors.
+
+```bash
+is checkout-api breaching its SLO this week?
+```
+
+- pacote: `api-sentinel-forge>=0.1.0,<0.2.0` · binário: `api-sentinel` · python `>=3.11`
 
 ### Code Atlas (`code-atlas-forge`)
 
@@ -157,7 +174,7 @@ analyze this repo's GitHub Actions posture
 
 Product management and product analytics specialist for context, requirements, roadmaps, SQL and governed product operations.
 
-**Intents declarados:** `product discovery`, `write requirements`, `review roadmap`, `validate product SQL`, `analyze product metrics`
+**Intents declarados:** `product discovery`, `write requirements`, `review roadmap`, `validate product SQL`, `analyze product metrics`, `knowledge context`, `knowledge evidence`, `obsidian knowledge import`, `obsidian knowledge export`, `obsidian knowledge sync`
 
 **Compõe com:** `code-atlas-forge`, `api-forge`, `data-sentinel-forge`, `forge-lens`
 
@@ -167,7 +184,7 @@ Product management and product analytics specialist for context, requirements, r
 turn approved product proposal into requirements
 ```
 
-- pacote: `product-forge>=0.1.0,<0.2.0` · binário: `productforge` · python `>=3.11`
+- pacote: `product-forge>=0.2.0,<0.3.0` · binário: `productforge` · python `>=3.11`
 
 ### Spark Forge AWS (`spark-forge-aws`)
 
