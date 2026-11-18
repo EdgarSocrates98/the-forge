@@ -1020,6 +1020,13 @@ def _resolve_install_template(manifest: dict[str, Any]) -> list[str]:
                 f"{fid}: install_command has undeclared placeholder: {raw!r}",
             )
         argv.append(arg)
+    # Bare argv[0] (e.g. ``["data-sentinel", "install", "--yes"]``) is a
+    # logical name — resolve it through the registered launcher chain
+    # (env var → cli.shim → cli.name), same as a plain ``cli`` delegation.
+    if argv and not (Path(argv[0]).is_absolute() or os.sep in argv[0]):
+        resolved = providers.manifest_cli(manifest)
+        if resolved:
+            argv[0] = resolved
     return argv
 
 
@@ -1287,6 +1294,11 @@ _KIND_RANK = {"control-tool": 0, "service": 1, "content": 2}
 # user docs) are namespaced per forge — never path conflicts.
 _CONFLICT_KINDS = frozenset({"skill", "agent", "knowledge", "rules", "evals", "config", "state"})
 
+# Bare-string plan claims that are NOT whole-file conflicts: ``.mcp.json``
+# holds per-forge managed keys and the marker docs hold per-forge managed
+# blocks — both are namespaced inside the shared file by design.
+_MANAGED_DOC_PATHS = frozenset({".mcp.json", "CLAUDE.md", "AGENTS.md", "AGENT_PROTOCOL.md"})
+
 
 def _install_order(manifests: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], list[str]]:
     """Install order over declared ``depends_on`` — deterministic Kahn on a
@@ -1408,15 +1420,35 @@ def _collect_forge_plan(
             )
             return entry
         entry["plan"] = receipt
-    paths: dict[str, dict[str, Any]] = {}
-    for f in (entry["plan"] or {}).get("planned_files", []):
-        if not isinstance(f, dict) or not isinstance(f.get("path"), str):
-            continue
-        if f.get("kind") not in _CONFLICT_KINDS or f.get("action") == "skipped":
-            continue
-        paths[f["path"]] = {"sha256": f.get("sha256"), "kind": f.get("kind")}
-    entry["paths"] = paths
+    entry["paths"] = _plan_path_claims(entry["plan"])
     return entry
+
+
+def _plan_path_claims(plan_doc: dict[str, Any] | None) -> dict[str, dict[str, Any]]:
+    """Whole-file path claims from a child plan receipt — both receipt
+    shapes: structured entries (dicts with ``kind``/``sha256``, claimed
+    only for conflict kinds) and bare-string lists (claimed except
+    managed-key/marker docs, which are namespaced inside shared files)."""
+    doc = plan_doc or {}
+    marker_docs = {
+        m["file"]
+        for m in doc.get("managed_markers") or []
+        if isinstance(m, dict) and isinstance(m.get("file"), str)
+    }
+    non_conflicting = _MANAGED_DOC_PATHS | marker_docs
+    paths: dict[str, dict[str, Any]] = {}
+    for key in ("planned_files", "managed_files"):
+        for f in doc.get(key) or []:
+            if isinstance(f, str):
+                if f not in non_conflicting:
+                    paths.setdefault(f, {"sha256": None, "kind": "file"})
+                continue
+            if not isinstance(f, dict) or not isinstance(f.get("path"), str):
+                continue
+            if f.get("kind") not in _CONFLICT_KINDS or f.get("action") == "skipped":
+                continue
+            paths[f["path"]] = {"sha256": f.get("sha256"), "kind": f.get("kind")}
+    return paths
 
 
 def _path_conflicts(
@@ -1661,6 +1693,7 @@ def _installation_doc(
                     f
                     for f in plan.get("planned_files", [])
                     if isinstance(f, dict)
+                    and isinstance(f.get("path"), str)
                     and f.get("action") != "skipped"
                     and f.get("path") not in set(lost_by_fid.get(fid, []))
                 ]
