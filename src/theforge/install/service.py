@@ -1020,6 +1020,13 @@ def _resolve_install_template(manifest: dict[str, Any]) -> list[str]:
                 f"{fid}: install_command has undeclared placeholder: {raw!r}",
             )
         argv.append(arg)
+    # Bare argv[0] (e.g. ``["data-sentinel", "install", "--yes"]``) is a
+    # logical name — resolve it through the registered launcher chain
+    # (env var → cli.shim → cli.name), same as a plain ``cli`` delegation.
+    if argv and not (Path(argv[0]).is_absolute() or os.sep in argv[0]):
+        resolved = providers.manifest_cli(manifest)
+        if resolved:
+            argv[0] = resolved
     return argv
 
 
@@ -1661,6 +1668,7 @@ def _installation_doc(
                     f
                     for f in plan.get("planned_files", [])
                     if isinstance(f, dict)
+                    and isinstance(f.get("path"), str)
                     and f.get("action") != "skipped"
                     and f.get("path") not in set(lost_by_fid.get(fid, []))
                 ]
