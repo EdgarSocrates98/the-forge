@@ -39,7 +39,7 @@ from typing import Any
 _INSTALLKIT_VERSION = "1.0.6"
 # Filled by the vendor step (scripts/installkit/vendor.py) — the sha256 of
 # the canonical source body, so drift checks can compare vendored copies.
-_SOURCE_SHA256 = "4deac428b1247623"
+_SOURCE_SHA256 = "dd279c639576d015"
 
 SCHEMA_MANIFEST = "forge/InstallationManifest/v1"
 SCHEMA_RECEIPT = "forge/InstallReceipt/v1"
@@ -255,6 +255,11 @@ class InstallContext:
     # profile's kinds; other booleans (e.g. ``graph_studio``) are runtime
     # flags persisted to ``components.json`` under state_dir.
     options: dict[str, Any] = field(default_factory=dict)
+    # Relative managed paths the consolidated workspace plan excludes from
+    # this forge's write set (install-2.1: a cross-forge conflict is never
+    # last-writer-wins — the loser skips the path and the receipt says so).
+    # Orchestrator-set only; plan/apply report the skip, never silently drop.
+    exclude: tuple[str, ...] = ()
 
 
 # --------------------------------------------------------------------------
@@ -747,6 +752,7 @@ def plan(ctx: InstallContext) -> dict[str, Any]:
     """Pure plan — what *would* change. Never writes."""
     assets = ctx.spec.render_assets(ctx) if ctx.spec.render_assets else {}
     kinds = set(asset_kinds_for(ctx))
+    excluded = set(ctx.exclude)
     files = []
     for rel in sorted(assets):
         kind = _asset_kind(rel)
@@ -757,6 +763,17 @@ def plan(ctx: InstallContext) -> dict[str, Any]:
                 E_UNSAFE,
                 f"{rel!r}: escapes the install root — remove or fix the asset path",
             )
+        if rel in excluded:
+            files.append(
+                {
+                    "path": rel,
+                    "kind": kind,
+                    "action": "skipped",
+                    "sha256": _sha(assets[rel]),
+                    "note": "cross-forge conflict — excluded by the consolidated plan",
+                }
+            )
+            continue
         target = ctx.root / rel
         exists = target.exists()
         files.append(
@@ -871,6 +888,7 @@ def apply_install(ctx: InstallContext, *, approved: bool = False) -> dict[str, A
             "skill": 0, "agent": 0, "knowledge": 0, "rules": 0, "evals": 0,
             "managed": 0,
         }
+        excluded = set(ctx.exclude)
         for rel in sorted(assets):
             kind = _asset_kind(rel)
             if kind not in kinds:
@@ -880,6 +898,19 @@ def apply_install(ctx: InstallContext, *, approved: bool = False) -> dict[str, A
                     E_UNSAFE,
                     f"{rel!r}: escapes the install root — remove or fix the asset path",
                 )
+            if rel in excluded:
+                # Loser path of a cross-forge conflict — the consolidated
+                # plan already assigned the winner. Skip and say so.
+                files.append(
+                    {
+                        "path": rel,
+                        "kind": kind,
+                        "action": "skipped",
+                        "sha256": _sha(assets[rel]),
+                        "note": "cross-forge conflict — skipped by the consolidated plan",
+                    }
+                )
+                continue
             data = assets[rel]
             if kind in ctx_bytes:
                 ctx_bytes[kind] += len(data)
@@ -1029,6 +1060,18 @@ def apply_install(ctx: InstallContext, *, approved: bool = False) -> dict[str, A
         ) from exc
     written = sum(1 for f in files if f.get("action") in ("created", "updated"))
     checks.append({"id": "files-written", "status": "PASS", "detail": f"{written} writes"})
+    conflict_skips = [f["path"] for f in files if f.get("action") == "skipped"]
+    if conflict_skips:
+        checks.append(
+            {
+                "id": "cross-forge-conflicts",
+                "status": "PASS",
+                "detail": (
+                    f"{len(conflict_skips)} loser paths skipped per the "
+                    f"consolidated plan: {conflict_skips}"
+                ),
+            }
+        )
     if "codex" in ctx.hosts and ctx.scope == "project":
         # Observed on codex-cli 0.160.0: `codex mcp list` ignores project
         # `.mcp.json` and `.codex/config.toml` — MCP only enters through
@@ -1431,6 +1474,19 @@ def _prune_empty_dirs(root: Path, removed: list[str]) -> None:
 # --------------------------------------------------------------------------
 
 
+# Declared install-surface keys of ``forge/InstallationManifest/v1`` —
+# optional additions consumed by the orchestrator's typed delegation
+# (install-2.1, ``forge/WorkspaceInstallation/v2``):
+#
+# - ``installation_kind``: ``content``|``service``|``control-tool``.
+# - ``install``: declared surface — ``operations``/``flags``/``hosts``/
+#   ``scopes``/``profiles``/``approval``. The orchestrator's argv builder
+#   only sends what is declared; undeclared blocks keep the v1 default
+#   (the standard flag family) for backward compatibility.
+# - ``depends_on``: forge_ids that must install first (install order).
+INSTALLATION_KINDS = ("content", "service", "control-tool")
+
+
 def manifest_for(
     spec: ForgeSpec,
     *,
@@ -1440,6 +1496,9 @@ def manifest_for(
     source: dict[str, Any],
     shim: Path | None,
     installation_method: str | None = None,
+    installation_kind: str | None = None,
+    install: dict[str, Any] | None = None,
+    depends_on: list[str] | None = None,
 ) -> dict[str, Any]:
     doc = {
         "schema": SCHEMA_MANIFEST,
@@ -1483,6 +1542,19 @@ def manifest_for(
         if spec.mcp_verify_tool:
             mcp_doc["verify_tool"] = spec.mcp_verify_tool
         doc["mcp"] = mcp_doc
+    if installation_kind is not None:
+        if installation_kind not in INSTALLATION_KINDS:
+            raise InstallError(
+                E_UNSUPPORTED,
+                f"installation_kind {installation_kind!r} — expected {INSTALLATION_KINDS}",
+            )
+        doc["installation_kind"] = installation_kind
+    if install:
+        # Declared install surface — copied verbatim from the forge's own
+        # declaration (forge.json/bootstrap), never fabricated.
+        doc["install"] = dict(install)
+    if depends_on:
+        doc["depends_on"] = [str(d) for d in depends_on]
     return doc
 
 

@@ -12,6 +12,54 @@
     "serve"
   ],
   "mcp_verify_tool": "theforge_status",
+  "installation_kind": "control-tool",
+  "install": {
+    "operations": [
+      "plan",
+      "apply",
+      "status",
+      "doctor",
+      "repair",
+      "update",
+      "uninstall",
+      "auto",
+      "mcp-verify"
+    ],
+    "flags": [
+      "--scope",
+      "--root",
+      "--host",
+      "--profile",
+      "--components",
+      "--gateway-profile",
+      "--yes",
+      "--dry-run",
+      "--json",
+      "--forge",
+      "--member",
+      "--purge",
+      "--to",
+      "--repo"
+    ],
+    "hosts": [
+      "claude",
+      "devin",
+      "codex",
+      "copilot"
+    ],
+    "scopes": [
+      "project",
+      "workspace",
+      "user"
+    ],
+    "profiles": [
+      "minimal",
+      "recommended",
+      "full"
+    ],
+    "approval": "--yes"
+  },
+  "depends_on": [],
   "extras": [
     "mcp"
   ],
