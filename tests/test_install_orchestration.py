@@ -932,3 +932,38 @@ def test_uninstall_user_scope_pristine_creates_no_context(
     (forge_home / ".forge").mkdir()  # state dir existe: exercita o caminho installed
     service.uninstall(scope="user")
     assert not (forge_home / ".forge" / "context").exists()
+
+
+def test_plan_path_claims_structured_and_string_shapes() -> None:
+    """Sibling receipts diverge: structured ``managed_files`` dicts
+    (kind/sha256) vs bare-string ``planned_files``. Both must surface as
+    claims — the xpto E2E showed strings-only plans made conflicts: []."""
+    claims = service._plan_path_claims(
+        {
+            "planned_files": [".mcp.json", "CLAUDE.md", "a/skill.md", {"note": "no path"}],
+            "managed_files": [
+                {"path": "a/agent.md", "kind": "agent", "action": "written", "sha256": "x"},
+                {"path": ".mcp.json", "kind": "mcp", "action": "written"},
+                {"path": "b/skip.md", "kind": "skill", "action": "skipped"},
+            ],
+            "managed_markers": [{"file": "AGENTS.md", "marker": "forge:x"}],
+        }
+    )
+    assert claims["a/agent.md"] == {"sha256": "x", "kind": "agent"}
+    assert claims["a/skill.md"] == {"sha256": None, "kind": "file"}
+    assert ".mcp.json" not in claims  # managed keys are namespaced
+    assert "CLAUDE.md" not in claims and "AGENTS.md" not in claims
+    assert "b/skip.md" not in claims and len(claims) == 2
+
+
+def test_path_conflicts_detects_sibling_shared_collision(tmp_path) -> None:
+    """Two forges claiming the same path → one conflict row per loser —
+    the AWS/Azure ``_shared`` + ``evals/evals.json`` collision shape."""
+    plans = {
+        "aws-forge": {"paths": {"s/x.md": {"sha256": None, "kind": "skill"}}},
+        "azure-forge": {"paths": {"s/x.md": {"sha256": None, "kind": "file"}}},
+    }
+    out = service._path_conflicts(plans, ["aws-forge", "azure-forge"], tmp_path)
+    assert len(out) == 1
+    assert out[0]["path"] == "s/x.md"
+    assert out[0]["winner"] == "aws-forge" and out[0]["loser"] == "azure-forge"
