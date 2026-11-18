@@ -1632,6 +1632,99 @@ SEEDS: dict[str, dict[str, Any]] = {
         "warnings": [],
         "unresolved": [],
     },
+    # install-2.1: the consolidated workspace installation document
+    # (cycle-16 wave-01, ADR-0065)
+    "WorkspaceInstallation": {
+        "schema": "forge/WorkspaceInstallation/v2",
+        "workspace_root": "/ws",
+        "created_at": "t",
+        "updated_at": "t",
+        "scope": "workspace",
+        "order": ["the-forge", "api-forge"],
+        "order_note": None,
+        "forges": [
+            {
+                "forge_id": "the-forge",
+                "installation_kind": "control-tool",
+                "version": "0.7.7",
+                "cli": "theforge",
+                "install_command": ["{python}", "install"],
+                "depends_on": [],
+                "surface": {
+                    "operations": ["apply", "uninstall"],
+                    "flags": ["--scope", "--yes"],
+                    "hosts": ["claude"],
+                    "scopes": ["project", "workspace"],
+                    "profiles": ["recommended"],
+                    "approval": "--yes",
+                },
+                "resources": [
+                    {
+                        "id": "the-forge:AGENTS.md",
+                        "kind": "managed-block",
+                        "location": "AGENTS.md",
+                        "sha256": SHA,
+                        "owner": "the-forge",
+                        "policy": "forge-owned",
+                    }
+                ],
+                "owned_paths": ["AGENTS.md"],
+                "ownership": "forge-owned",
+                "ownership_source": "receipt",
+                "security": {
+                    "requires_network": False,
+                    "requires_credentials": False,
+                    "spawn_allowed": True,
+                    "notes": "n",
+                },
+                "verification": "PASS",
+                "classification": "new",
+                "classification_detail": "fresh",
+            },
+            {
+                "forge_id": "api-forge",
+                "installation_kind": "content",
+                "version": None,
+                "cli": None,
+                "install_command": [],
+                "depends_on": ["the-forge"],
+                "surface": {
+                    "operations": [],
+                    "flags": [],
+                    "hosts": [],
+                    "scopes": [],
+                    "profiles": [],
+                    "approval": "--yes",
+                },
+                "resources": [],
+                "owned_paths": [],
+                "ownership": "forge-owned",
+                "ownership_source": None,
+                "security": {
+                    "requires_network": None,
+                    "requires_credentials": None,
+                    "spawn_allowed": None,
+                    "notes": None,
+                },
+                "verification": "BLOCKED",
+                "classification": "conflict",
+                "classification_detail": "loses 1",
+            },
+        ],
+        "conflicts": [
+            {
+                "path": ".agents/skills/x/SKILL.md",
+                "claimants": ["the-forge", "api-forge"],
+                "winner": "the-forge",
+                "loser": "api-forge",
+                "resolution": "skipped",
+                "detail": "first in install order wins",
+            }
+        ],
+        "members": ["backend-api"],
+        "notes": ["undeclared deps used stable order"],
+        "verification": "UNVERIFIED",
+    },
 }
 
 CONTRACTS: tuple[type[Any], ...] = tuple(dict.fromkeys((*EXPORTED, Response)))

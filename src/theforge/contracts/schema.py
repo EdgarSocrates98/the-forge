@@ -100,6 +100,7 @@ from theforge.contracts import (
     VerifyVerdict,
     WorkspaceDescriptor,
     WorkspaceGraph,
+    WorkspaceInstallation,
 )
 
 EXPORTED: tuple[type[Any], ...] = (
@@ -215,6 +216,8 @@ EXPORTED: tuple[type[Any], ...] = (
     EvidenceHandoff,
     # orchestrator lane consolidated report (lf-0031, PHASE 9+12)
     OrchestrationReport,
+    # workspace installation 2.1 (cycle-16 wave-01, ADR-0065)
+    WorkspaceInstallation,
 )
 # Core-only artifacts that never cross the Forge Protocol: their published schemas
 # reject unknown properties at every level. Provider-facing contracts stay open
@@ -279,6 +282,9 @@ CLOSED_SCHEMAS: tuple[type[Any], ...] = (
     KnowledgeContextPack,
     KnowledgeRelation,
     KnowledgeImportReceipt,
+    # workspace installation inventory is a core-produced record —
+    # unknown keys are drift.
+    WorkspaceInstallation,
     # agent specs are authored core data too.
     AgentSpec,
     ObsidianSyncPlan,

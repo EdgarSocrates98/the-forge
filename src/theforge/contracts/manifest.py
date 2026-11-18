@@ -26,6 +26,22 @@ class Signals:
     keywords: list[str] = field(default_factory=list)
     file_globs: list[str] = field(default_factory=list)
     dependencies: list[str] = field(default_factory=list)
+    # Optional classification axes (install-2.1, ADR-0065): declared labels
+    # for indexing/discovery — platform affinity (e.g. "linux", "aws"),
+    # service surface (e.g. "mcp-server"), implementation language, and
+    # artifact-type affinity. They are NOT routing inputs: the router
+    # stays keyword/glob/dependency-driven; ``axes_index()`` exposes them
+    # for inspection the way ``domains_index`` exposes domains.
+    platform: list[str] = field(default_factory=list)
+    service: list[str] = field(default_factory=list)
+    language: list[str] = field(default_factory=list)
+    artifact_type: list[str] = field(default_factory=list)
+
+
+# The four declared classification axes on ``Signals`` — optional labels,
+# closed set of NAMES (values stay free-form declared labels like
+# ``keywords``; no registry is fabricated).
+SIGNAL_AXES: tuple[str, ...] = ("platform", "service", "language", "artifact_type")
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -229,3 +245,21 @@ class ForgeManifest:
             return canonical, False
         aliased = next((c for c in self.capabilities if name in c.aliases), None)
         return (aliased, True) if aliased is not None else None
+
+
+def axes_index(manifest: ForgeManifest) -> dict[str, dict[str, list[str]]]:
+    """axis → value → capability ids — the declared ``Signals`` axes
+    (``SIGNAL_AXES``) indexed for discovery/inspection, the way
+    ``domains_index`` exposes declared domains. Deterministic; axes with
+    no declared values are omitted. NOT a routing input (ADR-0065)."""
+    idx: dict[str, dict[str, set[str]]] = {a: {} for a in SIGNAL_AXES}
+    for cap in manifest.capabilities:
+        for axis in SIGNAL_AXES:
+            for value in getattr(cap.signals, axis, ()):
+                if isinstance(value, str) and value:
+                    idx[axis].setdefault(value, set()).add(cap.id)
+    return {
+        axis: {v: sorted(ids) for v, ids in sorted(values.items())}
+        for axis, values in idx.items()
+        if values
+    }
