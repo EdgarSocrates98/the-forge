@@ -759,7 +759,7 @@ def environment_contract(
     values = {
         f"{prefix}_INSTALL_ROOT": str(install_root.resolve()),
         f"{prefix}_VENV": str(venv.resolve()),
-        f"{prefix}_PYTHON": str(_venv_python(venv).resolve()),
+        f"{prefix}_PYTHON": str(_venv_python(venv)),
         f"{prefix}_CLI": str(real_cli.resolve()),
     }
     if has_checkout:

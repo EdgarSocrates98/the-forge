@@ -719,3 +719,21 @@ def test_persist_failure_is_named_refusal(tmp_path, monkeypatch, capsys):
     stage = next(s for s in rcpt["stages"] if s["stage"] == "persist-environment")
     assert stage["status"] == "refused"
     assert stage["kind"] == "FORGE-ENV-PERSISTENCE-FAILED"
+
+
+def test_environment_contract_keeps_venv_python_launcher(tmp_path, monkeypatch):
+    """POSIX ``<venv>/bin/python`` is a symlink to the base interpreter —
+    ``.resolve()`` would persist the base path and delegated
+    ``{python} -m <pkg>`` calls lose the venv's site-packages (xpto E2E:
+    ``No module named forge_doctor_api``)."""
+    monkeypatch.setattr(fb.os, "name", "posix")
+    base = tmp_path / "base" / "python3.11"
+    base.parent.mkdir(parents=True)
+    base.touch()
+    venv = tmp_path / "install" / ".venv"
+    (venv / "bin").mkdir(parents=True)
+    (venv / "bin" / "python").symlink_to(base)
+    contract = fb.environment_contract(
+        {"forge_id": "x-forge", "cli": "x"}, tmp_path / "c", tmp_path / "install", venv, None
+    )
+    assert contract["variables"]["X_FORGE_PYTHON"] == str(venv / "bin" / "python")
