@@ -12,9 +12,15 @@ from __future__ import annotations
 
 import json
 import os
+import re
+import shutil
 import sys
+import time
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from theforge.contracts.workspace_installation import VerificationState
 
 from theforge import __version__
 from theforge import _forgecontext as fctx
@@ -69,6 +75,7 @@ def _ctx(
     cwd: Path | None = None,
     components: tuple[str, ...] | None = None,
     gateway_profile: str | None = None,
+    exclude: tuple[str, ...] = (),
 ) -> kit.InstallContext:
     spec = _spec()
     base = Path(cwd or Path.cwd())
@@ -97,6 +104,7 @@ def _ctx(
         hosts=hosts,
         dry_run=dry_run,
         options=options,
+        exclude=exclude,
     )
 
 
@@ -128,6 +136,7 @@ def install(
     dry_run: bool = False,
     components: tuple[str, ...] | None = None,
     gateway_profile: str | None = None,
+    exclude: tuple[str, ...] = (),
 ) -> dict[str, Any]:
     if profile not in PROFILES:
         raise kit.InstallError(kit.E_PROFILE, f"profile {profile!r}; {PROFILES}")
@@ -139,6 +148,7 @@ def install(
         dry_run,
         components=components,
         gateway_profile=gateway_profile,
+        exclude=exclude,
     )
     if dry_run:
         return kit.apply_install(ctx, approved=yes)
@@ -951,6 +961,68 @@ def sync_provider_registry(
     )
 
 
+# Delegation argv — built ONLY from the manifest's declared install
+# surface, never fabricated. ``install_command`` templates resolve the
+# placeholder set below; anything else is an undeclared placeholder.
+_DELEGATION_PLACEHOLDERS = ("python", "checkout", "home", "install_root")
+_INSTALL_VERBS = frozenset({"install", "apply"})
+_APPROVAL_FLAGS = frozenset({"--yes", "-y", "--dry-run"})
+_CTRL_CHARS = re.compile(r"[\x00-\x1f\x7f-\x9f]")
+_SHELL_META = re.compile(r"[;&|><`$]")
+
+
+def _check_manifest_arg(raw: Any, fid: str) -> str:
+    """One manifest-declared argv token — refuses unsafe/invalid content
+    before it can reach exec."""
+    if not isinstance(raw, str) or not raw:
+        raise kit.InstallError(
+            kit.E_UNSUPPORTED, f"{fid}: delegation argv entries must be non-empty strings"
+        )
+    if _CTRL_CHARS.search(raw):
+        raise kit.InstallError(
+            kit.E_UNSAFE, f"{fid}: delegation argv has control characters: {raw!r}"
+        )
+    if _SHELL_META.search(raw):
+        raise kit.InstallError(kit.E_UNSAFE, f"{fid}: delegation argv has shell syntax: {raw!r}")
+    return raw
+
+
+def _resolve_install_template(manifest: dict[str, Any]) -> list[str]:
+    """``install_command`` template → resolved argv prefix.
+
+    ``{python}`` → the forge's registered venv interpreter (this process's
+    interpreter when the venv is gone), ``{checkout}``/``{home}`` → the
+    registered source path, ``{install_root}`` → the registered install
+    root. Any other ``{name}`` is an undeclared placeholder — refused."""
+    fid = str(manifest.get("forge_id") or "?")
+    tpl = manifest.get("install_command")
+    if not isinstance(tpl, list) or not tpl:
+        raise kit.InstallError(
+            kit.E_UNSUPPORTED, f"{fid}: install_command must be a non-empty argv list"
+        )
+    py = providers.manifest_python(manifest)
+    checkout = str((manifest.get("source") or {}).get("path") or ".")
+    replacements = {
+        "python": py or sys.executable,
+        "checkout": checkout,
+        "home": checkout,
+        "install_root": str(manifest.get("install_root") or ""),
+    }
+    argv: list[str] = []
+    for raw in tpl:
+        raw = _check_manifest_arg(raw, fid)
+        arg = raw
+        for name in _DELEGATION_PLACEHOLDERS:
+            arg = arg.replace("{" + name + "}", replacements[name])
+        if "{" in arg or "}" in arg:
+            raise kit.InstallError(
+                kit.E_UNSUPPORTED,
+                f"{fid}: install_command has undeclared placeholder: {raw!r}",
+            )
+        argv.append(arg)
+    return argv
+
+
 def _delegated_cmd(
     manifest: dict[str, Any],
     scope: str,
@@ -960,45 +1032,726 @@ def _delegated_cmd(
     host: str = "all",
     profile: str = "recommended",
     components: tuple[str, ...] | None = None,
+    gateway_profile: str | None = None,
 ) -> list[str]:
-    """Argv for delegating ``install`` to a sibling forge. Most forges
-    expose ``<cli> install``; a manifest may instead carry
-    ``install_command`` — an argv template where ``{python}`` resolves to
-    the forge's registered venv interpreter and ``{checkout}`` to its
-    registered source path (used by forges whose package boundary forbids
-    the install engine, e.g. RC-locked CLIs that install via a script)."""
-    tpl = manifest.get("install_command")
-    if tpl:
-        py = providers.manifest_python(manifest)
-        checkout = str((manifest.get("source") or {}).get("path") or ".")
-        replacements = {
-            "python": py or sys.executable,
-            "checkout": checkout,
-            "home": checkout,
-            "install_root": str(manifest.get("install_root") or ""),
-        }
-        argv = [
-            a.replace("{python}", replacements["python"])
-            .replace("{checkout}", replacements["checkout"])
-            .replace("{home}", replacements["home"])
-            .replace("{install_root}", replacements["install_root"])
-            for a in tpl
-        ]
+    """Argv for delegating ``install`` to a sibling forge — built from the
+    manifest's DECLARED install surface, never fabricated:
+
+    - ``install_command``: the forge's own installer entry (argv template).
+      When the template already carries the install/apply verb — or bakes
+      flags like ``--yes`` — the orchestrator never appends a duplicate.
+    - ``cli``: the ``forge/* v1`` contract CLI — ``<cli> install`` accepts
+      the standard flag family.
+    - neither → ``E_UNSUPPORTED``: no honest argv exists.
+
+    ``--scope``/``--root`` are the delegation request itself — always
+    appended. ``--host``/``--profile``/``--components``/``--gateway-profile``
+    and the approval flag are appended only when the template did not
+    already declare them. When the manifest declares an ``install``
+    surface (install-2.1) with a ``flags`` list, ONLY declared flags may
+    be sent — a request flag the surface does not declare makes the
+    request unhonorable (``E_UNSUPPORTED``; the caller marks the forge
+    ``unsupported-capability`` rather than widening silently). Absent
+    ``install`` keeps the v1 default: the standard flag family.
+    Raises ``InstallError`` on invalid manifests — callers mark the forge,
+    never exec a bad argv.
+    """
+    fid = str(manifest.get("forge_id") or "?")
+    missing = _missing_capabilities(
+        manifest,
+        dry_run=dry_run,
+        components=components,
+        gateway_profile=gateway_profile,
+    )
+    if missing:
+        raise kit.InstallError(
+            kit.E_UNSUPPORTED,
+            f"{fid}: declared install surface lacks {missing} — request cannot be honored as asked",
+        )
+    if manifest.get("install_command") is not None:
+        argv = _resolve_install_template(manifest)
     else:
-        cli = providers.manifest_cli(manifest) or str(manifest.get("forge_id"))
-        argv = [cli]
-    command = argv + [
-        "install",
-        "--scope",
-        scope,
-        "--root",
-        str(target),
-    ]
-    command.extend(["--host", host, "--profile", profile])
+        cli = providers.manifest_cli(manifest)
+        if not cli:
+            raise kit.InstallError(
+                kit.E_UNSUPPORTED,
+                f"{fid}: manifest declares no cli/install_command — delegation unsupported",
+            )
+        argv = [_check_manifest_arg(cli, fid)]
+    declared = set(argv)
+    if not (declared & _INSTALL_VERBS):
+        argv.append("install")
+        declared.add("install")
+    argv += ["--scope", scope, "--root", str(target)]
+    if "--host" not in declared:
+        argv += ["--host", host]
+    if "--profile" not in declared:
+        argv += ["--profile", profile]
+    if components is not None and "--components" not in declared:
+        argv += ["--components", ",".join(components)]
+    if gateway_profile is not None and "--gateway-profile" not in declared:
+        argv += ["--gateway-profile", gateway_profile]
+    if dry_run:
+        if "--dry-run" not in declared:
+            argv.append("--dry-run")
+    elif not (declared & _APPROVAL_FLAGS):
+        argv.append(_declared_approval(manifest))
+    for arg in argv:
+        if not arg or _CTRL_CHARS.search(arg):
+            raise kit.InstallError(
+                kit.E_UNSAFE, f"{fid}: delegation argv failed validation: {arg!r}"
+            )
+    return argv
+
+
+# Flags the orchestrator sends for an install request — the standard v1
+# family. ``--scope``/``--root`` are the request itself and are always
+# required; the rest are request capabilities a declared surface must list.
+_REQUEST_FLAGS = (
+    "--scope",
+    "--root",
+    "--host",
+    "--profile",
+    "--components",
+    "--gateway-profile",
+    "--yes",
+    "--dry-run",
+)
+
+
+def _declared_surface(manifest: dict[str, Any]) -> dict[str, Any] | None:
+    surf = manifest.get("install")
+    return surf if isinstance(surf, dict) else None
+
+
+def _declared_approval(manifest: dict[str, Any]) -> str:
+    """The approval flag the forge's gate honors — declared ``install.
+    approval`` wins, ``--yes`` is the v1 default."""
+    surf = _declared_surface(manifest)
+    if surf is not None:
+        flag = surf.get("approval")
+        if isinstance(flag, str) and flag.startswith("-"):
+            return flag
+    return "--yes"
+
+
+def _missing_capabilities(
+    manifest: dict[str, Any],
+    *,
+    dry_run: bool,
+    components: tuple[str, ...] | None,
+    gateway_profile: str | None,
+) -> list[str]:
+    """Request flags the manifest's declared ``install.flags`` does not
+    list. Absent surface = v1 default family (nothing missing)."""
+    surf = _declared_surface(manifest)
+    if surf is None:
+        return []
+    flags = surf.get("flags")
+    if not isinstance(flags, list):
+        return []
+    allowed = set(str(f) for f in flags)
+    needed = ["--scope", "--root", "--host", "--profile"]
     if components is not None:
-        command.extend(["--components", ",".join(components)])
-    command.append("--dry-run" if dry_run else "--yes")
-    return command
+        needed.append("--components")
+    if gateway_profile is not None:
+        needed.append("--gateway-profile")
+    # The approval flag is whatever the forge's gate honors — declared
+    # ``install.approval`` (default --yes), or --dry-run for plan mode.
+    needed.append("--dry-run" if dry_run else _declared_approval(manifest))
+    return [f for f in needed if f not in allowed]
+
+
+def _exe_resolvable(exe: str) -> bool:
+    """``argv[0]`` must resolve before we exec — PATH names via
+    ``shutil.which``, path-like entries must exist on disk."""
+    if Path(exe).is_absolute() or os.sep in exe:
+        return Path(exe).exists()
+    return shutil.which(exe) is not None
+
+
+def _valid_child_receipt(doc: Any, fid: str) -> bool:
+    return (
+        isinstance(doc, dict)
+        and doc.get("schema") == kit.SCHEMA_RECEIPT
+        and doc.get("forge_id") == fid
+        and doc.get("operation") == "install"
+    )
+
+
+def _receipt_from_stdout(text: str, fid: str) -> dict[str, Any] | None:
+    text = (text or "").strip()
+    if not text:
+        return None
+    try:
+        doc = json.loads(text)
+    except json.JSONDecodeError:
+        doc = None
+    if isinstance(doc, dict) and _valid_child_receipt(doc, fid):
+        return doc
+    for line in reversed(text.splitlines()):
+        line = line.strip()
+        if not line.startswith("{"):
+            continue
+        try:
+            doc = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if isinstance(doc, dict) and _valid_child_receipt(doc, fid):
+            return doc
+    return None
+
+
+def _receipt_dirs(target: Path) -> list[Path]:
+    """Candidate receipts dirs a child install may have written — the
+    ``.<state>/receipts`` convention, including nested ``.<state>/install/``."""
+    dirs: list[Path] = []
+    try:
+        hidden = sorted(p for p in target.glob(".*") if p.is_dir() and not p.is_symlink())
+    except OSError:
+        return dirs
+    for d in hidden:
+        for cand in (d / kit.RECEIPTS_DIR, d / "install" / kit.RECEIPTS_DIR):
+            if cand.is_dir():
+                dirs.append(cand)
+    return dirs
+
+
+def _child_install_receipt(
+    fid: str, target: Path, stdout: str, since: float
+) -> dict[str, Any] | None:
+    """The delegated child's ``forge/InstallReceipt/v1`` — stdout JSON
+    first, then the newest receipt file under ``<target>/.<state>/receipts``
+    written after ``since``. A returncode of 0 without a receipt is NOT
+    evidence of success."""
+    doc = _receipt_from_stdout(stdout, fid)
+    if doc is not None:
+        return doc
+    newest: tuple[float, dict[str, Any]] | None = None
+    for rdir in _receipt_dirs(target):
+        try:
+            files = sorted(rdir.glob("*.json"))
+        except OSError:
+            continue
+        for path in files:
+            try:
+                mtime = path.stat().st_mtime
+            except OSError:
+                continue
+            if mtime < since - 1.0:
+                continue
+            doc = kit._load_json(path, None)
+            if _valid_child_receipt(doc, fid) and (newest is None or mtime > newest[0]):
+                newest = (mtime, doc)
+    return newest[1] if newest else None
+
+
+def _delegation_verdict(returncode: int, receipt: dict[str, Any] | None) -> tuple[str, str]:
+    """(forge status, check status) — only a valid child receipt reporting
+    ``completed`` + ``PASS`` counts as success; rc==0 alone is unverified."""
+    if returncode != 0:
+        return "failed", "FAIL"
+    if receipt is None:
+        return "unverified", "UNVERIFIED"
+    status = str(receipt.get("status") or "")
+    verification = str((receipt.get("verification") or {}).get("status") or "")
+    if status == "completed" and verification == "PASS":
+        return "completed", "PASS"
+    if status in ("completed", "planned"):
+        return "unverified", "UNVERIFIED"
+    return "failed", "FAIL"
+
+
+# --------------------------------------------------------------------------
+# install-2.1 — the consolidated workspace plan
+# (forge/WorkspaceInstallation/v2, ADR-0065)
+#
+# ``install auto`` plans EVERY registered forge before any write: the
+# in-process kit.plan() for this forge, the child's own ``--dry-run``
+# receipt for siblings. The consolidated doc orders the family (declared
+# depends_on → topological; undeclared → stable default, honestly noted),
+# classifies each forge's operation (closed vocabulary), detects
+# cross-forge managed-path claims and records the per-forge ownership
+# inventory. Apply honors the plan — the loser of a conflicting path is
+# skipped, never last-writer-wins.
+# --------------------------------------------------------------------------
+
+_PLAN_TIMEOUT_S = 120
+
+# Stable ordering base when depends_on is undeclared — the control plane
+# lays down shared surfaces first, then services, then content forges.
+_KIND_RANK = {"control-tool": 0, "service": 1, "content": 2}
+
+# Managed-asset kinds whose path collisions are real conflicts. ``mcp``
+# (managed keys inside .mcp.json) and ``marker`` (managed blocks inside
+# user docs) are namespaced per forge — never path conflicts.
+_CONFLICT_KINDS = frozenset({"skill", "agent", "knowledge", "rules", "evals", "config", "state"})
+
+
+def _install_order(manifests: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], list[str]]:
+    """Install order over declared ``depends_on`` — deterministic Kahn on a
+    (installation_kind, forge_id) base order. Undeclared dependencies and
+    broken cycles become honest notes, never guesses."""
+    notes: list[str] = []
+    base = sorted(
+        manifests,
+        key=lambda m: (
+            _KIND_RANK.get(str(m.get("installation_kind") or "content"), 2),
+            str(m.get("forge_id") or ""),
+        ),
+    )
+    by_id = {str(m.get("forge_id") or ""): m for m in base}
+    position = {fid: i for i, fid in enumerate(by_id)}
+    declared: dict[str, list[str]] = {}
+    unknown: list[str] = []
+    for fid, m in by_id.items():
+        deps = m.get("depends_on")
+        ds = [d for d in deps if isinstance(d, str)] if isinstance(deps, list) else []
+        declared[fid] = [d for d in ds if d in by_id and d != fid]
+        unknown.extend(d for d in ds if d not in by_id)
+    if not any(declared.values()):
+        notes.append(
+            "no forge declares install dependencies — stable default order "
+            "(control-tool → service → content, then forge_id)"
+        )
+    if unknown:
+        notes.append(
+            f"depends_on names unregistered forges {sorted(set(unknown))} — ignored for ordering"
+        )
+    remaining: dict[str, list[str]] = {fid: list(ds) for fid, ds in declared.items()}
+    order: list[dict[str, Any]] = []
+    while remaining:
+        ready = sorted(
+            (fid for fid, ds in remaining.items() if not ds),
+            key=lambda f: position[f],
+        )
+        if not ready:
+            fid = sorted(remaining, key=lambda f: position[f])[0]
+            notes.append(
+                f"dependency cycle broken at {fid} — depends_on must be "
+                "fixed by the declaring forges; stable order resumed"
+            )
+            ready = [fid]
+            remaining[fid] = []
+        for fid in ready:
+            order.append(by_id[fid])
+            remaining.pop(fid, None)
+            for ds in remaining.values():
+                if fid in ds:
+                    ds.remove(fid)
+    return order, notes
+
+
+def _collect_forge_plan(
+    manifest: dict[str, Any],
+    *,
+    scope: str,
+    target: Path,
+    host: str,
+    profile: str,
+    components: tuple[str, ...] | None,
+    gateway_profile: str | None,
+) -> dict[str, Any]:
+    """One forge's plan evidence for the consolidated workspace plan —
+    ``kit.plan()`` in-process for this forge, the child's own ``--dry-run``
+    InstallReceipt for siblings. When evidence cannot be obtained the entry
+    says so (``unsupported``/``unavailable``) — paths are never fabricated."""
+    fid = str(manifest.get("forge_id") or "?")
+    entry: dict[str, Any] = {"forge_id": fid, "paths": {}}
+    if fid == FORGE_ID:
+        ctx = _ctx(
+            scope,
+            target,
+            _hosts(host),
+            profile,
+            True,
+            components=components,
+            gateway_profile=gateway_profile,
+        )
+        entry["plan"] = kit.plan(ctx)
+    else:
+        try:
+            cmd = _delegated_cmd(
+                manifest,
+                scope,
+                target,
+                True,
+                host=host,
+                profile=profile,
+                components=components,
+                gateway_profile=gateway_profile,
+            )
+        except kit.InstallError as exc:
+            entry["unsupported"] = str(exc)
+            return entry
+        entry["cmd"] = cmd
+        if not _exe_resolvable(cmd[0]):
+            entry["unavailable"] = f"{cmd[0]} nao resolvido"
+            return entry
+        import subprocess
+
+        try:
+            proc = subprocess.run(  # plan delegation — the child's --dry-run
+                cmd,
+                capture_output=True,
+                text=True,
+                timeout=_PLAN_TIMEOUT_S,
+                check=False,
+            )
+        except (OSError, subprocess.SubprocessError) as exc:
+            entry["unavailable"] = f"plan delegation failed: {exc}"
+            return entry
+        receipt = _receipt_from_stdout(proc.stdout or "", fid)
+        if receipt is None:
+            entry["unavailable"] = (
+                "child --dry-run emitted no forge/InstallReceipt/v1 — plan evidence unavailable"
+            )
+            return entry
+        entry["plan"] = receipt
+    paths: dict[str, dict[str, Any]] = {}
+    for f in (entry["plan"] or {}).get("planned_files", []):
+        if not isinstance(f, dict) or not isinstance(f.get("path"), str):
+            continue
+        if f.get("kind") not in _CONFLICT_KINDS or f.get("action") == "skipped":
+            continue
+        paths[f["path"]] = {"sha256": f.get("sha256"), "kind": f.get("kind")}
+    entry["paths"] = paths
+    return entry
+
+
+def _path_conflicts(
+    plans: dict[str, dict[str, Any]],
+    order: list[str],
+    target: Path,
+) -> list[dict[str, Any]]:
+    """Cross-forge managed-path claims — two forges planning the same
+    whole-file asset is a conflict. Winner: the single claimant whose
+    planned bytes already sit at the path (incumbent), else the first
+    forge in install order. One row per (path, loser)."""
+    claims: dict[str, list[str]] = {}
+    for fid in order:
+        for rel in plans.get(fid, {}).get("paths") or {}:
+            claims.setdefault(rel, []).append(fid)
+    out: list[dict[str, Any]] = []
+    for rel in sorted(claims):
+        claimants = claims[rel]
+        if len(claimants) < 2:
+            continue
+        disk_sha = None
+        path = target / rel
+        if path.is_file():
+            try:
+                disk_sha = kit._sha_file(path)
+            except OSError:
+                disk_sha = None
+        incumbents = (
+            [f for f in claimants if plans[f]["paths"].get(rel, {}).get("sha256") == disk_sha]
+            if disk_sha
+            else []
+        )
+        winner = incumbents[0] if len(incumbents) == 1 else claimants[0]
+        detail = (
+            "incumbent wins — planned bytes already at the path"
+            if len(incumbents) == 1
+            else "first in install order wins"
+        )
+        if disk_sha is None:
+            detail += "; path absent on disk"
+        elif not incumbents:
+            detail += (
+                "; path exists with foreign content — the engine's "
+                "foreign-file rule still applies at apply time"
+            )
+        for loser in (f for f in claimants if f != winner):
+            out.append(
+                {
+                    "path": rel,
+                    "claimants": list(claimants),
+                    "winner": winner,
+                    "loser": loser,
+                    "resolution": None,
+                    "detail": detail,
+                }
+            )
+    return out
+
+
+def _classify_forge(
+    manifest: dict[str, Any],
+    entry: dict[str, Any] | None,
+    result_status: str | None,
+    lost: list[str],
+    target: Path,
+) -> tuple[str | None, str]:  # (PlanClassification | None, detail)
+    """Closed plan vocabulary — ``new|updated|reused|preserved|conflict|
+    unsupported-capability``. ``None`` = honestly unclassified (no plan
+    evidence); the detail always says why."""
+    fid = str(manifest.get("forge_id") or "?")
+    if lost:
+        return "conflict", f"loses {len(lost)} managed path(s) to other forge(s): {lost}"
+    entry = entry or {}
+    if entry.get("unsupported"):
+        return "unsupported-capability", str(entry["unsupported"])
+    if result_status == "refused" or result_status is None:
+        return "preserved", "not delegated in this run — existing install untouched"
+    paths = entry.get("paths") or {}
+    if not paths:
+        detail = entry.get("unavailable")
+        if detail:
+            return None, str(detail)
+        return "reused", "no managed paths planned — nothing to change"
+    # Kind-aware diff: a planned path missing on disk is a create; matching
+    # sha is reuse; a differing sha is an update.
+    states = {"create": 0, "reused": 0, "updated": 0}
+    for rel, info in paths.items():
+        p = target / rel
+        if not p.is_file():
+            states["create"] += 1
+            continue
+        try:
+            same = kit._sha_file(p) == info.get("sha256")
+        except OSError:
+            same = False
+        states["reused" if same else "updated"] += 1
+    if states["updated"]:
+        return "updated", f"{states['updated']} managed path(s) would change"
+    if states["reused"]:
+        return "reused", f"{states['reused']} path(s) already converge"
+    # every path absent: fresh for this target — unless install evidence
+    # (mcp key or managed marker block) says the forge already manages it.
+    if _member_state(target, fid):
+        return "reused", "install evidence at target; managed paths not in plan"
+    return "new", f"{states['create']} managed path(s) to create"
+
+
+def _member_state(member: Path, fid: str) -> str | None:
+    """Precedence evidence at a project root — the forge's own ``.mcp.json``
+    key or ``<fid>:managed`` marker block means a project-scope install
+    already owns the target."""
+    mcp = member / ".mcp.json"
+    if mcp.exists():
+        doc = kit._load_json(mcp, None)
+        if isinstance(doc, dict) and fid in (doc.get("mcpServers") or {}):
+            return "project"
+    agents = member / "AGENTS.md"
+    if agents.exists() and f"{fid}:managed:begin" in agents.read_text(
+        encoding="utf-8", errors="replace"
+    ):
+        return "project"
+    return None
+
+
+def _result_verification(status: str | None) -> VerificationState:
+    """Apply-status → verification state for the consolidated doc — the
+    closed ``forge/*`` check vocabulary, never a guess."""
+    table: dict[str, VerificationState] = {
+        "completed": "PASS",
+        "planned": "UNVERIFIED",
+        "refused": "UNVERIFIED",
+        "unverified": "UNVERIFIED",
+        "blocked": "BLOCKED",
+        "unsupported": "BLOCKED",
+        "failed": "FAIL",
+    }
+    return table.get(status or "", "UNVERIFIED")
+
+
+def _owned_files(receipt: dict[str, Any] | None) -> list[dict[str, Any]]:
+    """Managed-file entries the receipt proves the forge owns — never
+    entries the engine flagged user-owned/skipped/adopted."""
+    out: list[dict[str, Any]] = []
+    for f in (receipt or {}).get("managed_files", []):
+        if not isinstance(f, dict) or not isinstance(f.get("path"), str):
+            continue
+        note = str(f.get("note") or "")
+        if f.get("action") in ("skipped",) or "user-owned" in note or "skipped" in note:
+            continue
+        out.append(f)
+    return out
+
+
+def _surface_doc(manifest: dict[str, Any]) -> dict[str, Any]:
+    surf = _declared_surface(manifest) or {}
+    return {
+        "operations": [str(o) for o in surf.get("operations") or []],
+        "flags": [str(f) for f in surf.get("flags") or []],
+        "hosts": [str(h) for h in surf.get("hosts") or []],
+        "scopes": [str(s) for s in surf.get("scopes") or []],
+        "profiles": [str(p) for p in surf.get("profiles") or []],
+        "approval": str(surf.get("approval") or "--yes"),
+    }
+
+
+def _security_doc(manifest: dict[str, Any]) -> dict[str, Any]:
+    sec = manifest.get("security")
+    if not isinstance(sec, dict):
+        sec = (_declared_surface(manifest) or {}).get("security")
+    sec = sec if isinstance(sec, dict) else {}
+    return {
+        "requires_network": sec.get("requires_network"),
+        "requires_credentials": sec.get("requires_credentials"),
+        "spawn_allowed": sec.get("spawn_allowed"),
+        "notes": sec.get("notes"),
+    }
+
+
+def _resource_kind(file_kind: str | None) -> str:
+    return {
+        "mcp": "managed-key",
+        "marker": "managed-block",
+    }.get(str(file_kind or ""), "managed-file")
+
+
+def _installation_doc(
+    *,
+    scope: str,
+    target: Path,
+    ordered: list[dict[str, Any]],
+    plans: dict[str, dict[str, Any]],
+    results: list[dict[str, Any]],
+    receipts: dict[str, dict[str, Any]],
+    conflicts: list[dict[str, Any]],
+    order_notes: list[str],
+    members: list[str],
+) -> dict[str, Any]:
+    """The consolidated ``forge/WorkspaceInstallation/v2`` document —
+    plan view, apply record and ownership inventory in one shape."""
+    from typing import cast
+
+    from theforge.contracts.base import to_dict
+    from theforge.contracts.workspace_installation import (
+        INSTALLATION_KINDS,
+        OWNERSHIP_POLICIES,
+        OWNERSHIP_SOURCES,
+        PLAN_CLASSIFICATIONS,
+        ForgeInstallation,
+        InstallationKind,
+        InstallResource,
+        InstallSecurity,
+        InstallSurface,
+        OwnershipPolicy,
+        OwnershipSource,
+        PathConflict,
+        PlanClassification,
+        WorkspaceInstallation,
+    )
+
+    result_by_fid = {str(r.get("forge_id")): r for r in results}
+    lost_by_fid: dict[str, list[str]] = {}
+    for c in conflicts:
+        lost_by_fid.setdefault(str(c["loser"]), []).append(str(c["path"]))
+
+    forges: list[ForgeInstallation] = []
+    for manifest in ordered:
+        fid = str(manifest.get("forge_id") or "?")
+        entry = plans.get(fid) or {}
+        row = result_by_fid.get(fid) or {}
+        status = row.get("status")
+        cls, detail = _classify_forge(manifest, entry, status, lost_by_fid.get(fid, []), target)
+        # Ownership evidence: the applied InstallReceipt proves managed
+        # paths (``managed_files``); in plan-only mode the planned paths
+        # are what WOULD be owned — provenance recorded, never invented.
+        receipt = receipts.get(fid)
+        owned_files = _owned_files(receipt)
+        ownership_source = "receipt" if owned_files else None
+        if not owned_files:
+            plan = entry.get("plan")
+            if isinstance(plan, dict):
+                owned_files = [
+                    f
+                    for f in plan.get("planned_files", [])
+                    if isinstance(f, dict)
+                    and f.get("action") != "skipped"
+                    and f.get("path") not in set(lost_by_fid.get(fid, []))
+                ]
+                if owned_files:
+                    ownership_source = "plan"
+        excluded = set(lost_by_fid.get(fid, []))
+        owned = sorted(f["path"] for f in owned_files if f.get("path") not in excluded)
+        surf_raw = manifest.get("install")
+        surf = surf_raw if isinstance(surf_raw, dict) else {}
+        raw_policy = surf.get("update_policy")
+        policy: OwnershipPolicy = (
+            cast(OwnershipPolicy, raw_policy)
+            if isinstance(raw_policy, str) and raw_policy in OWNERSHIP_POLICIES
+            else "forge-owned"
+        )
+        raw_kind = str(manifest.get("installation_kind") or "content")
+        kind = cast(InstallationKind, raw_kind if raw_kind in INSTALLATION_KINDS else "content")
+        src = (
+            cast(OwnershipSource, ownership_source)
+            if ownership_source in OWNERSHIP_SOURCES
+            else None
+        )
+        cls_t = cast(PlanClassification, cls) if cls in PLAN_CLASSIFICATIONS else None
+        resources = [
+            InstallResource(
+                id=f"{fid}:{f['path']}",
+                kind=_resource_kind(f.get("kind")),
+                location=str(f["path"]),
+                sha256=(f.get("sha256") if isinstance(f.get("sha256"), str) else None),
+                owner=fid,
+                policy=policy,
+            )
+            for f in owned_files
+            if f.get("path") not in excluded
+        ]
+        forges.append(
+            ForgeInstallation(
+                forge_id=fid,
+                installation_kind=kind,
+                version=(
+                    manifest.get("version") if isinstance(manifest.get("version"), str) else None
+                ),
+                cli=providers.manifest_cli(manifest),
+                install_command=[str(a) for a in (manifest.get("install_command") or [])],
+                depends_on=[
+                    str(d) for d in (manifest.get("depends_on") or []) if isinstance(d, str)
+                ],
+                surface=InstallSurface(**_surface_doc(manifest)),
+                resources=resources,
+                owned_paths=owned,
+                ownership=policy,
+                ownership_source=src,
+                security=InstallSecurity(**_security_doc(manifest)),
+                verification=_result_verification(status),
+                classification=cls_t,
+                classification_detail=detail,
+            )
+        )
+    ver_states = [f.verification for f in forges]
+    aggregate: VerificationState = (
+        "FAIL"
+        if any(v == "FAIL" for v in ver_states)
+        else "PASS"
+        if ver_states and all(v in ("PASS", "NOT_APPLICABLE") for v in ver_states)
+        else "UNVERIFIED"
+    )
+    notes = list(order_notes)
+    doc = WorkspaceInstallation(
+        workspace_root=str(target),
+        created_at=kit._utc_now(),
+        updated_at=kit._utc_now(),
+        scope=scope,
+        order=[f.forge_id for f in forges],
+        order_note="; ".join(order_notes) if order_notes else None,
+        forges=forges,
+        conflicts=[
+            PathConflict(
+                path=str(c["path"]),
+                claimants=[str(x) for x in c["claimants"]],
+                winner=str(c["winner"]),
+                loser=str(c["loser"]),
+                resolution=c.get("resolution"),
+                detail=str(c.get("detail") or ""),
+            )
+            for c in conflicts
+        ],
+        members=members,
+        notes=notes,
+        verification=aggregate,
+    )
+    return to_dict(doc)
 
 
 def install_auto(
@@ -1063,7 +1816,39 @@ def install_auto(
             "status": "failed",
             "created_at": kit._utc_now(),
         }
-    for manifest in found:
+    # ------------------------------------------------------------------
+    # Phase 1 — consolidated plan (install-2.1): every forge is planned
+    # BEFORE any write. Sibling plans come from the child's own
+    # ``--dry-run`` receipt; this forge plans in-process. Without the
+    # approval gate no delegation happens at all — no plan collection,
+    # no writes (the plan itself is part of the gated surface).
+    # ------------------------------------------------------------------
+    approved = bool(yes or dry_run)
+    ordered, order_notes = _install_order(found)
+    order_ids = [str(m.get("forge_id") or "?") for m in ordered]
+    plans: dict[str, dict[str, Any]] = {}
+    if approved:
+        for manifest in ordered:
+            fid = str(manifest.get("forge_id") or "?")
+            plans[fid] = _collect_forge_plan(
+                manifest,
+                scope=scope,
+                target=target,
+                host=host,
+                profile=profile,
+                components=components,
+                gateway_profile=gateway_profile,
+            )
+    conflicts = _path_conflicts(plans, order_ids, target)
+    exclusions: dict[str, list[str]] = {}
+    for c in conflicts:
+        exclusions.setdefault(str(c["loser"]), []).append(str(c["path"]))
+
+    # ------------------------------------------------------------------
+    # Phase 2 — apply in install order, honoring the consolidated plan.
+    # ------------------------------------------------------------------
+    receipts: dict[str, dict[str, Any]] = {}
+    for manifest in ordered:
         fid = manifest.get("forge_id", "?")
         if fid == FORGE_ID:
             out = (
@@ -1076,10 +1861,13 @@ def install_auto(
                     gateway_profile=gateway_profile,
                     yes=yes,
                     dry_run=dry_run,
+                    exclude=tuple(sorted(exclusions.get(fid, []))),
                 )
-                if (yes or dry_run)
+                if approved
                 else {"status": "refused", "detail": "sem --yes"}
             )
+            if isinstance(out, dict) and out.get("schema") == kit.SCHEMA_RECEIPT:
+                receipts[fid] = out
             results.append(
                 {
                     "forge_id": fid,
@@ -1095,30 +1883,34 @@ def install_auto(
                 }
             )
             continue
-        cmd = _delegated_cmd(
-            manifest,
-            scope,
-            target,
-            dry_run,
-            host=host,
-            profile=profile,
-            components=components,
-        )
-        if not (yes or dry_run):
+        if not approved:
             results.append({"forge_id": fid, "status": "refused", "detail": "sem --yes"})
             checks.append(
                 {"id": f"forge:{fid}", "status": "BLOCKED", "detail": "approval gate — sem --yes"}
             )
             continue
-        import shutil
-
+        unsupported = (plans.get(fid) or {}).get("unsupported")
+        if unsupported:
+            results.append({"forge_id": fid, "status": "unsupported", "detail": unsupported})
+            checks.append({"id": f"forge:{fid}", "status": "BLOCKED", "detail": unsupported})
+            continue
+        try:
+            cmd = _delegated_cmd(
+                manifest,
+                scope,
+                target,
+                dry_run,
+                host=host,
+                profile=profile,
+                components=components,
+                gateway_profile=gateway_profile,
+            )
+        except kit.InstallError as exc:
+            results.append({"forge_id": fid, "status": "unsupported", "detail": str(exc)})
+            checks.append({"id": f"forge:{fid}", "status": "BLOCKED", "detail": str(exc)})
+            continue
         exe = cmd[0]
-        probe_ok = (
-            Path(exe).exists()
-            if Path(exe).is_absolute() or os.sep in exe
-            else shutil.which(exe) is not None
-        )
-        if not probe_ok:
+        if not _exe_resolvable(exe):
             results.append({"forge_id": fid, "status": "blocked", "detail": f"{exe} nao resolvido"})
             checks.append(
                 {"id": f"forge:{fid}", "status": "BLOCKED", "detail": f"{exe} nao encontrado"}
@@ -1130,24 +1922,79 @@ def install_auto(
             continue
         import subprocess
 
+        started = time.time()
         proc = subprocess.run(  # delegation to the forge's own governed CLI
             cmd, capture_output=True, text=True, timeout=600, check=False
         )
-        ok = proc.returncode == 0
-        results.append(
-            {
-                "forge_id": fid,
-                "status": "completed" if ok else "failed",
-                "returncode": proc.returncode,
-            }
-        )
+        child_rcpt = _child_install_receipt(fid, target, proc.stdout, started)
+        if child_rcpt is not None:
+            receipts[fid] = child_rcpt
+        verdict, check_status = _delegation_verdict(proc.returncode, child_rcpt)
+        row: dict[str, Any] = {
+            "forge_id": fid,
+            "status": verdict,
+            "returncode": proc.returncode,
+        }
+        if child_rcpt and child_rcpt.get("receipt_id"):
+            row["receipt_id"] = child_rcpt["receipt_id"]
+        results.append(row)
         checks.append(
             {
                 "id": f"forge:{fid}",
-                "status": "PASS" if ok else "FAIL",
+                "status": check_status,
                 "detail": (proc.stdout or proc.stderr)[-200:],
             }
         )
+
+    # ------------------------------------------------------------------
+    # Phase 3 — resolve conflicts from observed evidence (apply mode).
+    # The loser's own engine skips foreign-owned paths too, but the
+    # resolution is recorded from the receipt, never assumed.
+    # ------------------------------------------------------------------
+    for c in conflicts:
+        loser_rcpt = receipts.get(str(c["loser"]))
+        if dry_run:
+            c["resolution"] = None
+            continue
+        entry_kind = next(
+            (
+                f
+                for f in (loser_rcpt or {}).get("managed_files", [])
+                if isinstance(f, dict) and f.get("path") == c["path"]
+            ),
+            None,
+        )
+        if entry_kind is None:
+            c["resolution"] = (
+                "skipped" if loser_rcpt is not None else "unverified — no loser receipt"
+            )
+        elif entry_kind.get("action") in ("created", "updated"):
+            c["resolution"] = "overwritten — loser wrote anyway (plan violation)"
+            checks.append(
+                {
+                    "id": "cross-forge-conflicts",
+                    "status": "FAIL",
+                    "detail": (
+                        f"{c['loser']} overwrote {c['path']} claimed by "
+                        f"{c['winner']} — last-writer-wins is forbidden"
+                    ),
+                }
+            )
+        else:
+            c["resolution"] = "skipped"
+
+    if conflicts:
+        checks.append(
+            {
+                "id": "consolidated-plan",
+                "status": "PASS" if not dry_run else "UNVERIFIED",
+                "detail": (
+                    f"{len(conflicts)} cross-forge path conflict(s): "
+                    + "; ".join(f"{c['path']} {c['loser']}!={c['winner']}" for c in conflicts)
+                ),
+            }
+        )
+
     registry_sync: dict[str, Any] | None = None
     if yes or dry_run:
         registry_sync = sync_provider_registry(
@@ -1178,6 +2025,18 @@ def install_auto(
             "completed" if all(c["status"] in ("PASS", "UNVERIFIED") for c in checks) else "failed"
         )
     )
+    member_entries: list[str] = []
+    installation = _installation_doc(
+        scope=scope,
+        target=target,
+        ordered=ordered,
+        plans=plans,
+        results=results,
+        receipts=receipts,
+        conflicts=conflicts,
+        order_notes=order_notes,
+        members=[],  # filled below once workspace discovery ran
+    )
     receipt: dict[str, Any] = {
         "schema": kit.SCHEMA_RECEIPT,
         "forge_id": FORGE_ID,
@@ -1192,6 +2051,7 @@ def install_auto(
         "checks": checks,
         "forges": results,
         "provider_registry": registry_sync,
+        "installation": installation,
         "managed_files": [],
         "verification": {
             "status": (
@@ -1210,14 +2070,19 @@ def install_auto(
         receipt["workspace"] = _workspace_report(
             target,
             results,
-            found,
+            ordered,
             members=members,
             approved=yes,
             dry_run=dry_run,
             host=host,
             profile=profile,
             components=components,
+            gateway_profile=gateway_profile,
+            installation=installation,
         )
+        member_entries = [str(m.get("path")) for m in receipt["workspace"].get("members", [])]
+        if member_entries:
+            installation["members"] = member_entries
     return receipt
 
 
@@ -1232,12 +2097,15 @@ def _workspace_report(
     host: str = "all",
     profile: str = "recommended",
     components: tuple[str, ...] | None = None,
+    gateway_profile: str | None = None,
+    installation: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Member discovery + precedence + the ``forge/WorkspaceInstall/v1``
     manifest for ``install auto --scope workspace``.
 
-    Members = independent ``.git`` checkouts under the root (never
-    assumed to be a monorepo). A member already project-installed for a
+    Members = independent project roots under the root — ``.git`` or a
+    project manifest marker, never assumed to be a monorepo. A member
+    already project-installed for a
     forge (own ``.mcp.json`` key or ``<tag>:managed`` marker block) keeps
     project precedence — workspace assets specialize, never widen.
     ``members`` names subprojects (relative paths) for explicit
@@ -1248,19 +2116,6 @@ def _workspace_report(
     member_entries: list[dict[str, Any]] = []
     conflicts: list[dict[str, Any]] = []
     done = [r for r in results if r.get("status") == "completed"]
-
-    def _member_state(member: Path, fid: str) -> str | None:
-        mcp = member / ".mcp.json"
-        if mcp.exists():
-            doc = kit._load_json(mcp, None)
-            if isinstance(doc, dict) and fid in (doc.get("mcpServers") or {}):
-                return "project"
-        agents = member / "AGENTS.md"
-        if agents.exists() and f"{fid}:managed:begin" in agents.read_text(
-            encoding="utf-8", errors="replace"
-        ):
-            return "project"
-        return None
 
     for member in discovered:
         rel = str(member.relative_to(ws_root)) if member != ws_root else "."
@@ -1292,18 +2147,40 @@ def _workspace_report(
             fid = manifest.get("forge_id", "?")
             if fid == FORGE_ID:
                 continue  # self already installed at workspace root
-            cmd = _delegated_cmd(
-                manifest,
-                "project",
-                member_dir,
-                dry_run,
-                host=host,
-                profile=profile,
-                components=components,
-            )
             if not (approved or dry_run):
                 member_results.append(
                     {"member": rel, "forge_id": fid, "status": "refused", "detail": "approval gate"}
+                )
+                continue
+            try:
+                cmd = _delegated_cmd(
+                    manifest,
+                    "project",
+                    member_dir,
+                    dry_run,
+                    host=host,
+                    profile=profile,
+                    components=components,
+                    gateway_profile=gateway_profile,
+                )
+            except kit.InstallError as exc:
+                member_results.append(
+                    {
+                        "member": rel,
+                        "forge_id": fid,
+                        "status": "unsupported",
+                        "detail": str(exc),
+                    }
+                )
+                continue
+            if not _exe_resolvable(cmd[0]):
+                member_results.append(
+                    {
+                        "member": rel,
+                        "forge_id": fid,
+                        "status": "blocked",
+                        "detail": f"{cmd[0]} nao resolvido",
+                    }
                 )
                 continue
             if dry_run:
@@ -1313,13 +2190,16 @@ def _workspace_report(
                 continue
             import subprocess
 
+            started = time.time()
             proc = subprocess.run(cmd, capture_output=True, text=True, timeout=600, check=False)
+            receipt = _child_install_receipt(fid, member_dir, proc.stdout, started)
+            verdict, _check_status = _delegation_verdict(proc.returncode, receipt)
             member_results.append(
                 {
                     "member": rel,
                     "forge_id": fid,
-                    "status": ("completed" if proc.returncode == 0 else "failed"),
-                    "receipt_id": f"{rel}/{fid}",
+                    "status": verdict,
+                    "receipt_id": (receipt or {}).get("receipt_id") or f"{rel}/{fid}",
                 }
             )
 
@@ -1341,8 +2221,13 @@ def _workspace_report(
         "created_at": kit._utc_now(),
         "updated_at": kit._utc_now(),
     }
+    if installation is not None:
+        # The consolidated cross-forge ownership inventory (install-2.1,
+        # forge/WorkspaceInstallation/v2) — persisted under the v1
+        # manifest's ``installation`` block, extended not replaced.
+        manifest["installation"] = installation
     state = ws_root / ".forge"
-    if not dry_run and (done or projects):
+    if not dry_run and (done or projects or conflicts):
         state.mkdir(parents=True, exist_ok=True)
         prev = kit._load_json(state / "workspace-install.json", None)
         if isinstance(prev, dict) and prev.get("created_at"):

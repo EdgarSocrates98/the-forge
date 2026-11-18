@@ -146,6 +146,24 @@ def test_get_text_window_and_integrity(tmp_path: Path) -> None:
     assert tail.text == body[9:17]
 
 
+def test_get_rejects_negative_window_and_offset(tmp_path: Path) -> None:
+    res, root = _resolver(
+        tmp_path,
+        [{"id": "doc", "kind": "knowledge", "location": "knowledge/d.md"}],
+    )
+    (root / "knowledge").mkdir()
+    (root / "knowledge" / "d.md").write_text("payload", encoding="utf-8")
+    with pytest.raises(ResourceFailure) as ei:
+        res.get("tforge:doc", max_bytes=-1)
+    assert ei.value.kind == ResourceErrorKind.INVALID
+    with pytest.raises(ResourceFailure) as ei:
+        res.get("tforge:doc", offset=-1)
+    assert ei.value.kind == ResourceErrorKind.INVALID
+    # zero remains valid — a deliberately empty window
+    out = res.get("tforge:doc", max_bytes=0)
+    assert out.served_bytes == 0 and out.truncated
+
+
 def test_get_redacts_secrets(tmp_path: Path) -> None:
     res, root = _resolver(
         tmp_path,

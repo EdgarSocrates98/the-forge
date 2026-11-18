@@ -29,6 +29,69 @@ existing cycle without intentionally breaking the Forge Protocol.
   runs without a telemetry artifact are named, never synthesized. Closes the
   live-correlation gap between the-forge and forge-lens (was `NOT_APPLICABLE`
   in the federated E2E; now a verified check).
+- install-2.1 (ADR-0065, `forge/WorkspaceInstallation/v2`): `install auto`
+  plans every registered forge BEFORE any write — `kit.plan()` in-process
+  for this forge, each sibling's own `--dry-run` InstallReceipt for the
+  rest — and consolidates the result into a single document: install order
+  (`depends_on` → topological; undeclared → stable default
+  `control-tool → service → content`, honestly noted), per-forge
+  classification (`new|updated|reused|preserved|conflict|
+  unsupported-capability`), declared install surfaces, cross-forge
+  managed-path conflicts with explicit winner/loser, and a per-forge
+  ownership inventory (`owned_paths` + qualified `resources[]` with
+  sha256/policy/provenance — `receipt` evidence vs `plan` projection). The
+  document persists under `forge/WorkspaceInstall/v1`'s `installation`
+  block and renders on the wizard review screen and status docs.
+- Installation manifests declare install capabilities: `installation_kind`
+  (`content|service|control-tool`), `install` (operations / flags / hosts /
+  scopes / profiles / approval flag) and `depends_on` — propagated verbatim
+  from `forge.json` by the bootstrap. Delegated argv is now built strictly
+  from the declared surface: a request flag the surface does not list is
+  `E_UNSUPPORTED`, never a silently widened argv; absent `install` keeps
+  the v1 standard flag family.
+- Cross-forge path-conflict safety: whole-file managed assets claimed by
+  ≥2 forges resolve to the incumbent-on-disk or the first forge in install
+  order; loser paths are excluded from apply and a rogue write is named
+  `overwritten — plan violation` → FAIL, never last-writer-wins.
+- `theforge init` now writes `forge.workspace.yaml` — the marker the
+  installkit's workspace-root search recognizes, closing the
+  `init` → `install --scope workspace` round-trip.
+- Gitless workspace members are first-class: member discovery counts a
+  directory carrying any of `.git`, `forge.json`, `forge.agentic.json`,
+  `pyproject.toml` or `package.json` (depth ≤ 2, symlinks/junctions never
+  followed, no descent into a discovered member).
+- Closed verdict taxonomy (`theforge.contracts.verdicts`): `PASS`, `FAIL`,
+  `BLOCKED`, `SKIPPED`, `NOT_APPLICABLE`, `UNVERIFIED`, `ERROR` as a
+  StrEnum — `parse` is case/separator-insensitive, off-set values are a
+  contract violation — plus `ACCEPTANCE`, the single table deciding what
+  a verdict means for a gate (`PASS` → success, `FAIL`/`ERROR` →
+  blocking, the rest → unverified). Both E2E aggregators emit and gate
+  through it.
+- Signals gain optional classification axes (`platform`, `service`,
+  `language`, `artifact_type`) plus `axes_index()` — indexing/discovery
+  labels only, never routing inputs.
+
+### Changed
+
+- Interactive apply confirmation defaults to **No** (`approve_plan`,
+  wizard): writes require an explicit `y`; an empty Enter aborts. Dry-run
+  remains approval-free.
+- `install auto` sibling success is receipt-verified: only a child
+  `forge/InstallReceipt/v1` reporting `completed` + `PASS` counts —
+  a green exit code alone now reports `unverified`, never success.
+
+### Fixed
+
+- `install auto --scope workspace --root <dir>`: an explicit root can no
+  longer be overridden by an ancestor workspace marker — markers may
+  only confirm the directory the walk reaches without `--root`.
+- Context retrieval rejects negative windows up front: `resources get`
+  `max_bytes`/`offset` < 0 → typed `INVALID`; `plan_context`
+  `level3_budget` < 0 → `ValueError` (previously the L3 budget check
+  could never fire). Zero stays a legal empty window.
+- `unified_e2e` exits non-zero on FAIL/ERROR scenarios (mandatory
+  scenarios now carry `blocking[]`); `federated_e2e` reads the real
+  `l1_refs_scanned` metric key.
 
 ## [0.7.6] - 2026-11-12
 

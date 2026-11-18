@@ -119,12 +119,14 @@ from theforge.contracts.knowledge_interop import (
     knowledge_canonical_json,
 )
 from theforge.contracts.manifest import (
+    SIGNAL_AXES,
     Capability,
     CapabilityContext,
     CapabilityRelations,
     ExecutionInfo,
     ForgeManifest,
     Signals,
+    axes_index,
 )
 from theforge.contracts.mcp import (
     MCP_DOCUMENT_SCHEMA,
@@ -336,6 +338,15 @@ from theforge.contracts.workspace import (
     Technology,
     WorkspaceDescriptor,
     WorkspaceRelation,
+)
+from theforge.contracts.workspace_installation import (
+    WORKSPACE_INSTALLATION_SCHEMA,
+    ForgeInstallation,
+    InstallResource,
+    InstallSecurity,
+    InstallSurface,
+    PathConflict,
+    WorkspaceInstallation,
 )
 
 __all__ = [
@@ -594,6 +605,7 @@ __all__ = [
     "SemanticPlanOption",
     "SemanticPlanProposal",
     "ShadowRecommendation",
+    "SIGNAL_AXES",
     "Signals",
     "SignatureRef",
     "SimulatedNode",
@@ -617,10 +629,18 @@ __all__ = [
     "VerifyRequest",
     "VerifyVerdict",
     "Violation",
+    "WORKSPACE_INSTALLATION_SCHEMA",
+    "ForgeInstallation",
+    "InstallResource",
+    "InstallSecurity",
+    "InstallSurface",
+    "PathConflict",
     "WorkspaceDescriptor",
     "WorkspaceGraph",
+    "WorkspaceInstallation",
     "WorkspaceRelation",
     "WorkspaceSummary",
+    "axes_index",
     "from_dict",
     "handoff_integrity",
     "new_request_id",

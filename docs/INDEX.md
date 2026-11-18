@@ -69,6 +69,7 @@ _Task-oriented guides and workflows._
 ### adapters/
 
 - [theforge-apiforge-adapter](../adapters/apiforge/README.md)
+- [theforge-apisentinel — forge/v1 adapter for API Sentinel](../adapters/apisentinel/README.md)
 - [theforge-platformforge-adapter](../adapters/platformforge/README.md)
 - [theforge-sparkforge-aws-adapter](../adapters/sparkforge_aws/README.md)
 - [theforge-sparkforge-azure-adapter](../adapters/sparkforge_azure/README.md)
@@ -77,7 +78,15 @@ _Task-oriented guides and workflows._
 
 - [Forge ecosystem audit](../audit/README.md)
 - [Validation matrix](../audit/matrix/README.md)
+- [CLI/TUI e instalação — fechamento da rodada](../audit/reports/cli-tui-install-parity-2026-11-04.md)
 - [Installation report](../audit/reports/installation-report.md)
+
+### audits/
+
+- [Installation and portability](audits/cycle-0.5.1/09-installation-and-portability.md)
+- [Cycle 0.5.1 — federated closure](audits/cycle-0.5.1/README.md)
+- [Installation compatibility](audits/cycle-0.5/08-installation-compatibility.md)
+- [Cycle 0.5 — compatibilidade cross-repository](audits/cycle-0.5/README.md)
 
 ### docs/
 
@@ -121,7 +130,9 @@ _Task-oriented guides and workflows._
 - [the-forge + Devin CLI](installation/devin-cli.md)
 - [Instalação global (escopo user) — the-forge](installation/global-installation.md)
 - [MCP — the-forge](installation/mcp.md)
+- [Migration — install v1 → Workspace Installation 2.1](installation/migration-2.1.md)
 - [Instalação portátil — the-forge](installation/portable-installation.md)
+- [Workspace Installation 2.1 — Architecture and Operational Guide](installation/workspace-installation-2.1.md)
 - [Instalação em workspace — the-forge](installation/workspace-installation.md)
 
 ### learn/
@@ -136,6 +147,26 @@ _Task-oriented guides and workflows._
 - [Receita — instalar o the-forge (um comando, de verdade)](learn/recipes/instalar-theforge.md)
 - [Receita — portal web local: command center da federação](learn/recipes/portal-command-center.md)
 - [Receita — usar o Command Center (TUI)](learn/recipes/tui-command-center.md)
+
+### phase1/
+
+- [Phase 1 installation homologation](phase1/PHASE1_INSTALLATION_HOMOLOGATION.md)
+
+### phase1.1/
+
+- [Installation regression](phase1.1/INSTALLATION_REGRESSION.md)
+
+### phase2/
+
+- [Phase 2 — Installation Homologation](phase2/INSTALLATION_HOMOLOGATION.md)
+
+### phase2.7/
+
+- [Installation Matrix](phase2.7/INSTALLATION_MATRIX.md)
+
+### phase2.8/
+
+- [Federated Installed E2E](phase2.8/FEDERATED_INSTALLED_E2E.md)
 
 ### portable-installation/
 
@@ -183,6 +214,12 @@ _Task-oriented guides and workflows._
 
 _Command, contract, schema and tool references._
 
+### audits/
+
+- [Contract conformance](audits/cycle-0.5.1/05-contract-conformance.md)
+- [Contract inventory](audits/cycle-0.5/03-contract-inventory.md)
+- [Schema evolution policy](audits/cycle-0.5/05-schema-evolution-policy.md)
+
 ### contracts/
 
 - [Forge Experience Contracts — v1 (congelados na FASE 0)](../contracts/experience/README.md)
@@ -200,10 +237,37 @@ _Command, contract, schema and tool references._
 - [Federated Capability Descriptor](engineering-excellence/federation-contract.md)
 - [External Practice References](engineering-excellence/references.md)
 
+### experience/
+
+- [CLI, TTY/TUI e instalação — contrato do ecossistema](experience/cli-tui-install-contract.md)
+
 ### graph-studio/
 
 - [ForgeGraphView/v1 ↔ real engines — gap analysis](graph-studio/graph-contract-gap-analysis.md)
 - [forge/ForgeGraphView/v1](graph-studio/graph-contract.md)
+
+### phase1/
+
+- [Contract inventory](phase1/CONTRACT_INVENTORY.md)
+- [Phase 1 contract compatibility](phase1/PHASE1_CONTRACT_COMPATIBILITY.md)
+
+### phase1.1/
+
+- [Contract compatibility matrix](phase1.1/CONTRACT_COMPATIBILITY_MATRIX.md)
+- [Knowledge authorization contract](phase1.1/KNOWLEDGE_AUTHORIZATION_CONTRACT.md)
+
+### phase2/
+
+- [Phase 2 — Contract Compatibility](phase2/CONTRACT_COMPATIBILITY.md)
+- [Phase 2 — Contract Matrix](phase2/CONTRACT_MATRIX.md)
+
+### phase2.7/
+
+- [Obsidian Contracts](phase2.7/OBSIDIAN_CONTRACTS.md)
+
+### phase2.8/
+
+- [Obsidian Contract Matrix](phase2.8/OBSIDIAN_CONTRACT_MATRIX.md)
 
 ### portable-installation/
 
@@ -281,7 +345,13 @@ _Concepts, architecture and design decisions._
 - [ADR 0060 — Forge Lab coordinator: subsistema novo no core, ou orquestração sobre labs existentes?](adr/0060-forge-lab-coordinator.md)
 - [ADR 0061 — `.forge/context/`: registry de contexto por workspace + contrato `forge/context/v1`](adr/0061-forge-context-registry.md)
 - [ADR 0062 — catálogo federado de especialistas](adr/0062-ecosystem-specialist-catalog.md)
+- [ADR 0063 — ownership dos contratos agentic e evidência de roster](adr/0063-agentic-contract-ownership-and-roster-evidence.md)
+- [ADR 0065 — Plano de instalação consolidado e inventário de posse cross-forge](adr/0065-workspace-installation-consolidated.md)
 - [Índice de ADRs](adr/README.md)
+
+### audits/
+
+- [Architecture inventory](audits/cycle-0.5/01-architecture-inventory.md)
 
 ### docs/
 
@@ -306,6 +376,10 @@ _Concepts, architecture and design decisions._
 - [Graph Studio architecture](graph-studio/architecture.md)
 - [Graph Studio architecture](graph-studio/graph-studio-architecture.md)
 
+### phase2/
+
+- [Phase 2 — Architecture Decisions](phase2/ARCHITECTURE_DECISIONS.md)
+
 ### programs/
 
 - [Cycle 11.2 — MCP protocol verify (P1-002)](programs/cycle-11.2/mcp-protocol.md)
@@ -323,11 +397,32 @@ _Troubleshooting, doctor/repair, observability._
 - [theforge-doctorapi-adapter](../adapters/doctorapi/README.md)
 - [theforge-doctordata-adapter](../adapters/doctordata/README.md)
 
+### adr/
+
+- [ADR 0064 — segurança operacional e limites de evidência agentic](adr/0064-agentic-operational-safety-and-evidence.md)
+
 ### agentic/
 
 - [forge-doctor-api](../agentic/skills/forge-doctor-api.md)
 - [forge-doctor-data](../agentic/skills/forge-doctor-data.md)
 - [forge-troubleshooting](../agentic/skills/forge-troubleshooting.md)
+
+### audit/
+
+- [Release diagnostic summary](../audit/release-dumps/2026-11-04-ecosystem-v10/forge-doctor-api/release-summary.md)
+- [Release diagnostic summary](../audit/release-dumps/2026-11-04-ecosystem-v10/forge-doctor-data/release-summary.md)
+- [Release diagnostic summary](../audit/release-dumps/2026-11-04-ecosystem-v11/forge-doctor-api/release-summary.md)
+- [Release diagnostic summary](../audit/release-dumps/2026-11-04-ecosystem-v11/forge-doctor-data/release-summary.md)
+- [Release diagnostic summary](../audit/release-dumps/2026-11-04-ecosystem-v7/forge-doctor-api/release-summary.md)
+- [Release diagnostic summary](../audit/release-dumps/2026-11-04-ecosystem-v7/forge-doctor-data/release-summary.md)
+- [Release diagnostic summary](../audit/release-dumps/2026-11-04-ecosystem-v8/forge-doctor-api/release-summary.md)
+- [Release diagnostic summary](../audit/release-dumps/2026-11-04-ecosystem-v8/forge-doctor-data/release-summary.md)
+- [Release diagnostic summary](../audit/release-dumps/2026-11-04-ecosystem-v9/forge-doctor-api/release-summary.md)
+- [Release diagnostic summary](../audit/release-dumps/2026-11-04-ecosystem-v9/forge-doctor-data/release-summary.md)
+
+### audits/
+
+- [Portal API Operations](audits/cycle-0.5.1/07-portal-api-operations.md)
 
 ### graph-studio/
 
@@ -361,10 +456,12 @@ _Agent instructions, skills and internal process._
 
 ### agentic/
 
+- [forge-api-sentinel](../agentic/skills/forge-api-sentinel.md)
 - [forge-api](../agentic/skills/forge-api.md)
 - [forge-bootstrap](../agentic/skills/forge-bootstrap.md)
 - [forge-capability-negotiation](../agentic/skills/forge-capability-negotiation.md)
 - [forge-cross-domain-planning](../agentic/skills/forge-cross-domain-planning.md)
+- [forge-data-sentinel](../agentic/skills/forge-data-sentinel.md)
 - [forge-discovery](../agentic/skills/forge-discovery.md)
 - [forge-ecosystem](../agentic/skills/forge-ecosystem.md)
 - [forge-factory](../agentic/skills/forge-factory.md)
@@ -404,11 +501,78 @@ _Historical, deprecated, generated and evidence docs (preserved, not entry point
 
 ### audit/
 
+- [Release diagnostic summary](../audit/release-dumps/2026-11-04-ecosystem-master-v14/release-summary.md) `RELEASE_REPORT`
+- [Release diagnostic summary](../audit/release-dumps/2026-11-04-ecosystem-v10/api-forge/release-summary.md) `RELEASE_REPORT`
+- [Release diagnostic summary](../audit/release-dumps/2026-11-04-ecosystem-v10/code-atlas-forge/release-summary.md) `RELEASE_REPORT`
+- [Release diagnostic summary](../audit/release-dumps/2026-11-04-ecosystem-v10/data-sentinel-forge/release-summary.md) `RELEASE_REPORT`
+- [Release diagnostic summary](../audit/release-dumps/2026-11-04-ecosystem-v10/forge-agent-bridge/release-summary.md) `RELEASE_REPORT`
+- [Release diagnostic summary](../audit/release-dumps/2026-11-04-ecosystem-v10/forge-cli/release-summary.md) `RELEASE_REPORT`
+- [Release diagnostic summary](../audit/release-dumps/2026-11-04-ecosystem-v10/forge-lens/release-summary.md) `RELEASE_REPORT`
+- [Release diagnostic summary](../audit/release-dumps/2026-11-04-ecosystem-v10/forge-portal/release-summary.md) `RELEASE_REPORT`
+- [Release diagnostic summary](../audit/release-dumps/2026-11-04-ecosystem-v10/platform-forge/release-summary.md) `RELEASE_REPORT`
+- [Release diagnostic summary](../audit/release-dumps/2026-11-04-ecosystem-v10/product-forge/release-summary.md) `RELEASE_REPORT`
+- [Release diagnostic summary](../audit/release-dumps/2026-11-04-ecosystem-v10/spark-forge-aws/release-summary.md) `RELEASE_REPORT`
+- [Release diagnostic summary](../audit/release-dumps/2026-11-04-ecosystem-v10/spark-forge-azure/release-summary.md) `RELEASE_REPORT`
+- [Release diagnostic summary](../audit/release-dumps/2026-11-04-ecosystem-v10/the-forge/release-summary.md) `RELEASE_REPORT`
+- [Release diagnostic summary](../audit/release-dumps/2026-11-04-ecosystem-v11/api-forge/release-summary.md) `RELEASE_REPORT`
+- [Release diagnostic summary](../audit/release-dumps/2026-11-04-ecosystem-v11/code-atlas-forge/release-summary.md) `RELEASE_REPORT`
+- [Release diagnostic summary](../audit/release-dumps/2026-11-04-ecosystem-v11/data-sentinel-forge/release-summary.md) `RELEASE_REPORT`
+- [Release diagnostic summary](../audit/release-dumps/2026-11-04-ecosystem-v11/forge-agent-bridge/release-summary.md) `RELEASE_REPORT`
+- [Release diagnostic summary](../audit/release-dumps/2026-11-04-ecosystem-v11/forge-cli/release-summary.md) `RELEASE_REPORT`
+- [Release diagnostic summary](../audit/release-dumps/2026-11-04-ecosystem-v11/forge-lens/release-summary.md) `RELEASE_REPORT`
+- [Release diagnostic summary](../audit/release-dumps/2026-11-04-ecosystem-v11/forge-portal/release-summary.md) `RELEASE_REPORT`
+- [Release diagnostic summary](../audit/release-dumps/2026-11-04-ecosystem-v11/platform-forge/release-summary.md) `RELEASE_REPORT`
+- [Release diagnostic summary](../audit/release-dumps/2026-11-04-ecosystem-v11/product-forge/release-summary.md) `RELEASE_REPORT`
+- [Release diagnostic summary](../audit/release-dumps/2026-11-04-ecosystem-v11/spark-forge-aws/release-summary.md) `RELEASE_REPORT`
+- [Release diagnostic summary](../audit/release-dumps/2026-11-04-ecosystem-v11/spark-forge-azure/release-summary.md) `RELEASE_REPORT`
+- [Release diagnostic summary](../audit/release-dumps/2026-11-04-ecosystem-v11/the-forge/release-summary.md) `RELEASE_REPORT`
+- [Release diagnostic summary](../audit/release-dumps/2026-11-04-ecosystem-v12/release-summary.md) `RELEASE_REPORT`
+- [Release diagnostic summary](../audit/release-dumps/2026-11-04-ecosystem-v13/release-summary.md) `RELEASE_REPORT`
+- [Release diagnostic summary](../audit/release-dumps/2026-11-04-ecosystem-v7/api-forge/release-summary.md) `RELEASE_REPORT`
+- [Release diagnostic summary](../audit/release-dumps/2026-11-04-ecosystem-v7/code-atlas-forge/release-summary.md) `RELEASE_REPORT`
+- [Release diagnostic summary](../audit/release-dumps/2026-11-04-ecosystem-v7/data-sentinel-forge/release-summary.md) `RELEASE_REPORT`
+- [Release diagnostic summary](../audit/release-dumps/2026-11-04-ecosystem-v7/forge-agent-bridge/release-summary.md) `RELEASE_REPORT`
+- [Release diagnostic summary](../audit/release-dumps/2026-11-04-ecosystem-v7/forge-cli/release-summary.md) `RELEASE_REPORT`
+- [Release diagnostic summary](../audit/release-dumps/2026-11-04-ecosystem-v7/forge-lens/release-summary.md) `RELEASE_REPORT`
+- [Release diagnostic summary](../audit/release-dumps/2026-11-04-ecosystem-v7/forge-portal/release-summary.md) `RELEASE_REPORT`
+- [Release diagnostic summary](../audit/release-dumps/2026-11-04-ecosystem-v7/platform-forge/release-summary.md) `RELEASE_REPORT`
+- [Release diagnostic summary](../audit/release-dumps/2026-11-04-ecosystem-v7/product-forge/release-summary.md) `RELEASE_REPORT`
+- [Release diagnostic summary](../audit/release-dumps/2026-11-04-ecosystem-v7/spark-forge-aws/release-summary.md) `RELEASE_REPORT`
+- [Release diagnostic summary](../audit/release-dumps/2026-11-04-ecosystem-v7/spark-forge-azure/release-summary.md) `RELEASE_REPORT`
+- [Release diagnostic summary](../audit/release-dumps/2026-11-04-ecosystem-v7/the-forge/release-summary.md) `RELEASE_REPORT`
+- [Release diagnostic summary](../audit/release-dumps/2026-11-04-ecosystem-v8/api-forge/release-summary.md) `RELEASE_REPORT`
+- [Release diagnostic summary](../audit/release-dumps/2026-11-04-ecosystem-v8/code-atlas-forge/release-summary.md) `RELEASE_REPORT`
+- [Release diagnostic summary](../audit/release-dumps/2026-11-04-ecosystem-v8/data-sentinel-forge/release-summary.md) `RELEASE_REPORT`
+- [Release diagnostic summary](../audit/release-dumps/2026-11-04-ecosystem-v8/forge-agent-bridge/release-summary.md) `RELEASE_REPORT`
+- [Release diagnostic summary](../audit/release-dumps/2026-11-04-ecosystem-v8/forge-cli/release-summary.md) `RELEASE_REPORT`
+- [Release diagnostic summary](../audit/release-dumps/2026-11-04-ecosystem-v8/forge-lens/release-summary.md) `RELEASE_REPORT`
+- [Release diagnostic summary](../audit/release-dumps/2026-11-04-ecosystem-v8/forge-portal/release-summary.md) `RELEASE_REPORT`
+- [Release diagnostic summary](../audit/release-dumps/2026-11-04-ecosystem-v8/platform-forge/release-summary.md) `RELEASE_REPORT`
+- [Release diagnostic summary](../audit/release-dumps/2026-11-04-ecosystem-v8/product-forge/release-summary.md) `RELEASE_REPORT`
+- [Release diagnostic summary](../audit/release-dumps/2026-11-04-ecosystem-v8/spark-forge-aws/release-summary.md) `RELEASE_REPORT`
+- [Release diagnostic summary](../audit/release-dumps/2026-11-04-ecosystem-v8/spark-forge-azure/release-summary.md) `RELEASE_REPORT`
+- [Release diagnostic summary](../audit/release-dumps/2026-11-04-ecosystem-v8/the-forge/release-summary.md) `RELEASE_REPORT`
+- [Release diagnostic summary](../audit/release-dumps/2026-11-04-ecosystem-v9/api-forge/release-summary.md) `RELEASE_REPORT`
+- [Release diagnostic summary](../audit/release-dumps/2026-11-04-ecosystem-v9/code-atlas-forge/release-summary.md) `RELEASE_REPORT`
+- [Release diagnostic summary](../audit/release-dumps/2026-11-04-ecosystem-v9/data-sentinel-forge/release-summary.md) `RELEASE_REPORT`
+- [Release diagnostic summary](../audit/release-dumps/2026-11-04-ecosystem-v9/forge-agent-bridge/release-summary.md) `RELEASE_REPORT`
+- [Release diagnostic summary](../audit/release-dumps/2026-11-04-ecosystem-v9/forge-cli/release-summary.md) `RELEASE_REPORT`
+- [Release diagnostic summary](../audit/release-dumps/2026-11-04-ecosystem-v9/forge-lens/release-summary.md) `RELEASE_REPORT`
+- [Release diagnostic summary](../audit/release-dumps/2026-11-04-ecosystem-v9/forge-portal/release-summary.md) `RELEASE_REPORT`
+- [Release diagnostic summary](../audit/release-dumps/2026-11-04-ecosystem-v9/platform-forge/release-summary.md) `RELEASE_REPORT`
+- [Release diagnostic summary](../audit/release-dumps/2026-11-04-ecosystem-v9/product-forge/release-summary.md) `RELEASE_REPORT`
+- [Release diagnostic summary](../audit/release-dumps/2026-11-04-ecosystem-v9/spark-forge-aws/release-summary.md) `RELEASE_REPORT`
+- [Release diagnostic summary](../audit/release-dumps/2026-11-04-ecosystem-v9/spark-forge-azure/release-summary.md) `RELEASE_REPORT`
+- [Release diagnostic summary](../audit/release-dumps/2026-11-04-ecosystem-v9/the-forge/release-summary.md) `RELEASE_REPORT`
 - [THE FORGE FULL ECOSYSTEM CERTIFICATION](../audit/reports/THE_FORGE_FULL_ECOSYSTEM_CERTIFICATION.md) `UNKNOWN`
 - [Compatibility matrix](../audit/reports/compatibility-matrix.md) `UNKNOWN`
+- [Ecosystem release train — 2026-11-04](../audit/reports/ecosystem-release-train-2026-11-04.md) `RELEASE_REPORT`
 - [Ecosystem summary](../audit/reports/ecosystem-summary.md) `UNKNOWN`
+- [Verificação do ecossistema Forge — 2026-11-07](../audit/reports/ecosystem-verification-2026-11-07.md) `UNKNOWN`
 - [Independence report](../audit/reports/independence-report.md) `UNKNOWN`
 - [Integration report](../audit/reports/integration-report.md) `UNKNOWN`
+- [FORGE Ecosystem — Master Delivery Report](../audit/reports/master-2026-11-04-final.md) `UNKNOWN`
+- [FORGE Ecosystem — Master Audit 2026-11-04](../audit/reports/master-2026-11-04.md) `UNKNOWN`
 - [Prompt Evo — auditoria de auditabilidade (historical)](../audit/reports/prompt-evo-auditabilidade.md) `UNKNOWN`
 - [Prompt Evo Mastering Melhorias — current audit](../audit/reports/prompt-evo-mastering-melhorias.md) `UNKNOWN`
 - [Security and supply-chain report](../audit/reports/security-report.md) `UNKNOWN`
@@ -421,8 +585,55 @@ _Historical, deprecated, generated and evidence docs (preserved, not entry point
 
 ### audits/
 
+- [Agentic Readiness Report — 2026-11-13T17:10:10+00:00](../audits/unified-platform/AGENTIC_READINESS_REPORT.md) `UNKNOWN`
+- [CI + Release Evidence — 2026-11-13T17:10:10+00:00](../audits/unified-platform/CI_RELEASE_EVIDENCE.md) `TEST_EVIDENCE`
+- [Context Engineering Evals — 2026-11-13T17:10:10+00:00](../audits/unified-platform/CONTEXT_ENGINEERING_EVALS.md) `UNKNOWN`
+- [Corporate Security Report — 2026-11-13T17:10:10+00:00](../audits/unified-platform/CORPORATE_SECURITY_REPORT.md) `UNKNOWN`
+- [Federated E2E Report — 2026-11-13T17:10:10+00:00](../audits/unified-platform/FEDERATED_E2E_REPORT.md) `UNKNOWN`
+- [Final Platform Certification — FORGE unified platform](../audits/unified-platform/FINAL_PLATFORM_CERTIFICATION.md) `UNKNOWN`
+- [Known Limitations — 2026-11-13T17:10:10+00:00](../audits/unified-platform/KNOWN_LIMITATIONS.md) `UNKNOWN`
+- [MCP Host Compatibility — 2026-11-13T17:10:10+00:00](../audits/unified-platform/MCP_HOST_COMPATIBILITY.md) `UNKNOWN`
+- [Portability Matrix — 2026-11-13T17:10:10+00:00](../audits/unified-platform/PORTABILITY_MATRIX.md) `UNKNOWN`
+- [Portal UX Acceptance — 2026-11-13T17:10:10+00:00](../audits/unified-platform/PORTAL_UX_ACCEPTANCE.md) `UNKNOWN`
+- [Remaining Backlog — 2026-11-13T17:10:10+00:00](../audits/unified-platform/REMAINING_BACKLOG.md) `UNKNOWN`
+- [Repository Status Matrix — 2026-11-13T17:10:10+00:00](../audits/unified-platform/REPOSITORY_STATUS_MATRIX.md) `UNKNOWN`
+- [Resource Catalog Audit — 2026-11-13T17:10:10+00:00](../audits/unified-platform/RESOURCE_CATALOG_AUDIT.md) `UNKNOWN`
+- [Capability ownership](../audits/unified-platform/capability-ownership.md) `UNKNOWN`
+- [Repository matrix — unified platform baseline](../audits/unified-platform/repository-matrix.md) `UNKNOWN`
 - [FORGE_CONTEXT_BASELINE — the-forge](audits/FORGE_CONTEXT_BASELINE.md) `UNKNOWN`
 - [FORGE_CONTEXT_FINAL_HOMOLOGATION — the-forge](audits/FORGE_CONTEXT_FINAL_HOMOLOGATION.md) `UNKNOWN`
+- [Executive summary](audits/cycle-0.5.1/00-executive-summary.md) `UNKNOWN`
+- [Main baseline and evidence boundary](audits/cycle-0.5.1/01-main-baseline.md) `UNKNOWN`
+- [Revalidated findings](audits/cycle-0.5.1/02-revalidated-findings.md) `UNKNOWN`
+- [Agent Bridge remediation](audits/cycle-0.5.1/03-agent-bridge-remediation.md) `UNKNOWN`
+- [Provider routing closure](audits/cycle-0.5.1/04-provider-routing-closure.md) `UNKNOWN`
+- [Federated E2E laboratory](audits/cycle-0.5.1/06-e2e-laboratory.md) `UNKNOWN`
+- [Security assessment](audits/cycle-0.5.1/08-security-assessment.md) `UNKNOWN`
+- [Test results](audits/cycle-0.5.1/10-test-results.md) `TEST_EVIDENCE`
+- [Compatibility matrix](audits/cycle-0.5.1/11-compatibility-matrix.md) `UNKNOWN`
+- [Remaining risks](audits/cycle-0.5.1/12-remaining-risks.md) `UNKNOWN`
+- [API Sentinel readiness](audits/cycle-0.5.1/13-api-sentinel-readiness.md) `UNKNOWN`
+- [Final homologation](audits/cycle-0.5.1/14-final-homologation.md) `UNKNOWN`
+- [Executive summary — Cycle 0.5](audits/cycle-0.5/00-executive-summary.md) `UNKNOWN`
+- [Capability ownership](audits/cycle-0.5/02-capability-ownership.md) `UNKNOWN`
+- [Compatibility matrix](audits/cycle-0.5/04-compatibility-matrix.md) `UNKNOWN`
+- [Findings and remediation](audits/cycle-0.5/06-findings-and-remediation.md) `UNKNOWN`
+- [Security assessment](audits/cycle-0.5/07-security-assessment.md) `UNKNOWN`
+- [E2E lab specification](audits/cycle-0.5/09-e2e-lab-specification.md) `UNKNOWN`
+- [Test results](audits/cycle-0.5/10-test-results.md) `TEST_EVIDENCE`
+- [Unresolved risks](audits/cycle-0.5/11-unresolved-risks.md) `UNKNOWN`
+- [API Sentinel Forge readiness gate](audits/cycle-0.5/12-api-sentinel-readiness.md) `UNKNOWN`
+- [Final homologation — Cycle 0.5](audits/cycle-0.5/13-final-homologation.md) `UNKNOWN`
+- [Cycle 0.5 revalidation — 2026-11-08](audits/cycle-0.5/14-revalidation-2026-11-08.md) `UNKNOWN`
+- [Cycle 0.5 E2E evidence — 2026-11-08](audits/cycle-0.5/evidence/2026-11-08/README.md) `TEST_EVIDENCE`
+- [API Operations E2E — Agent Bridge availability classification](audits/cycle-0.5/evidence/2026-11-08/api-operations-e2e-agent-state-2026-11-08.md) `TEST_EVIDENCE`
+- [API Operations E2E — routable catalog receipt](audits/cycle-0.5/evidence/2026-11-08/api-operations-e2e-routable-2026-11-08.md) `TEST_EVIDENCE`
+- [Control-plane provider execution — 2026-11-08](audits/cycle-0.5/evidence/2026-11-08/control-plane-provider-execution-2026-11-08.md) `TEST_EVIDENCE`
+- [Doctor roster closure — 2026-11-08](audits/cycle-0.5/evidence/2026-11-08/doctor-roster-closure-2026-11-08.md) `TEST_EVIDENCE`
+- [Specialist roster evidence — 2026-11-08](audits/cycle-0.5/evidence/2026-11-08/specialist-roster-2026-11-08.md) `TEST_EVIDENCE`
+- [Cycle 0.5 repository baseline — 2026-11-08](audits/cycle-0.5/repository-baseline-2026-11-08.md) `UNKNOWN`
+- [Repository baseline — Cycle 0.5](audits/cycle-0.5/repository-baseline.md) `UNKNOWN`
+- [Cycle 1 — integração governada e prontidão operacional](audits/cycle-1-integration-readiness.md) `UNKNOWN`
 
 ### certification/
 
@@ -485,6 +696,7 @@ _Historical, deprecated, generated and evidence docs (preserved, not entry point
 - [Capabilities: taxonomia e catálogo](capabilities.md) `UNKNOWN`
 - [Capability Negotiation v2](capability-negotiation.md) `UNKNOWN`
 - [CLI](cli.md) `UNKNOWN`
+- [Context Engineering — the L0–L3 model](context-engineering.md) `UNKNOWN`
 - [Context ROI](context-roi.md) `UNKNOWN`
 - [Control Plane — Specialist Lifecycle, Hosts & Delegation](control-plane.md) `UNKNOWN`
 - [Cross-Forge Orchestration](cross-forge-orchestration.md) `UNKNOWN`
@@ -508,6 +720,7 @@ _Historical, deprecated, generated and evidence docs (preserved, not entry point
 - [Ontologia compartilhada](ontology.md) `UNKNOWN`
 - [Orquestração por capability — OrchestrationReport (lf-0031)](orchestration.md) `UNKNOWN`
 - [Performance: benchmark, baseline e budgets](performance.md) `UNKNOWN`
+- [Profiles — install, gateway and runtime budget](profiles.md) `UNKNOWN`
 - [Escrevendo um provider](provider-authoring.md) `UNKNOWN`
 - [Provider Distribution & Installation Plan v2](provider-distribution.md) `UNKNOWN`
 - [Providers reais: os seis especialistas](real-providers.md) `UNKNOWN`
@@ -589,6 +802,8 @@ _Historical, deprecated, generated and evidence docs (preserved, not entry point
 - [Release candidates verificáveis por projeto — sem publicar](../factory/specs/active/cyc101-08-release-candidates.md) `RELEASE_REPORT`
 - [E2E global obrigatório: app de exemplo com problemas conhecidos](../factory/specs/active/cyc101-09-global-e2e.md) `UNKNOWN`
 - [Certificação final + relatório obrigatório §16](../factory/specs/active/cyc101-10-final-certification.md) `UNKNOWN`
+- [Grill Gate](../factory/specs/active/egm-resolve-agentic-ecosystem-2026-11-06.md) `UNKNOWN`
+- [Grill Gate](../factory/specs/active/forge-ecosystem-master-2026-11-04.md) `UNKNOWN`
 - [Grill Gate](../factory/specs/active/lf-0001-loop-factory-smoke.md) `UNKNOWN`
 - [Engineering Excellence Grill](../factory/specs/active/lf-0005-engineering-excellence.md) `UNKNOWN`
 - [The Forge control-plane agentic manifest](../factory/specs/archive/2026/control-plane-agentic-manifest.md) `HISTORICAL`
@@ -608,6 +823,7 @@ _Historical, deprecated, generated and evidence docs (preserved, not entry point
 - [Grill Gate](../factory/specs/archive/2026/lf-0004-family-onboarding-router.md) `HISTORICAL`
 - [Grill Gate](../factory/specs/archive/2026/lf-0004-rui-terminal-resilience.md) `HISTORICAL`
 - [Grill Gate](../factory/specs/archive/2026/lf-0006-zero-touch-router.md) `HISTORICAL`
+- [Ecosystem CLI, TTY/TUI and install parity](../factory/specs/archive/2026/lf-0007-ecosystem-cli-tui-install-parity.md) `HISTORICAL`
 - [Review Template](../factory/templates/review.md) `UNKNOWN`
 - [Grill Gate](../factory/templates/spec.md) `UNKNOWN`
 
@@ -664,6 +880,95 @@ _Historical, deprecated, generated and evidence docs (preserved, not entry point
 ### learn/
 
 - [The Forge — do zero à execução multi-especialista](learn/zero-to-multi-specialist.md) `UNKNOWN`
+
+### phase1/
+
+- [Dependency graph](phase1/DEPENDENCY_GRAPH.md) `UNKNOWN`
+- [Duplication audit](phase1/DUPLICATION_AUDIT.md) `UNKNOWN`
+- [Integration gap analysis](phase1/INTEGRATION_GAP_ANALYSIS.md) `UNKNOWN`
+- [Forge Ecosystem — Phase 1 baseline](phase1/PHASE1_BASELINE.md) `UNKNOWN`
+- [Phase 1 E2E evidence](phase1/PHASE1_E2E_EVIDENCE.md) `TEST_EVIDENCE`
+- [Phase 1 execution report — current checkpoint](phase1/PHASE1_EXECUTION_REPORT.md) `UNKNOWN`
+- [Forge Lab federado — evidência local L1](phase1/PHASE1_FEDERATED_LAB_L1_EVIDENCE_2026-11-08.md) `TEST_EVIDENCE`
+- [Phase 1 performance report](phase1/PHASE1_PERFORMANCE_REPORT.md) `UNKNOWN`
+- [Phase 1 remaining gaps](phase1/PHASE1_REMAINING_GAPS.md) `UNKNOWN`
+- [Phase 1 revalidation — 2026-11-08](phase1/PHASE1_REVALIDATION_2026-11-08.md) `UNKNOWN`
+- [Phase 1 security report](phase1/PHASE1_SECURITY_REPORT.md) `UNKNOWN`
+- [Spark LAB-002 — evidência live L1](phase1/PHASE1_SPARK_L1_LIVE_EVIDENCE_2026-11-08.md) `TEST_EVIDENCE`
+- [Phase 2 specialist audit handoff](phase1/PHASE2_SPECIALIST_AUDIT_HANDOFF.md) `UNKNOWN`
+- [Quality baseline](phase1/QUALITY_BASELINE.md) `UNKNOWN`
+- [Repository capability matrix](phase1/REPOSITORY_CAPABILITY_MATRIX.md) `UNKNOWN`
+- [Security baseline](phase1/SECURITY_BASELINE.md) `UNKNOWN`
+
+### phase1.1/
+
+- [Baseline revalidation](phase1.1/BASELINE_REVALIDATION.md) `UNKNOWN`
+- [Bridge parity report](phase1.1/BRIDGE_PARITY_REPORT.md) `UNKNOWN`
+- [CI verification](phase1.1/CI_VERIFICATION.md) `UNKNOWN`
+- [Defuddle hardening](phase1.1/DEFUDDLE_HARDENING.md) `UNKNOWN`
+- [Phase 1.1 — execution record](phase1.1/EXECUTION_PLAN.md) `UNKNOWN`
+- [Federated E2E report](phase1.1/FEDERATED_E2E_REPORT.md) `UNKNOWN`
+- [Final acceptance matrix](phase1.1/FINAL_ACCEPTANCE_MATRIX.md) `UNKNOWN`
+- [Phase 1.1 — final revalidation (2026-11-08)](phase1.1/FINAL_REVALIDATION_2026-11-08.md) `UNKNOWN`
+- [Obsidian compatibility](phase1.1/OBSIDIAN_COMPATIBILITY.md) `UNKNOWN`
+- [P0/P1 findings](phase1.1/P0_P1_FINDINGS.md) `UNKNOWN`
+- [Phase 2 readiness](phase1.1/PHASE2_READINESS.md) `UNKNOWN`
+- [Remaining risks](phase1.1/REMAINING_RISKS.md) `UNKNOWN`
+- [Search performance](phase1.1/SEARCH_PERFORMANCE.md) `UNKNOWN`
+- [Security remediation](phase1.1/SECURITY_REMEDIATION.md) `UNKNOWN`
+- [URL security report](phase1.1/URL_SECURITY_REPORT.md) `UNKNOWN`
+
+### phase2/
+
+- [Phase 2 — Baseline](phase2/BASELINE.md) `UNKNOWN`
+- [Phase 2 — Completion Audit](phase2/COMPLETION_AUDIT.md) `UNKNOWN`
+- [Phase 2 — Execution Report](phase2/EXECUTION_REPORT.md) `UNKNOWN`
+- [Phase 2 — Cross-Forge Obsidian E2E Evidence](phase2/FEDERATED_E2E_EVIDENCE.md) `TEST_EVIDENCE`
+- [Phase 2 — Final Acceptance](phase2/FINAL_ACCEPTANCE.md) `UNKNOWN`
+- [Phase 2 — Knowledge Freshness Report](phase2/KNOWLEDGE_FRESHNESS_REPORT.md) `UNKNOWN`
+- [Phase 2 — Obsidian Format Compatibility](phase2/OBSIDIAN_FORMAT_COMPATIBILITY.md) `UNKNOWN`
+- [Obsidian Integration — Gap Analysis](phase2/OBSIDIAN_INTEGRATION_GAP_ANALYSIS.md) `UNKNOWN`
+- [Phase 2 — Ownership Matrix](phase2/OWNERSHIP_MATRIX.md) `UNKNOWN`
+- [Phase 2 — Performance Report](phase2/PERFORMANCE_REPORT.md) `UNKNOWN`
+- [Phase 2 — Quality Gate Ledger](phase2/QUALITY_GATE_LEDGER.md) `UNKNOWN`
+- [Phase 2 — Remaining Risks](phase2/REMAINING_RISKS.md) `UNKNOWN`
+- [Phase 2 — Specialist Adapters](phase2/SPECIALIST_ADAPTERS.md) `UNKNOWN`
+- [Phase 2 — Sync Integrity Report](phase2/SYNC_INTEGRITY_REPORT.md) `UNKNOWN`
+- [Phase 2 — Vault Security Report](phase2/VAULT_SECURITY_REPORT.md) `UNKNOWN`
+
+### phase2.7/
+
+- [Cycle 2.7 — Federated Baseline](phase2.7/BASELINE.md) `UNKNOWN`
+- [CI Convergence](phase2.7/CI_CONVERGENCE.md) `UNKNOWN`
+- [Cross-Forge Compatibility](phase2.7/CROSS_FORGE_COMPATIBILITY.md) `UNKNOWN`
+- [Federated E2E](phase2.7/FEDERATED_E2E.md) `UNKNOWN`
+- [Final Acceptance](phase2.7/FINAL_ACCEPTANCE.md) `UNKNOWN`
+- [Findings](phase2.7/FINDINGS.md) `UNKNOWN`
+- [Package Certification](phase2.7/PACKAGE_CERTIFICATION.md) `UNKNOWN`
+- [Platform Context Security](phase2.7/PLATFORM_CONTEXT_SECURITY.md) `UNKNOWN`
+- [Portal UX Report](phase2.7/PORTAL_UX_REPORT.md) `UNKNOWN`
+- [Quality Gate Ledger](phase2.7/QUALITY_GATE_LEDGER.md) `UNKNOWN`
+- [Redaction Policy](phase2.7/REDACTION_POLICY.md) `UNKNOWN`
+- [Remaining Risks](phase2.7/REMAINING_RISKS.md) `UNKNOWN`
+- [Security Boundaries](phase2.7/SECURITY_BOUNDARIES.md) `UNKNOWN`
+- [Vault Integrity](phase2.7/VAULT_INTEGRITY.md) `UNKNOWN`
+
+### phase2.8/
+
+- [API Forge Pages Status](phase2.8/API_PAGES_STATUS.md) `UNKNOWN`
+- [Cycle 2.8 Baseline](phase2.8/BASELINE.md) `UNKNOWN`
+- [Cycle 2.8 CI Convergence](phase2.8/CI_CONVERGENCE.md) `UNKNOWN`
+- [Cycle 2.8 Final Acceptance](phase2.8/FINAL_ACCEPTANCE.md) `UNKNOWN`
+- [Package Compatibility](phase2.8/PACKAGE_COMPATIBILITY.md) `UNKNOWN`
+- [Platform Context Hardening](phase2.8/PLATFORM_CONTEXT_HARDENING.md) `UNKNOWN`
+- [Quality Gate Ledger](phase2.8/QUALITY_GATES.md) `UNKNOWN`
+- [Shared Redaction and Provenance Report](phase2.8/REDACTION_REPORT.md) `UNKNOWN`
+- [Remaining Risks](phase2.8/REMAINING_RISKS.md) `UNKNOWN`
+- [Security Boundary Audit](phase2.8/SECURITY_BOUNDARIES.md) `UNKNOWN`
+
+### portable-installation/
+
+- [Forge SDD Contracts — federação (Onda 5)](portable-installation/forge-sdd-contracts.md) `SDD_ARTIFACT`
 
 ### portal/
 
@@ -736,6 +1041,7 @@ _Historical, deprecated, generated and evidence docs (preserved, not entry point
 - [Agentic Ecosystem — Final Report (prompt_evo_engenharia_agentica §100)](reports/agentic-ecosystem.md) `UNKNOWN`
 - [Agentic Ecosystem Control Plane — cycle report](reports/agentic-orchestration.md) `UNKNOWN`
 - [Agentic Ecosystem — Polish & Closure Report (prompt_evo_agentic_ecosystem §50)](reports/agentic-polish-closure.md) `UNKNOWN`
+- [Resolução dos achados Goldfish — ecossistema agentic](reports/agentic-resolution-2026-11-06.md) `UNKNOWN`
 - [Cycle 2 — relatório final (gate de fechamento)](reports/cycle-2-final.md) `RELEASE_REPORT`
 - [Cycle 2.1 — Closure & Proof (relatório de trabalho)](reports/cycle-2.1.md) `RELEASE_REPORT`
 - [Relatório final do Cycle 2](reports/cycle-2.md) `RELEASE_REPORT`

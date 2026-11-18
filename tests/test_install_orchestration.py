@@ -292,6 +292,68 @@ def test_delegated_cmd_propagates_setup_choices() -> None:
     ]
 
 
+def test_delegated_cmd_template_verb_not_duplicated() -> None:
+    """The template already IS the installer entry — appending a second
+    ``install`` (``-m forge_doctor_api install install``) was the bug."""
+    manifest = {
+        "forge_id": "forge-doctor-api",
+        "cli": {"name": "forge-doctor-api"},
+        "install_command": ["{python}", "-m", "forge_doctor_api", "install"],
+    }
+    argv = service._delegated_cmd(manifest, "project", Path("T"), False)
+    assert argv.count("install") == 1
+    assert argv[1:4] == ["-m", "forge_doctor_api", "install"]
+    assert argv[-1] == "--yes"
+
+
+def test_delegated_cmd_template_declared_flags_not_duplicated() -> None:
+    """Flags already declared in the template are not appended twice;
+    a baked ``--yes`` stays, and --dry-run is still honored."""
+    manifest = {
+        "forge_id": "atlas",
+        "cli": {"name": "atlas"},
+        "install_command": ["atlas", "install", "--yes"],
+    }
+    argv = service._delegated_cmd(manifest, "project", Path("T"), False)
+    assert argv.count("--yes") == 1
+    assert "--scope" in argv and "--root" in argv
+    dry = service._delegated_cmd(manifest, "project", Path("T"), True)
+    assert dry[-1] == "--dry-run"
+
+
+def test_delegated_cmd_propagates_gateway_profile() -> None:
+    argv = service._delegated_cmd(
+        {"forge_id": "x", "cli": {"name": "x-cli"}},
+        "project",
+        Path("T"),
+        False,
+        gateway_profile="economy",
+    )
+    assert argv[-3:] == ["--gateway-profile", "economy", "--yes"]
+
+
+def test_delegated_cmd_no_surface_is_unsupported() -> None:
+    """A manifest declaring neither cli nor install_command must not
+    fabricate ``<forge_id> install …`` — it is UNSUPPORTED, typed."""
+    with pytest.raises(kit.InstallError) as exc:
+        service._delegated_cmd({"forge_id": "ghost"}, "project", Path("T"), False)
+    assert exc.value.kind == kit.E_UNSUPPORTED
+
+
+def test_delegated_cmd_refuses_invalid_templates() -> None:
+    bad = [
+        "not-a-list",  # not an argv list
+        ["{python}", "{bogus}/x.py"],  # undeclared placeholder
+        ["{python}", "a;b"],  # shell metachars in a manifest token
+        ["echo && rm"],  # shell composition is never an argv entry
+        [""],  # empty argv entry
+    ]
+    for tpl in bad:
+        manifest = {"forge_id": "evil", "install_command": tpl}
+        with pytest.raises(kit.InstallError):
+            service._delegated_cmd(manifest, "project", Path("T"), False)
+
+
 def test_install_auto_self_persists_execution_profile(forge_home: Path, target: Path) -> None:
     inst = forge_home / ".forge" / "installations"
     inst.mkdir(parents=True)
@@ -379,6 +441,14 @@ def test_ask_parser_exposes_one_step_auto_install() -> None:
 _STUB = "import sys; sys.exit(0)"
 
 
+def _receipt_doc(fid: str) -> str:
+    return (
+        "{'schema':'forge/InstallReceipt/v1','receipt_id':'sha256:stub-1',"
+        f"'forge_id':'{fid}','operation':'install','status':'completed',"
+        "'verification':{'status':'PASS'},'checks':[],'managed_files':[]}"
+    )
+
+
 def _workspace(tmp_path: Path, *members: str) -> Path:
     ws = tmp_path / "ws"
     for m in members:
@@ -387,11 +457,28 @@ def _workspace(tmp_path: Path, *members: str) -> Path:
     return ws
 
 
-def _register_stub_forge(forge_home: Path, fid: str = "fake-forge") -> None:
+def _register_stub_forge(
+    forge_home: Path, fid: str = "fake-forge", *, receipt: str = "stdout"
+) -> None:
+    """``install_command`` stub: ``receipt='stdout'`` prints a valid
+    forge/InstallReceipt/v1, ``'file'`` writes it under
+    ``<root>/.<fid>/receipts/``, ``'none'`` exits 0 silently."""
     inst = forge_home / ".forge" / "installations"
     inst.mkdir(parents=True, exist_ok=True)
     stub = forge_home / f"{fid}-stub.py"
-    stub.write_text(_STUB, "utf-8")
+    if receipt == "stdout":
+        body = f"import json\nprint(json.dumps({_receipt_doc(fid)}))\n"
+    elif receipt == "file":
+        body = (
+            "import json, sys\nfrom pathlib import Path\n"
+            "root = Path(sys.argv[sys.argv.index('--root') + 1])\n"
+            f"d = root / '.{fid}' / 'receipts'\n"
+            "d.mkdir(parents=True, exist_ok=True)\n"
+            f"(d / 'install-1.json').write_text(json.dumps({_receipt_doc(fid)}), 'utf-8')\n"
+        )
+    else:
+        body = _STUB
+    stub.write_text(body, "utf-8")
     (inst / f"{fid}.json").write_text(
         json.dumps(
             {
@@ -426,6 +513,44 @@ def test_workspace_member_fanout(forge_home: Path, tmp_path: Path) -> None:
     manifest = json.loads((ws / ".forge" / "workspace-install.json").read_text("utf-8"))
     assert [p["path"] for p in manifest["projects"]] == ["backend-api"]
     assert manifest["projects"][0]["forge_id"] == "fake-forge"
+
+
+def test_member_fanout_receipt_via_receipts_dir(forge_home: Path, tmp_path: Path) -> None:
+    """The child's InstallReceipt may arrive via its receipts dir instead
+    of stdout — both count as proof."""
+    ws = _workspace(tmp_path, "backend-api")
+    _register_stub_forge(forge_home, receipt="file")
+    out = service.install_auto(scope="workspace", root=ws, yes=True, members=("backend-api",))
+    results = out["workspace"]["member_results"]
+    assert [(r["member"], r["status"]) for r in results] == [("backend-api", "completed")]
+    assert results[0]["receipt_id"] == "sha256:stub-1"
+
+
+def test_delegation_rc0_without_receipt_is_unverified(forge_home: Path, tmp_path: Path) -> None:
+    """returncode==0 alone is NOT success — no valid InstallReceipt means
+    the install is reported UNVERIFIED, never completed."""
+    ws = _workspace(tmp_path, "backend-api")
+    _register_stub_forge(forge_home, receipt="none")
+    out = service.install_auto(scope="workspace", root=ws, yes=True, members=("backend-api",))
+    results = out["workspace"]["member_results"]
+    assert [(r["member"], r["status"]) for r in results] == [("backend-api", "unverified")]
+    forge = next(r for r in out["forges"] if r["forge_id"] == "fake-forge")
+    assert forge["status"] == "unverified"
+    # nothing verifiably completed -> no workspace manifest is written
+    assert not (ws / ".forge" / "workspace-install.json").exists()
+
+
+def test_auto_marks_surfaceless_forge_unsupported(forge_home: Path, target: Path) -> None:
+    inst = forge_home / ".forge" / "installations"
+    inst.mkdir(parents=True)
+    (inst / "the-forge.json").write_text(
+        '{"forge_id": "the-forge", "cli": {"name": "theforge"}}', "utf-8"
+    )
+    (inst / "ghost.json").write_text('{"forge_id": "ghost"}', "utf-8")
+    out = service.install_auto(scope="project", root=target, yes=True)
+    ghost = next(r for r in out["forges"] if r["forge_id"] == "ghost")
+    assert ghost["status"] == "unsupported"
+    assert "delegation unsupported" in ghost["detail"]
 
 
 def test_workspace_unknown_member_reported(forge_home: Path, tmp_path: Path) -> None:

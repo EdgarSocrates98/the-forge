@@ -80,6 +80,29 @@ def test_scope_unknown_refuses(tmp_path):
     assert e.value.kind == kit.E_SCOPE
 
 
+def test_resolve_scope_explicit_root_never_climbs(tmp_path):
+    """--root is authoritative: a workspace marker in an ANCESTOR must not
+    pull the resolved workspace root above the explicit --root."""
+    ws = tmp_path / "ws"
+    member = ws / "member"
+    member.mkdir(parents=True)
+    (ws / ".forge-workspace").touch()  # ancestor marker — must not win
+    spec = _spec()
+    assert kit.resolve_scope(spec, "workspace", member, member) == member
+    # without --root the marker walk still finds the workspace root
+    assert kit.resolve_scope(spec, "workspace", member, None) == ws.resolve()
+
+
+def test_resolve_scope_workspace_marker_itself_is_root(tmp_path):
+    ws = tmp_path / "ws"
+    (ws / "nested" / "leaf").mkdir(parents=True)
+    (ws / "forge.workspace.json").touch()
+    spec = _spec()
+    assert kit.resolve_scope(spec, "workspace", ws / "nested" / "leaf", None) == ws.resolve()
+    # explicit --root equal to the marker dir resolves to itself
+    assert kit.resolve_scope(spec, "workspace", ws, ws) == ws
+
+
 def test_profile_unknown_raises(tmp_path):
     ctx = _ctx(tmp_path)
     ctx.profile = "bogus"
@@ -385,6 +408,62 @@ def test_discover_projects_finds_repos(tmp_path):
     (ws / "not-a-repo").mkdir(parents=True)
     (ws / ".hidden" / ".git").mkdir(parents=True)
     assert kit.discover_projects(ws) == sorted((ws / n).resolve() for n in ("a", "b"))
+
+
+def test_discover_projects_gitless_members(tmp_path):
+    """Gitless project roots are first-class members: a manifest marker
+    counts exactly like ``.git``."""
+    ws = tmp_path / "ws"
+    (ws / "pyproj").mkdir(parents=True)
+    (ws / "pyproj" / "pyproject.toml").touch()
+    (ws / "node").mkdir(parents=True)
+    (ws / "node" / "package.json").touch()
+    (ws / "forge").mkdir(parents=True)
+    (ws / "forge" / "forge.json").touch()
+    (ws / "agentic").mkdir(parents=True)
+    (ws / "agentic" / "forge.agentic.json").touch()
+    (ws / "empty").mkdir(parents=True)  # no marker — not a member
+    assert kit.discover_projects(ws) == sorted(
+        (ws / n).resolve() for n in ("pyproj", "node", "forge", "agentic")
+    )
+
+
+def test_discover_projects_skips_ignored_dirs(tmp_path):
+    ws = tmp_path / "ws"
+    for name in ("node_modules", "dist", "venv", "__pycache__"):
+        (ws / name).mkdir(parents=True)
+        (ws / name / "package.json").touch()
+    (ws / "real").mkdir(parents=True)
+    (ws / "real" / ".git").mkdir()
+    assert kit.discover_projects(ws) == [(ws / "real").resolve()]
+
+
+def test_discover_projects_never_follows_symlinks(tmp_path):
+    ws = tmp_path / "ws"
+    (ws / "real" / ".git").mkdir(parents=True)
+    link = ws / "linked"
+    try:
+        link.symlink_to(ws / "real", target_is_directory=True)
+    except OSError:
+        pytest.skip("symlink unsupported on this platform/policy")
+    assert kit.discover_projects(ws) == [(ws / "real").resolve()]
+
+
+def test_discover_projects_gitless_nested_depth(tmp_path):
+    ws = tmp_path / "ws"
+    (ws / "group" / "deep" / "pyproject.toml").parent.mkdir(parents=True)
+    (ws / "group" / "deep" / "pyproject.toml").touch()
+    (ws / "group" / "too" / "far" / "pyproject.toml").parent.mkdir(parents=True)
+    (ws / "group" / "too" / "far" / "pyproject.toml").touch()
+    found = kit.discover_projects(ws)
+    assert (ws / "group" / "deep").resolve() in found
+    assert (ws / "group" / "too" / "far").resolve() not in found  # beyond max_depth
+
+
+def test_ignored_dirs_mirror_security_paths():
+    from theforge.security.paths import IGNORED_DIRS as CORE_IGNORED
+
+    assert kit.IGNORED_DIRS == CORE_IGNORED
 
 
 def test_discover_projects_includes_root_repo(tmp_path):

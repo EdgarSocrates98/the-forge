@@ -11,6 +11,10 @@
   "why": "catálogo de capabilities declaradas por cada provider — descoberta por contrato, não memória",
   "when": "antes de instalar/delegar: list/discover/search/check o que cada forja atende"
  },
+ "context": {
+  "why": "roteamento progressivo de contexto L0→L3: metadata → seleção determinística → refs bounded",
+  "when": "planejar qual especialista e quais refs uma tarefa precisa antes de carregar conteúdo"
+ },
  "decisions": {
   "why": "memória de decisões reutilizáveis do workspace (.forge/intel/decisions.json)",
   "when": "registrar ou auditar decisões que devem persistir entre sessões"
@@ -63,6 +67,10 @@
   "why": "memória de engenharia do workspace (.forge/memory/)",
   "when": "persistir/recuperar contexto entre sessões sem re-derivar fatos"
  },
+ "mcp": {
+  "why": "expõe as tools do The Forge via MCP para hosts que falam o protocolo",
+  "when": "conectar um host MCP (stdio default; HTTP streamable opt-in) — não é um provider"
+ },
  "plan": {
   "why": "plano multi-provider: um nó por especialista, sequência local",
   "when": "trabalho composto que precisa ser revisto antes de executar"
@@ -87,6 +95,10 @@
   "why": "re-renderiza, re-verifica ou re-executa um run persistido",
   "when": "reproduzir uma execução com a mesma evidência gravada"
  },
+ "resources": {
+  "why": "catálogo tipado de recursos: search/describe/get com leitura bounded, contida e redactada",
+  "when": "inspecionar ou ler recursos do workspace sob budget — a fonte L3 do plano de contexto"
+ },
  "resume": {
   "why": "retoma um plano: nós com inputs ainda válidos são reutilizados, o resto re-executa",
   "when": "uma execução multi-step falhou no meio e você não quer recomeçar"
@@ -110,6 +122,10 @@
  "task": {
   "why": "delega um intent a um especialista — argv real do workflow declarado",
   "when": "executar trabalho na forja certa (plan antes, run depois, explain para auditar)"
+ },
+ "telemetry": {
+  "why": "exporta telemetria persistida de runs para OTLP/HTTP JSON — entrada do `forge-lens ingest`",
+  "when": "alimentar observabilidade externa com evidência determinística (re-export é idêntico)"
  },
  "trace": {
   "why": "o trace local do run, span por span — o que aconteceu",

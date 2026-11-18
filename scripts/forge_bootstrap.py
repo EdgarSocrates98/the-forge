@@ -722,12 +722,14 @@ def write_launcher(cli: str, venv: Path, no_launcher: bool, log) -> Path | None:
     d = shim_dir()
     d.mkdir(parents=True, exist_ok=True)
     if os.name == "nt":
-        (d / f"{cli}.cmd").write_text(f'@echo off\r\n"{real}" %*\r\n')
-        (d / cli).write_text(f'#!/bin/sh\nexec "{real}" "$@"\n')
+        # write_bytes: text mode would translate \n -> \r\n and corrupt the
+        # CRLF .cmd into \r\r\n; the sh shim must stay pure LF for Git Bash.
+        (d / f"{cli}.cmd").write_bytes(f'@echo off\r\n"{real}" %*\r\n'.encode())
+        (d / cli).write_bytes(f'#!/bin/sh\nexec "{real}" "$@"\n'.encode())
         path = d / f"{cli}.cmd"
     else:
         path = d / cli
-        path.write_text(f'#!/bin/sh\nexec "{real}" "$@"\n')
+        path.write_bytes(f'#!/bin/sh\nexec "{real}" "$@"\n'.encode())
         path.chmod(0o755)
     log(f"launcher {path}")
     return path
@@ -807,12 +809,22 @@ def _shell_label() -> str:
     return Path(os.environ.get("SHELL", "")).name.lower().removesuffix(".exe") or "posix"
 
 
+def _posix_home() -> Path:
+    """Home for shell-init files: the ``HOME`` env var is authoritative
+    (POSIX convention, and what Git Bash actually sets). ``Path.home()``
+    ignores ``HOME`` on Windows, which would write the real user's rc
+    files when a caller — tests, or a profile that remaps HOME —
+    overrides it."""
+    return Path(os.environ["HOME"]) if os.environ.get("HOME") else Path.home()
+
+
 def _posix_env_paths() -> tuple[Path, Path]:
-    config_home = Path(os.environ.get("XDG_CONFIG_HOME") or (Path.home() / ".config"))
+    home = _posix_home()
+    config_home = Path(os.environ.get("XDG_CONFIG_HOME") or (home / ".config"))
     env_file = config_home / ENV_DIR_NAME / ENV_FILE_NAME
     shell = Path(os.environ.get("SHELL", "/bin/sh")).name.lower().removesuffix(".exe")
     rc_name = {"bash": ".bashrc", "zsh": ".zshrc"}.get(shell, ".profile")
-    return env_file, Path.home() / rc_name
+    return env_file, home / rc_name
 
 
 def _is_git_bash() -> bool:
@@ -1158,6 +1170,25 @@ def register(
         # resolved by the delegator) for forges whose package boundary
         # forbids an in-package install engine.
         doc["install_command"] = list(cfg["install_command"])
+    if cfg.get("installation_kind"):
+        # Declared install kind (install-2.1) — content|service|control-tool,
+        # validated by the registry manifest schema, never fabricated.
+        kind = str(cfg["installation_kind"])
+        if kind not in ("content", "service", "control-tool"):
+            raise Refusal(
+                "FORGE-INSTALL-BAD-CONFIG",
+                f"forge.json installation_kind {kind!r} — expected "
+                "content|service|control-tool",
+            )
+        doc["installation_kind"] = kind
+    if cfg.get("install"):
+        # Declared install surface (operations/flags/hosts/scopes/profiles/
+        # approval) — copied verbatim; the orchestrator's argv builder only
+        # sends what is declared.
+        doc["install"] = dict(cfg["install"])
+    if cfg.get("depends_on"):
+        # Declared install-order dependencies (forge_ids installed first).
+        doc["depends_on"] = [str(d) for d in cfg["depends_on"]]
     path = forge_home() / INSTALLATIONS / f"{cfg['forge_id']}.json"
     _atomic_write(path, (json.dumps(doc, indent=2, sort_keys=True) + "\n").encode())
     log(f"registered {path}")

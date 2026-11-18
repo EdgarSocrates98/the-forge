@@ -3,14 +3,14 @@
 | Campo | Valor |
 |---|---|
 | repository | `the-forge` |
-| branch | `main` |
-| commit | `9d680a9` |
-| docs inventoried | 704 (excl. GENERATED mirrors: 549; vendored upstream: 0) |
+| branch | `feat/cycle16-installation-2-1` |
+| commit | `717c5ad` |
+| docs inventoried | 944 (excl. GENERATED mirrors: 783; vendored upstream: 0) |
 
 ## Review levels (honest)
 
 - `INVENTORIED`: 0
-- `AUTOMATICALLY_CHECKED`: 704
+- `AUTOMATICALLY_CHECKED`: 944
 - `TECHNICALLY_VERIFIED`: 0
 - `SEMANTICALLY_REVIEWED`: 0
 - `USER_JOURNEY_VALIDATED`: 0
@@ -19,23 +19,24 @@ Automatic checks ran on every row; semantic review is recorded only where a huma
 
 ## Category counts
 
-- `UNKNOWN`: 227
-- `GENERATED`: 155
-- `USER_GUIDE`: 68
-- `ADR`: 63
-- `RELEASE_REPORT`: 57
-- `SDD_ARTIFACT`: 35
+- `UNKNOWN`: 340
+- `GENERATED`: 161
+- `RELEASE_REPORT`: 121
+- `USER_GUIDE`: 91
+- `ADR`: 66
+- `SDD_ARTIFACT`: 36
 - `GETTING_STARTED`: 23
-- `SKILL`: 17
-- `HISTORICAL`: 17
+- `SKILL`: 19
+- `TEST_EVIDENCE`: 18
+- `CONTRACT`: 18
+- `HISTORICAL`: 18
 - `HOW_TO`: 11
-- `CONTRACT`: 7
-- `ARCHITECTURE`: 7
-- `TEST_EVIDENCE`: 5
+- `ARCHITECTURE`: 9
 - `AGENT_INSTRUCTIONS`: 4
 - `CONCEPT`: 3
 - `INTERNAL`: 2
 - `REFERENCE`: 2
+- `SCHEMA`: 1
 - `TUTORIAL`: 1
 
 ## Findings

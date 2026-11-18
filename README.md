@@ -62,13 +62,22 @@ explícito para quem já instalou uma Forge antes dessa automação. A sincroniz
 registra o adapter do provider; a configuração MCP continua sendo feita pela CLI
 da própria Forge quando `--components mcp` e um host são selecionados.
 
+Desde o install-2.1 ([ADR 0065](https://github.com/EdgarSocrates98/the-forge/blob/main/docs/adr/0065-workspace-installation-consolidated.md)),
+`install auto` planeja a família inteira antes de qualquer escrita, resolve
+conflitos de paths cross-forge com winner/loser explícito e só confia no receipt
+`forge/InstallReceipt/v1` da CLI filha — nunca no exit code. A confirmação
+interativa de apply passa a default **Não**. Arquitetura e operação:
+[workspace-installation-2.1.md](https://github.com/EdgarSocrates98/the-forge/blob/main/docs/installation/workspace-installation-2.1.md);
+o que muda para quem já usava a v1:
+[migration-2.1.md](https://github.com/EdgarSocrates98/the-forge/blob/main/docs/installation/migration-2.1.md).
+
 ## Primeiros passos
 
 Os comandos abaixo assumem o venv ativado (`source .venv/bin/activate`; no Windows, `.venv\Scripts\activate`). Sem ativar, chame `.venv/bin/theforge` (Windows: `.venv\Scripts\theforge`).
 
 ```bash
 theforge doctor
-theforge init
+theforge init               # .forge/ + o marcador forge.workspace.yaml (idempotente)
 theforge capabilities list
 theforge ask "eco olá" --capability demo.echo
 theforge explain <run_id>   # o run_id é impresso por `ask`
@@ -162,6 +171,7 @@ Mapa completo por preocupação em [docs/README.md](https://github.com/EdgarSocr
 - [Evals taxonomy & verification](https://github.com/EdgarSocrates98/the-forge/blob/v0.5.0/docs/evals-taxonomy.md) (suites classificadas §7.1, ops `evals`/`verify`, regras §7.3)
 - [Trace federation](https://github.com/EdgarSocrates98/the-forge/blob/v0.5.0/docs/trace-federation.md) (trace global + refs nativos opacos)
 - [Context ROI](https://github.com/EdgarSocrates98/the-forge/blob/v0.5.0/docs/context-roi.md) (utilização medida; recomendação advisory, não causal)
+- [Context engineering](https://github.com/EdgarSocrates98/the-forge/blob/main/docs/context-engineering.md) (modelo L0–L3: registry/`ROUTING.md`, `plan_context` determinístico, retrieval bounded com budgets/dedup/cache; sem sumarização por LLM no core)
 - [Adaptive experiments](https://github.com/EdgarSocrates98/the-forge/blob/v0.5.0/docs/adaptive-experiments.md) (champion/challenger governado, sem auto-promoção)
 - [A2A bridge](https://github.com/EdgarSocrates98/the-forge/blob/v0.5.0/docs/a2a-bridge.md) (experimental: cards/tasks/artifacts ⇄ contratos Forge; agente remoto nunca é provider local)
 
@@ -179,6 +189,7 @@ DX (Standard v1): [handbook do ecossistema](https://github.com/EdgarSocrates98/t
 - [Ecosystem skills](https://github.com/EdgarSocrates98/the-forge/blob/v0.5.0/docs/skills.md) (`forge-*` canônicas → mirrors por host; freshness auditado)
 - [Specialized agents](https://github.com/EdgarSocrates98/the-forge/blob/v0.5.0/docs/agents.md) (oito `AgentSpec`, autoridade fechada, sem auto-escalonamento)
 - [Installation orchestration](https://github.com/EdgarSocrates98/the-forge/blob/v0.5.0/docs/installation-orchestration.md) (knowledge → plano → aprovação → verificação)
+- [Profiles](https://github.com/EdgarSocrates98/the-forge/blob/main/docs/profiles.md) (três vocabulários separados: install `minimal`/`recommended`/`full`, gateway `economy`/`balanced`/`deep`, runtime `auto`/`economy`/`balanced`/`max`)
 - [Cross-forge orchestration](https://github.com/EdgarSocrates98/the-forge/blob/v0.5.0/docs/cross-forge-orchestration.md) (produces→consumes, produtor≠verificador)
 - [Agentic ecosystem](https://github.com/EdgarSocrates98/the-forge/blob/v0.5.0/docs/agentic-ecosystem.md) (mapa da camada agentic: knowledge + skills + agents + auditoria)
 - [Loop Factory](https://github.com/EdgarSocrates98/the-forge/blob/v0.5.0/docs/loop-factory.md) (fila operacional de specs: `factory/` onde a pasta é o estado; grill gate humano, archive só com aceite)

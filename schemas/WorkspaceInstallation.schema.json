@@ -1,0 +1,364 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "conflicts": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "claimants": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "detail": {
+            "type": "string"
+          },
+          "loser": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string"
+          },
+          "resolution": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "winner": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "path",
+          "claimants",
+          "winner",
+          "loser"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "created_at": {
+      "type": "string"
+    },
+    "forges": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "classification": {
+            "anyOf": [
+              {
+                "enum": [
+                  "new",
+                  "updated",
+                  "reused",
+                  "preserved",
+                  "conflict",
+                  "unsupported-capability"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "classification_detail": {
+            "type": "string"
+          },
+          "cli": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "depends_on": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "forge_id": {
+            "type": "string"
+          },
+          "install_command": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "installation_kind": {
+            "enum": [
+              "content",
+              "service",
+              "control-tool"
+            ]
+          },
+          "owned_paths": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "ownership": {
+            "enum": [
+              "forge-owned",
+              "shared",
+              "managed-block",
+              "managed-key",
+              "user",
+              "foreign"
+            ]
+          },
+          "ownership_source": {
+            "anyOf": [
+              {
+                "enum": [
+                  "ledger",
+                  "receipt",
+                  "registry",
+                  "manifest",
+                  "inventory",
+                  "plan"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "resources": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "kind": {
+                  "type": "string"
+                },
+                "location": {
+                  "type": "string"
+                },
+                "owner": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "policy": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "sha256": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "id",
+                "kind",
+                "location"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "security": {
+            "additionalProperties": false,
+            "properties": {
+              "notes": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "requires_credentials": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "requires_network": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "spawn_allowed": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [],
+            "type": "object"
+          },
+          "surface": {
+            "additionalProperties": false,
+            "properties": {
+              "approval": {
+                "type": "string"
+              },
+              "flags": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "hosts": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "operations": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "profiles": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "scopes": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              }
+            },
+            "required": [],
+            "type": "object"
+          },
+          "verification": {
+            "enum": [
+              "PASS",
+              "FAIL",
+              "BLOCKED",
+              "UNVERIFIED",
+              "NOT_APPLICABLE"
+            ]
+          },
+          "version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "forge_id"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "members": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "notes": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "order": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "order_note": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "schema": {
+      "type": "string"
+    },
+    "scope": {
+      "type": "string"
+    },
+    "updated_at": {
+      "type": "string"
+    },
+    "verification": {
+      "enum": [
+        "PASS",
+        "FAIL",
+        "BLOCKED",
+        "UNVERIFIED",
+        "NOT_APPLICABLE"
+      ]
+    },
+    "workspace_root": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "workspace_root",
+    "created_at",
+    "updated_at"
+  ],
+  "title": "WorkspaceInstallation",
+  "type": "object"
+}

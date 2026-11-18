@@ -1,7 +1,7 @@
 # Documentação — índice
 
 Mapa dos documentos vivos de `docs/`, agrupados por preocupação. Fatos
-históricos ficam em [adr/](adr/) (61 ADRs) e [reports/](reports/) (31
+históricos ficam em [adr/](adr/) (65 ADRs) e [reports/](reports/) (31
 relatórios de ciclo); evidência medida em [reality/](reality/). Docs aqui
 descrevem o sistema **como ele é** — quando divergir do código, o código
 vence e o doc é consertado.
@@ -45,6 +45,7 @@ vence e o doc é consertado.
 - [trace-federation.md](trace-federation.md) — o trace cross-provider em `RunTelemetry.spans`.
 - [global-stop.md](global-stop.md) — continuação cross-provider e stop conditions.
 - [information-gain.md](information-gain.md) — estimativa qualitativa de evidência incremental.
+- [context-engineering.md](context-engineering.md) — o modelo de contexto L0–L3: instruções permanentes, descoberta (registry/ROUTING.md), seleção (`ContextPlan`), retrieval bounded, budgets/dedup/cache/provenance.
 - [validation-state-policy.md](validation-state-policy.md) — outcome de código ≠ estado de transporte de CI.
 
 ## Inteligência (aprendizado)
@@ -62,6 +63,9 @@ Memória verificável, não histórico: correlação nunca vira causa sem experi
 - [portable-installation/](portable-installation/README.md) — productização
   da família Forge: bootstrap, contrato v1, escopo × host × perfil, matriz
   de portabilidade e riscos.
+- [profiles.md](profiles.md) — os três vocabulários de perfil: install
+  (`minimal`/`recommended`/`full`), gateway (`economy`/`balanced`/`deep`)
+  e budget de runtime (`auto`/`economy`/`balanced`/`max`).
 
 ## Camada agentic
 

@@ -29,6 +29,7 @@ from theforge.context.resources import (  # noqa: E402
     ResourceResolver,
     discover_roots,
 )
+from theforge.contracts.verdicts import Verdict, is_blocking  # noqa: E402
 
 SCENARIO_FORGES: dict[str, list[str]] = {
     "A-aws-standalone": ["spark-forge-aws"],
@@ -117,10 +118,10 @@ def make_workspace(ws_root: Path, forges: dict[str, Path], ids: list[str]) -> di
 
 
 def resolver_for(ws_dir: Path) -> ResourceResolver:
-    # Materialized dirs have no .git — checkout discovery (installkit
-    # `discover_projects`) intentionally only matches git repos. Non-git
-    # directories are discovered through the `explicit` source class —
-    # exactly the bundle/copied-workspace path the contract defines.
+    # Materialized dirs have no .git — installkit `discover_projects`
+    # matches them as checkout members via their forge.agentic.json
+    # marker (gitless members are first-class). `explicit` still pairs
+    # each dir with its id — dedup keeps one root per (fid, path).
     explicit = [
         (p.name, p) for p in sorted(ws_dir.iterdir())
         if p.is_dir() and (p / "forge.agentic.json").is_file()
@@ -262,7 +263,8 @@ def main() -> int:
                 ],
             }
         except Exception as exc:  # pragma: no cover - environment dependent
-            results["L-portal-cli"] = {"id": "L-portal-cli", "verdict": "unverified",
+            results["L-portal-cli"] = {"id": "L-portal-cli",
+                                       "verdict": Verdict.UNVERIFIED.value,
                                        "reason": f"portal import failed: {exc}", "checks": []}
 
         # ---- M: upgrade/migration — state preserved ------------------------
@@ -310,7 +312,8 @@ def main() -> int:
             plan = plan_context("spark glue job performance", orr, level3_budget=8000)
             o_rows.append({
                 "forges": len(orr.roots),
-                "l1_scanned": plan.metrics.get("l1_scanned", plan.level1_forges),
+                "l1_refs_scanned": plan.metrics.get("l1_refs_scanned",
+                                                    plan.level1_forges),
                 "l3_refs": len(plan.level3_refs),
                 "l3_est_bytes": plan.est_level3_bytes,
             })
@@ -326,7 +329,8 @@ def main() -> int:
             rr = resolvers.get(sid)
             if rr is None or not rr.roots:
                 receipt["evals"]["routing"].append(
-                    {"task": task, "verdict": "skipped", "reason": "workspace empty"})
+                    {"task": task, "verdict": Verdict.SKIPPED.value,
+                     "reason": "workspace empty"})
                 continue
             plan = plan_context(task, rr)
             hit = plan.level2_forge in accept if plan.level2_forge else False
@@ -373,19 +377,25 @@ def main() -> int:
                    "ok": "evil" not in {r.forge_id for r in tr.roots},
                    "note": "contract validation refuses traversal locations"})
 
-        # ---- verdicts ------------------------------------------------------
+        # ---- verdicts — closed taxonomy, acceptance via contracts.verdicts --
         for _sid, r in results.items():
             checks = r.get("checks", [])
-            if r.get("verdict") == "unverified":
+            if r.get("verdict") == Verdict.UNVERIFIED.value:
                 continue
-            r["verdict"] = "pass" if checks and all(c["ok"] for c in checks) else \
-                ("unverified" if not checks else "fail")
+            r["verdict"] = (
+                Verdict.PASS.value
+                if checks and all(c["ok"] for c in checks)
+                else (Verdict.UNVERIFIED.value if not checks else Verdict.FAIL.value)
+            )
         receipt["scenarios"] = {k: dict(v)
                                 for k, v in results.items()}
 
-    rp = sum(1 for s in receipt["scenarios"].values() if s.get("verdict") == "pass")
-    rf = sum(1 for s in receipt["scenarios"].values() if s.get("verdict") == "fail")
-    ru = sum(1 for s in receipt["scenarios"].values() if s.get("verdict") == "unverified")
+    rp = sum(1 for s in receipt["scenarios"].values()
+             if s.get("verdict") == Verdict.PASS.value)
+    rf = sum(1 for s in receipt["scenarios"].values()
+             if s.get("verdict") == Verdict.FAIL.value)
+    ru = sum(1 for s in receipt["scenarios"].values()
+             if s.get("verdict") == Verdict.UNVERIFIED.value)
     ep = sum(1 for e in receipt["evals"]["routing"] if e.get("ok"))
     eq = sum(1 for e in receipt["evals"]["resources"] if e.get("ok"))
     et = len(receipt["evals"]["routing"]) + len(receipt["evals"]["resources"])
@@ -401,7 +411,9 @@ def main() -> int:
     for sid, s in receipt["scenarios"].items():
         print(f"  {sid:24s} {s.get('verdict')}")
     print(f"  evals ok={ep + eq}/{et}  scenarios pass={rp} fail={rf} unverified={ru}")
-    return 0 if rf == 0 else 1
+    return 0 if not any(
+        is_blocking(s.get("verdict")) for s in receipt["scenarios"].values()
+    ) else 1
 
 
 if __name__ == "__main__":

@@ -43,10 +43,30 @@ installed, where is its CLI, which hosts/scopes are live".
              "devin":  {"integrated": false},
              "codex":  {"integrated": false},
              "copilot":{"integrated": false} },
+  "installation_kind": "content|service|control-tool",   // install-2.1, optional
+  "install": {                        // install-2.1, optional — the DECLARED
+    "operations": ["plan", "apply"],  // install surface; verbatim from forge.json
+    "flags": ["--scope", "--root", "--yes", "--dry-run"],
+    "hosts": ["claude", "devin"],
+    "scopes": ["project", "workspace"],
+    "profiles": ["recommended"],
+    "approval": "--yes"               // the flag the forge's gate honors
+  },
+  "depends_on": ["the-forge"],        // install-2.1, optional — forge_ids
+                                      // that must install first
   "installed_at": "…", "updated_at": "…",
   "installed_by": { "agent": "forge_bootstrap|cli|theforge", "version": "…" }
 }
 ```
+
+**Declared install surface (install-2.1).** The orchestrator only sends what
+the surface declares: when `install.flags` is present, a delegation request
+flag absent from the list makes the request *unhonorable* —
+`FORGE-INSTALL-UNSUPPORTED`, never a silent widen. A manifest without
+`install` keeps the v1 default family (`--scope --root --host --profile
+--components --gateway-profile --yes --dry-run`). `depends_on` feeds the
+consolidated install order (§4.2); undeclared forges get the stable default
+(`control-tool → service → content`, then `forge_id`), honestly noted.
 
 ## 2. `forge/InstallReceipt/v1` — `<target>/.<forge_state>/receipts/<ts>.json`
 
@@ -155,6 +175,68 @@ project in the same workspace install without clobbering sibling state.
   `<ws>/.forge/workspace-install.json` (`forge/WorkspaceInstall/v1`).
   Repeated runs merge `projects[]` keyed on `(path, forge_id)` and
   preserve `created_at`; `updated_at` moves. `dry_run` writes nothing.
+
+### 4.2 `forge/WorkspaceInstallation/v2` — the consolidated plan (install-2.1)
+
+`install auto` plans **every registered forge before any write**: this forge
+plans in-process, siblings contribute their own `--dry-run`
+`forge/InstallReceipt/v1`. The consolidated document rides on the receipt
+as `installation` and persists under the v1 manifest's `installation` block
+— it extends, never replaces `projects[]`.
+
+```jsonc
+{
+  "schema": "forge/WorkspaceInstallation/v2",
+  "workspace_root": "…", "scope": "workspace",
+  "order": ["the-forge", "api-forge"],        // depends_on → topological;
+  "order_note": "…",                         // undeclared → stable default,
+  "forges": [{                               // noted honestly
+    "forge_id": "api-forge",
+    "installation_kind": "content",
+    "surface": { "operations": […], "flags": […], "approval": "--yes" },
+    "depends_on": [],
+    "owned_paths": [".agents/skills/x/SKILL.md"],
+    "resources": [{ "id": "api-forge:.agents/skills/x/SKILL.md",
+                    "kind": "managed-file", "location": "…",
+                    "sha256": "…", "owner": "api-forge",
+                    "policy": "forge-owned" }],
+    "ownership": "forge-owned",
+    "ownership_source": "receipt",           // receipt|plan|ledger|…;
+                                             // "plan" = dry-run projection,
+                                             // nothing written yet
+    "verification": "PASS|FAIL|BLOCKED|UNVERIFIED|NOT_APPLICABLE",
+    "classification": "new|updated|reused|preserved|conflict"
+                      "|unsupported-capability",
+    "classification_detail": "…"
+  }],
+  "conflicts": [{                            // cross-forge managed-path claims
+    "path": ".agents/skills/shared/SKILL.md",
+    "claimants": ["api-forge", "doc-forge"],
+    "winner": "api-forge",                   // incumbent-on-disk else first
+    "loser": "doc-forge",                    // in install order
+    "resolution": "skipped|overwritten — …|null",  // null on plan-only
+    "detail": "…"
+  }],
+  "members": ["backend-api"],                // discovered workspace repos
+  "verification": "…", "created_at": "…", "updated_at": "…"
+}
+```
+
+Rules:
+
+- **Cross-forge conflicts are never last-writer-wins.** Whole-file managed
+  assets claimed by ≥2 forges produce one `conflicts[]` row per loser; the
+  loser's path is excluded from the apply (or named `overwritten — plan
+  violation` → FAIL when a rogue child writes anyway). `mcp` keys and
+  `marker` blocks are namespaced per forge and never conflict.
+- **Ownership provenance is honest.** `ownership_source` distinguishes
+  receipt-proven ownership from dry-run projection (`plan`); absent
+  evidence stays `null`.
+- **Every classification is closed-vocabulary** — a forge without honest
+  plan evidence is `unsupported-capability`, never guessed.
+
+JSON Schema: [`schemas/WorkspaceInstallation.schema.json`](schemas/WorkspaceInstallation.schema.json) ·
+ADR: [`0065`](../adr/0065-workspace-installation-consolidated.md).
 
 ## 5. CLI surface (normative)
 

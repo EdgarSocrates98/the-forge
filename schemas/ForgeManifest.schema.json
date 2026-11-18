@@ -265,6 +265,12 @@
           },
           "signals": {
             "properties": {
+              "artifact_type": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
               "dependencies": {
                 "items": {
                   "type": "string"
@@ -278,6 +284,24 @@
                 "type": "array"
               },
               "keywords": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "language": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "platform": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "service": {
                 "items": {
                   "type": "string"
                 },

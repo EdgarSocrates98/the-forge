@@ -21,7 +21,15 @@
       }
     },
     "created_at": {"type": "string"},
-    "updated_at": {"type": "string"}
+    "updated_at": {"type": "string"},
+    "installation": {
+      "type": "object",
+      "description": "install-2.1: the consolidated cross-forge ownership inventory — a forge/WorkspaceInstallation/v2 document (schemas/WorkspaceInstallation.schema.json)",
+      "required": ["schema"],
+      "properties": {
+        "schema": {"const": "forge/WorkspaceInstallation/v2"}
+      }
+    }
   },
   "additionalProperties": false
 }
