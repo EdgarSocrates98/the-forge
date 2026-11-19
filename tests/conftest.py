@@ -314,6 +314,14 @@ FILE_MARKERS: dict[str, tuple[str, ...]] = {
     # --preset resolution (§6.6), honest host onboarding states (§6.4/§9.2),
     # §3.4 daily-ops surface check
     "test_cycle161_setup_workspace.py": ("unit", "integration", "security"),
+    # cycle-16.1 FRENTE D/E/F: selection evidence + cross-cloud routing +
+    # context budget + fingerprint epoch + permanent-context audit (§8),
+    # declared host matrix (§9.1), .mcp.json audit (§9.3), 20-layer doctor
+    # + guided repair + footprint (§10, §7)
+    "test_context_governance.py": ("unit", "contract", "security"),
+    "test_host_matrix.py": ("unit",),
+    "test_mcp_audit.py": ("unit", "integration", "security"),
+    "test_doctor_repair.py": ("integration", "security"),
 }
 
 

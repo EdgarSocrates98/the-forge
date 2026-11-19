@@ -1,4 +1,5 @@
 """Progressive context routing (Onda 08): L1→L2→L3 budgeted plan."""
+
 from __future__ import annotations
 
 import json
@@ -23,9 +24,13 @@ def _resolver(tmp: Path) -> ResourceResolver:
         tmp / "a",
         "forge-a",
         [
-            {"id": "spark-tuning", "kind": "skill",
-             "location": "skills/spark-tuning/SKILL.md",
-             "description": "AWS Glue PySpark tuning", "tags": ["spark", "aws"]},
+            {
+                "id": "spark-tuning",
+                "kind": "skill",
+                "location": "skills/spark-tuning/SKILL.md",
+                "description": "AWS Glue PySpark tuning",
+                "tags": ["spark", "aws"],
+            },
         ],
     )
     (a / "skills/spark-tuning").mkdir(parents=True)
@@ -34,17 +39,24 @@ def _resolver(tmp: Path) -> ResourceResolver:
         tmp / "b",
         "forge-b",
         [
-            {"id": "api-design", "kind": "skill",
-             "location": "skills/api-design/SKILL.md",
-             "description": "REST OpenAPI design", "tags": ["api"]},
-            {"id": "gone", "kind": "skill", "location": None,
-             "availability": "unavailable",
-             "unavailable_reason": "not shipped"},
+            {
+                "id": "api-design",
+                "kind": "skill",
+                "location": "skills/api-design/SKILL.md",
+                "description": "REST OpenAPI design",
+                "tags": ["api"],
+            },
+            {
+                "id": "gone",
+                "kind": "skill",
+                "location": None,
+                "availability": "unavailable",
+                "unavailable_reason": "not shipped",
+            },
         ],
     )
     return ResourceResolver(
-        discover_roots(None, explicit=[("forge-a", a), ("forge-b", b)],
-                       scan_installed=False)
+        discover_roots(None, explicit=[("forge-a", a), ("forge-b", b)], scan_installed=False)
     )
 
 

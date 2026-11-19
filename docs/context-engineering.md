@@ -1,9 +1,10 @@
-# Context Engineering — the L0–L3 model
+# Context Engineering — the L0–L4 model
 
 How context moves through The Forge: what the host always sees (L0),
-what the platform can *discover* (L1), what a task *selects* (L2), and
-what is actually *retrieved* (L3). Every level is deterministic and
-bounded — no LLM, no embeddings, no silent summarization in the core.
+what the platform can *discover* (L1), what a task *selects* (L2), what
+is actually *retrieved* (L3), and what the run leaves behind as
+*evidence* (L4). Every level is deterministic and bounded — no LLM, no
+embeddings, no silent summarization in the core.
 
 ```mermaid
 flowchart LR
@@ -11,8 +12,10 @@ flowchart LR
     L1[L1 · discovery<br>.forge/context/registry.json · ROUTING.md<br>resource catalog — metadata only]
     L2[L2 · selection<br>forge/ContextPlan/v1<br>≤3 forges scored on metadata]
     L3[L3 · retrieval<br>bounded refs · paginated reads<br>redacted, contained]
+    L4[L4 · execution evidence<br>runs, receipts, logs, evals<br>post-hoc, never preloaded]
     L0 -. governs .-> L1
     L1 --> L2 --> L3
+    L3 --> L4
 ```
 
 ## L0 — permanent instructions
@@ -25,7 +28,13 @@ the regenerated `AGENT_PROTOCOL.md`, and the host directories
 
 L0 is sized by the **install profile** and component selection
 ([profiles.md](profiles.md)), not by any per-task budget — it is the
-fixed cost of having the family installed at all.
+fixed cost of having the family installed at all. Per-forge blocks in
+`AGENTS.md` are deliberately compact: identity, domains and the
+capability-manifest pointer (~<500 bytes per forge). CLI/MCP/discovery
+detail lives once in `AGENT_PROTOCOL.md` and in each manifest under
+`.forge/context/capabilities/` — pointers, never duplicated
+instruction text. Safety-critical rules (evidence-before-conclusion,
+retrieved-content-is-data) stay in the shared `forge:ecosystem` block.
 
 ## L1 — discovery, metadata only
 
@@ -48,6 +57,22 @@ the best-scoring forge plus auxiliaries (`MAX_L2_FORGES = 3`) and emits
 bounded L3 *references* — bodies are still not read, only sized via
 `stat()` against `level3_budget` (default 8 000 bytes) and `max_l3_refs`
 (12). Only resources of selected L2 forges may escalate to L3.
+
+The plan carries **selection evidence** (additive, never breaking older
+readers):
+
+- `selection` — `selected` | `ambiguous` | `no_match`;
+- `confidence` — `high` | `medium` | `low` (absent on `no_match`);
+- `evidence` — matched metadata terms per forge;
+- `forge_scores` — the deterministic scores;
+- `alternatives` — runner-ups with the reason each was not selected;
+- `disambiguation` — why the primary won, or what the tie needs.
+
+A tie at the top is declared **`ambiguous`**: `level2_forge` is unset,
+tied candidates are listed in deterministic forge-id order (never
+install order), and *nothing escalates to L3* until the caller
+disambiguates. Selection is merit-based — a second-installed forge wins
+on score, never position.
 
 `est_level3_bytes` is exactly that — an estimate from file sizes, not
 measured bytes. A `level3_budget < 0` is rejected up front
@@ -83,6 +108,34 @@ under hard limits:
   4 MiB cap; otherwise the served window is hashed and flagged
   `sha256_scope: window`.
 
+## L4 — execution evidence
+
+What a completed run *leaves behind*: run dirs under `.forge/runs/`,
+install receipts under `.forge/install/receipts/`, evals and logs. L4 is
+post-hoc — it is read on demand for verification, debugging or audit,
+and is never preloaded into a task's context. `theforge doctor` reads a
+bounded slice of it (receipt statuses, ledger drift) to diagnose;
+`theforge runs`/`replay` inspect it directly.
+
+## Measuring L0–L4: `theforge context budget`
+
+`theforge context budget` emits `theforge/ContextBudget/v1` — a bounded,
+offline audit of the context surface at the workspace root:
+
+- **per-category bytes and files** — permanent instructions, skill
+  metadata vs skill bodies, agents, knowledge, rules, MCP tools,
+  retrieved code, evidence, history — each marked `measured` or
+  `unmeasured` (runtime-only surfaces like tool output are never
+  reported as zero);
+- **estimated tokens, labeled** — every token figure carries
+  `kind: estimated`, the method (`utf-8 bytes / 4`) and
+  `confidence: low`; nothing claims an observed tokenizer count;
+- **truncation honesty** — a scan that hits its file bound reports
+  `truncated` as a lower bound, not a false total.
+
+Retrieved code (L3's footprint) is reported from the fingerprint cache
+when present and stays `unmeasured` when it is not.
+
 ## Inside a run: the Context Broker
 
 For provider executions the same model appears as `ContextPack/v1` —
@@ -106,7 +159,11 @@ references + sha256, **never file content** (ADR 0007/0015):
   recorded past a 2 s racy window; the cache lives in the user cache
   dir — never inside the analyzed workspace (a poisoned workspace cannot
   pre-seed hashes), is re-read strictly and written atomically once per
-  run;
+  run, and is discarded whole when its **epoch** differs — the epoch
+  binds the Forge package version, the provider manifest sha256 and the
+  provider trust state, so a Forge/security-rule update, a manifest
+  change or a permission revocation re-fingerprints instead of trusting
+  stale entries;
 - **provenance** — every file item and exclusion records *why* it is
   there (`signals`, `reason`), the pack names its `producer`, and
   `Evidence.hash` is normative (sha256 of exactly the delivered bytes);
@@ -132,6 +189,8 @@ routing inputs — the same honesty rule as the rest of the model.
 ```bash
 theforge context plan "tune AWS Glue PySpark job"
 theforge context plan "task" --budget 16000
+theforge context plan "generic iceberg task"   # tie → selection: ambiguous
+theforge context budget                        # per-category bytes + labeled estimates
 theforge resources list --forge spark-forge-aws
 theforge resources search "glue"
 theforge resources describe spark-forge-aws:kb-glue-tuning
