@@ -39,7 +39,7 @@ from typing import Any
 _INSTALLKIT_VERSION = "1.0.6"
 # Filled by the vendor step (scripts/installkit/vendor.py) — the sha256 of
 # the canonical source body, so drift checks can compare vendored copies.
-_SOURCE_SHA256 = "6d4aae3ed63f73a9"
+_SOURCE_SHA256 = "canonical"
 
 SCHEMA_MANIFEST = "forge/InstallationManifest/v1"
 SCHEMA_RECEIPT = "forge/InstallReceipt/v1"
@@ -551,14 +551,38 @@ def mcp_set(
     return doc
 
 
+def _mcp_argv_resolved(ctx: "InstallContext") -> tuple[str, ...]:
+    """PATH-independent argv for the managed ``.mcp.json`` key (§9.3).
+
+    Resolution order:
+
+    1. the registered install manifest's ``cli.shim`` (absolute launcher
+       written by the bootstrap) → ``(shim, *mcp_command[1:])``;
+    2. ``(sys.executable, "-m", <package>, *mcp_command[1:])`` — the
+       current interpreter, absolute by construction, module-pinned.
+
+    Empty when the spec declares no MCP command at all.
+    """
+    if not ctx.spec.mcp_command:
+        return ()
+    tail = ctx.spec.mcp_command[1:]
+    manifest = _load_json(
+        installations_dir() / f"{ctx.spec.forge_id}.json", {})
+    shim = (manifest.get("cli") or {}).get("shim")
+    if isinstance(shim, str) and shim and Path(shim).is_absolute():
+        return (shim, *tail)
+    return (sys.executable, "-m", ctx.spec.package, *tail)
+
+
 def _mcp_argv(ctx: "InstallContext") -> tuple[str, ...]:
     """The argv written to the managed ``.mcp.json`` key.
 
-    ``InstallContext.mcp_command_resolved`` (absolute interpreter/shim —
-    the PATH-independent launch the spec asks for) wins; the declared
-    ``spec.mcp_command`` is the fallback and may be PATH-dependent, which
-    the mcp doctor check reports honestly instead of hiding."""
-    return tuple(ctx.mcp_command_resolved or ctx.spec.mcp_command)
+    ``InstallContext.mcp_command_resolved`` (explicit per-forge override)
+    wins; otherwise the auto-resolved PATH-independent argv
+    (:func:`_mcp_argv_resolved`) is used so hosts never depend on the
+    installer's PATH."""
+    resolved = ctx.mcp_command_resolved or _mcp_argv_resolved(ctx)
+    return tuple(resolved or ctx.spec.mcp_command)
 
 
 def mcp_unset(doc: dict[str, Any], key: str, tag: str) -> dict[str, Any]:
