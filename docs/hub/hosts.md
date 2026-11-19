@@ -27,6 +27,17 @@ o audit de assets".
 `forge hosts` detecta/ativa; `forge install apply` escreve a integração
 com plano→aprovação. Verificação: `install mcp-verify` (handshake real).
 
+## Matriz de capacidades declarada
+
+`theforge hosts matrix` responde "o que cada host declara consumir" —
+skills, agents, subagents, arquivos de instrução, MCP, escopos — a
+partir dos dados observados em
+`docs/experience/host-capability-matrix.json` e da mecânica do kit de
+instalação. Estados `supported`/`partial`/`unsupported`/`unverified`:
+nada é inferido da presença de arquivos no filesystem (isso é papel de
+`hosts list`, que mede detecção), e nada é inferido de um host para
+outro — o que a matriz marca `UNVERIFIED` permanece `UNVERIFIED`.
+
 ## Observação e launch
 
 `forge hosts observe` mede por host (binário, versão, login, integração)
