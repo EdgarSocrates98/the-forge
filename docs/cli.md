@@ -5,7 +5,7 @@
 | Comando | Faz | Exit |
 |---|---|---|
 | `init` | cria `.forge/` (idempotente); remove o cache legado `.forge/registry` com aviso | 0 |
-| `doctor` | OS, Python, git, host, workspace, providers | 0 / 1 só se algum check for `fail` (Python < 3.11, `.forge` sem escrita, provider builtin não saudável, `providers.toml` inválido); provider não builtin não saudável e workspace não inicializado são `warn` (exit 0) |
+| `doctor [--repair]` | OS, Python, git, host, workspace, providers — relatório em **20 camadas nomeadas** (runtime → ci); checks com falha carregam guia `problema`/`causa_provavel`/`acao`/`estado`; `--repair` anexa o plano de reparo read-only (nunca executa — `install repair --yes` aplica) | 0 / 1 só se algum check for `fail` (Python < 3.11, `.forge` sem escrita, provider builtin não saudável, `providers.toml` inválido); provider não builtin não saudável e workspace não inicializado são `warn` (exit 0) |
 | `status` | resumo do workspace, incluindo os providers com cache | 0 |
 | `mcp serve [--transport stdio\|streamable-http] [--host HOST] [--port N]` | inicia o servidor MCP nativo do The Forge; stdio é o transporte padrão e `streamable-http` expõe `/mcp` em loopback por padrão; requer o extra opcional `mcp` | 0 / 2 |
 | `excellence audit [--root DIR] [--json]` | auditoria offline das Forjas catalogadas: estado, commit, capabilities, evidência, confiança, custo e próxima ação; não executa código nem rede | 0 / 3 se houver repositório indisponível ou caminho inválido |
@@ -33,7 +33,8 @@
 | `install apply [--scope project\|workspace\|user] [--host all\|claude\|devin\|codex\|copilot] [--profile minimal\|recommended\|full] [--yes] [--dry-run]` | instala os host assets da própria forge no alvo resolvido: skills em `.claude/`, `.devin/`, `.agents/`, `.github/` + marker gerenciado em `AGENTS.md`/`CLAUDE.md` — sem `--yes` recusa (`FORGE-INSTALL-PLAN-NOT-APPROVED`); `--dry-run` é plan-only — [ADR 0058](adr/0058-portable-installation.md) | 0 / 1 / 4 |
 | `install status [--scope ...]` | saúde do ledger instalado no alvo: `forge/InstallationHealth/v1` + drift por arquivo (`ok`/`modified`/`missing`) | 0 / 1 |
 | `install doctor [--scope ...]` | ledger + drift + config MCP + handshake real quando aplicável; `healthy`/`degraded`/`broken`/`unverified` | 0 / 1 |
-| `install repair [--scope ...] [--dry-run]` | reasserta bytes de assets gerenciados que driftaram; arquivos do usuário nunca são tocados | 0 / 1 |
+| `install repair [--scope ...] [--yes] [--dry-run]` | reasserta bytes de assets gerenciados que driftaram; sem `--yes` é plan-only (`status: planned`, `approval_required`, `deletes: []` sempre — nunca apaga dado do usuário, rollback via backups + receipt rerodável); com `--yes` aplica | 0 / 1 |
+| `install footprint [--scope ...]` | superfície física medida da instalação (`theforge/InstallFootprint/v1`): arquivos/bytes por diretório de host + `.agents` compartilhado, e duplicação por hash de conteúdo entre caminhos gerenciados — mede, nunca reestrutura | 0 |
 | `install uninstall [--scope ...] [--purge] [--dry-run]` | remove só o que o ledger declara gerenciado; preserva modificações do usuário e adota, nunca sobrescreve; `--purge` apaga `.forge/install` | 0 / 1 |
 | `install update [--to <version>] [--repo <path>] [--dry-run]` | atualiza o runtime instalado pelo bootstrap (pinned — `latest` é recusado) | 0 / 1 |
 | `install auto [--scope ...] [--forge <id>] [--host all\|none\|claude\|devin\|codex\|copilot] [--profile minimal\|recommended\|full] [--components LIST] [--yes] [--dry-run]` | orquestra a família: lê `~/.forge/installations/`, propaga escolhas e delega `<cli> install` a cada forge registrada (a própria instala em processo); `--forge` limita a uma — cada forge instala a si mesma | 0 / 1 |
@@ -47,6 +48,7 @@
 | `specialists doctor` | probes reais por especialista (handshake MCP quando declarado) | 0 / 1 |
 | `hosts list` | detecção de hosts de IA com evidência (env/binário/config dirs) e `confidence_basis` — nunca infere sessão de arquivo | 0 |
 | `hosts status` | idem a `hosts list` | 0 |
+| `hosts matrix` | matriz de capacidades **declarada** (`theforge/HostMatrix/v1`): skills/agents/subagents/instructions/MCP/escopos por host com estados `supported`/`partial`/`unsupported`/`unverified` — dados declarados, nunca inferência de filesystem | 0 |
 | `hosts activate <host> [--scope project\|workspace\|user]` | avalia ativação de um host: `ACTIVE_NOW` só com handshake MCP real; `RESTART_REQUIRED` para skills/agents; `UNSUPPORTED` sem caminho de consumo | 0 / 1 / 2 |
 | `task plan "<intent>" [--target path] [--provider id]` | constrói `SpecialistDelegationRequest/v1` por especialista com manifest agêntico; plan-only | 0 / 2 |
 | `task run "<intent>" [--target path] [--provider id] [--max-parallel n]` | executa as delegações via argv real; stage COMPLETED só com exit_code; registra em `.forge/delegations/` | 0 / 1 / 2 |
@@ -65,6 +67,8 @@
 | `resources search <q>` | busca em id, descrição e tags do catálogo | 0 |
 | `resources describe <forge:resource>` | metadados completos de um recurso, com localização efetiva (checkout vs. `packaged_location` instalado) | 0 / 2 se desconhecido |
 | `resources get <forge:resource> [--max-bytes N]` | recuperação limitada de um recurso disponível: containment por path real, redação aplicada, hash de integridade no envelope | 0 / 2 / 3 bloqueado por política |
+| `context plan <task> [--budget N]` | plano determinístico L1→L3 (`forge/ContextPlan/v1`) com evidência de seleção — `selection` (`selected`/`ambiguous`/`no_match`), `confidence`, `evidence`, `forge_scores`, `alternatives`, `disambiguation`; empate vira `ambiguous` e nada escala para L3 — [context-engineering.md](context-engineering.md) | 0 |
+| `context budget` | auditoria offline da superfície de contexto (`theforge/ContextBudget/v1`): bytes e arquivos por categoria (instruções permanentes, metadados vs. corpos de skills, agents, knowledge, rules, MCP, evidência, histórico); tokens são sempre `estimated` com método + `confidence: low`, e superfícies não observáveis reportam `unmeasured`, nunca zero inventado | 0 |
 | `explain <run_id>` | relatório versionado de um run ou plano, com verificação de hashes ([`explain`](#explain)) | 0 / 2 / 6 |
 | `replay <run_id> --mode render\|verify\|execute [--allow-unverified] [--approve CAPABILITY]...` | reapresenta, reverifica ou reexecuta um run ([`replay`](#replay)) | render/verify: 0 / 2 / 6; execute: 0 / 2 / 3 / 4 / 5 |
 | `resume <run_id> [--allow-unverified] [--approve CAPABILITY]...` | continua um run de plano reutilizando os nós provadamente intactos ([`resume`](#resume)) | 0 / 2 / 3 / 4 / 5 |

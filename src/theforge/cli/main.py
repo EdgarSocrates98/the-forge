@@ -131,9 +131,16 @@ def build_parser() -> argparse.ArgumentParser:
     sub.add_parser("init", parents=[common], help="create .forge/ in the workspace").set_defaults(
         handler=commands.cmd_init
     )
-    sub.add_parser(
+    doctor = sub.add_parser(
         "doctor", parents=[common], help="inspect host, workspace and providers"
-    ).set_defaults(handler=commands.cmd_doctor)
+    )
+    doctor.add_argument(
+        "--repair",
+        action="store_true",
+        help="also emit the read-only install repair plan (§10.3 — "
+        "never executes; `install repair --yes` applies it)",
+    )
+    doctor.set_defaults(handler=commands.cmd_doctor)
     setup = sub.add_parser(
         "setup",
         parents=[common],
@@ -307,6 +314,12 @@ def build_parser() -> argparse.ArgumentParser:
     ctx_plan.add_argument("task", help="task description to route")
     ctx_plan.add_argument("--budget", type=int, default=8_000)
     ctx_plan.set_defaults(handler=commands.cmd_context_plan)
+    context.add_parser(
+        "budget",
+        parents=[common],
+        help="per-category context bytes + estimated tokens "
+        "(measured file sizes; tokens labeled estimated, never observed)",
+    ).set_defaults(handler=commands.cmd_context_budget)
 
     caps = sub.add_parser("capabilities", help="declared capabilities").add_subparsers(
         dest="capabilities_command", required=True
@@ -401,7 +414,7 @@ def build_parser() -> argparse.ArgumentParser:
         p = install.add_parser(name, parents=[common], help=help_text)
         if name in ("apply", "status", "doctor", "repair", "uninstall", "auto"):
             p.add_argument("--scope", choices=("project", "workspace", "user"), default="project")
-        if name in ("apply", "auto"):
+        if name in ("apply", "auto", "repair"):
             p.add_argument(
                 "--yes",
                 "-y",
@@ -474,6 +487,17 @@ def build_parser() -> argparse.ArgumentParser:
             p.add_argument("--to", default=None, help="pinned version — never 'latest'")
             p.add_argument("--repo", default=None)
         p.set_defaults(handler=commands.cmd_install_lifecycle)
+
+    install_footprint = install.add_parser(
+        "footprint",
+        parents=[common],
+        help="measured physical install surface: per-host file counts + "
+        "content-hash duplication (read-only)",
+    )
+    install_footprint.add_argument(
+        "--scope", choices=("project", "workspace", "user"), default="project"
+    )
+    install_footprint.set_defaults(handler=commands.cmd_install_footprint)
 
     installations = sub.add_parser(
         "installations",
@@ -604,6 +628,11 @@ def build_parser() -> argparse.ArgumentParser:
     )
     hosts.add_parser("list", parents=[common]).set_defaults(handler=commands.cmd_hosts)
     hosts.add_parser("status", parents=[common]).set_defaults(handler=commands.cmd_hosts)
+    hosts.add_parser(
+        "matrix",
+        parents=[common],
+        help="declared per-host capability matrix (not filesystem detection)",
+    ).set_defaults(handler=commands.cmd_hosts_matrix)
     hosts_activate = hosts.add_parser(
         "activate", parents=[common], help="evaluate activation for a host"
     )

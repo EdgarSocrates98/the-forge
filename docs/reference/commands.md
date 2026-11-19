@@ -9,7 +9,7 @@ Rationale coverage: **38/38** first-level groups curated in `command-rationale.j
 - [`agents`](#agents) — 3 command(s)
 - [`ask`](#ask) — 1 command(s)
 - [`capabilities`](#capabilities) — 5 command(s)
-- [`context`](#context) — 2 command(s)
+- [`context`](#context) — 3 command(s)
 - [`decisions`](#decisions) — 1 command(s)
 - [`doctor`](#doctor) — 1 command(s)
 - [`economy`](#economy) — 3 command(s)
@@ -17,9 +17,9 @@ Rationale coverage: **38/38** first-level groups curated in `command-rationale.j
 - [`excellence`](#excellence) — 2 command(s)
 - [`explain`](#explain) — 1 command(s)
 - [`graph`](#graph) — 1 command(s)
-- [`hosts`](#hosts) — 6 command(s)
+- [`hosts`](#hosts) — 7 command(s)
 - [`init`](#init) — 1 command(s)
-- [`install`](#install) — 10 command(s)
+- [`install`](#install) — 11 command(s)
 - [`installations`](#installations) — 2 command(s)
 - [`knowledge`](#knowledge) — 4 command(s)
 - [`lab`](#lab) — 4 command(s)
@@ -280,6 +280,29 @@ theforge context
 _free notes — errors, examples, next steps (hand-written, preserved)_
 <!-- keep:end -->
 
+### `context budget`
+
+**para que:** per-category context bytes + estimated tokens (measured file sizes; tokens labeled estimated, never observed)
+
+- **por que:** roteamento progressivo de contexto L0→L3: metadata → seleção determinística → refs bounded
+- **quando usar:** planejar qual especialista e quais refs uma tarefa precisa antes de carregar conteúdo
+
+**Syntax**
+
+```text
+theforge context budget [root] [json] [debug]
+```
+
+| argument/flag | required | default | description |
+|---|---|---|---|
+| `root` | no | — | workspace root (default: current dir) |
+| `json` | no | — | machine-readable JSON output |
+| `debug` | no | — | on error, print the redacted diagnostic (never a traceback) |
+
+<!-- keep:start -->
+_free notes — errors, examples, next steps (hand-written, preserved)_
+<!-- keep:end -->
+
 ### `context plan`
 
 **para que:** L1 metadata → L2 specialist → L3 bounded refs routing plan
@@ -342,7 +365,7 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 **Syntax**
 
 ```text
-theforge doctor [root] [json] [debug]
+theforge doctor [root] [json] [debug] [repair]
 ```
 
 | argument/flag | required | default | description |
@@ -350,6 +373,7 @@ theforge doctor [root] [json] [debug]
 | `root` | no | — | workspace root (default: current dir) |
 | `json` | no | — | machine-readable JSON output |
 | `debug` | no | — | on error, print the redacted diagnostic (never a traceback) |
+| `repair` | no | — | also emit the read-only install repair plan (§10.3 — never executes; `install repair --yes` applies it) |
 
 <!-- keep:start -->
 _free notes — errors, examples, next steps (hand-written, preserved)_
@@ -727,6 +751,29 @@ theforge hosts list [root] [json] [debug]
 _free notes — errors, examples, next steps (hand-written, preserved)_
 <!-- keep:end -->
 
+### `hosts matrix`
+
+**para que:** declared per-host capability matrix (not filesystem detection)
+
+- **por que:** detecção e ativação de hosts de IA (Claude/Devin/Codex)
+- **quando usar:** ver onde a integração está ativa ou preparar a ativação
+
+**Syntax**
+
+```text
+theforge hosts matrix [root] [json] [debug]
+```
+
+| argument/flag | required | default | description |
+|---|---|---|---|
+| `root` | no | — | workspace root (default: current dir) |
+| `json` | no | — | machine-readable JSON output |
+| `debug` | no | — | on error, print the redacted diagnostic (never a traceback) |
+
+<!-- keep:start -->
+_free notes — errors, examples, next steps (hand-written, preserved)_
+<!-- keep:end -->
+
 ### `hosts observe`
 
 **para que:** version+auth+integration receipt per host (read-only)
@@ -908,6 +955,30 @@ theforge install doctor [root] [json] [debug] [scope]
 _free notes — errors, examples, next steps (hand-written, preserved)_
 <!-- keep:end -->
 
+### `install footprint`
+
+**para que:** measured physical install surface: per-host file counts + content-hash duplication (read-only)
+
+- **por que:** instalação governada de providers com plano→aprovação
+- **quando usar:** instalar/atualizar um especialista com recibo verificável
+
+**Syntax**
+
+```text
+theforge install footprint [root] [json] [debug] [scope]
+```
+
+| argument/flag | required | default | description |
+|---|---|---|---|
+| `root` | no | — | workspace root (default: current dir) |
+| `json` | no | — | machine-readable JSON output |
+| `debug` | no | — | on error, print the redacted diagnostic (never a traceback) |
+| `scope` | no | — | — |
+
+<!-- keep:start -->
+_free notes — errors, examples, next steps (hand-written, preserved)_
+<!-- keep:end -->
+
 ### `install mcp-verify`
 
 **para que:** real JSON-RPC handshake against the MCP server
@@ -968,7 +1039,7 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 **Syntax**
 
 ```text
-theforge install repair [root] [json] [debug] [scope] [dry_run]
+theforge install repair [root] [json] [debug] [scope] [yes] [dry_run]
 ```
 
 | argument/flag | required | default | description |
@@ -977,6 +1048,7 @@ theforge install repair [root] [json] [debug] [scope] [dry_run]
 | `json` | no | — | machine-readable JSON output |
 | `debug` | no | — | on error, print the redacted diagnostic (never a traceback) |
 | `scope` | no | — | — |
+| `yes` | no | — | explicit approval — required for any write |
 | `dry_run` | no | — | — |
 
 <!-- keep:start -->

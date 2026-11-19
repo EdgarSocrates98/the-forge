@@ -2,9 +2,9 @@
   "schema": "forge/CommandInventory/v1",
   "forge_id": "the-forge",
   "cli": "theforge",
-  "generated_at": "2026-11-19T01:46:40Z",
+  "generated_at": "2026-11-19T03:31:52Z",
   "generated_by": "doc_inventory.py/1",
-  "command_count": 109,
+  "command_count": 112,
   "commands": [
     {
       "path": "init",
@@ -81,6 +81,17 @@
           "choices": null,
           "positional": false,
           "help": "on error, print the redacted diagnostic (never a traceback)"
+        },
+        {
+          "name": "repair",
+          "flags": [
+            "--repair"
+          ],
+          "required": false,
+          "default": "False",
+          "choices": null,
+          "positional": false,
+          "help": "also emit the read-only install repair plan (§10.3 — never executes; `install repair --yes` applies it)"
         }
       ]
     },
@@ -1280,6 +1291,45 @@
       ]
     },
     {
+      "path": "context budget",
+      "help": "per-category context bytes + estimated tokens (measured file sizes; tokens labeled estimated, never observed)",
+      "arguments": [
+        {
+          "name": "root",
+          "flags": [
+            "--root"
+          ],
+          "required": false,
+          "default": ".",
+          "choices": null,
+          "positional": false,
+          "help": "workspace root (default: current dir)"
+        },
+        {
+          "name": "json",
+          "flags": [
+            "--json"
+          ],
+          "required": false,
+          "default": "False",
+          "choices": null,
+          "positional": false,
+          "help": "machine-readable JSON output"
+        },
+        {
+          "name": "debug",
+          "flags": [
+            "--debug"
+          ],
+          "required": false,
+          "default": "False",
+          "choices": null,
+          "positional": false,
+          "help": "on error, print the redacted diagnostic (never a traceback)"
+        }
+      ]
+    },
+    {
       "path": "capabilities",
       "help": "declared capabilities",
       "arguments": [],
@@ -1905,6 +1955,18 @@
           "help": null
         },
         {
+          "name": "yes",
+          "flags": [
+            "--yes",
+            "-y"
+          ],
+          "required": false,
+          "default": "False",
+          "choices": null,
+          "positional": false,
+          "help": "explicit approval — required for any write"
+        },
+        {
           "name": "dry_run",
           "flags": [
             "--dry-run"
@@ -2259,6 +2321,60 @@
           "choices": null,
           "positional": false,
           "help": "on error, print the redacted diagnostic (never a traceback)"
+        }
+      ]
+    },
+    {
+      "path": "install footprint",
+      "help": "measured physical install surface: per-host file counts + content-hash duplication (read-only)",
+      "arguments": [
+        {
+          "name": "root",
+          "flags": [
+            "--root"
+          ],
+          "required": false,
+          "default": ".",
+          "choices": null,
+          "positional": false,
+          "help": "workspace root (default: current dir)"
+        },
+        {
+          "name": "json",
+          "flags": [
+            "--json"
+          ],
+          "required": false,
+          "default": "False",
+          "choices": null,
+          "positional": false,
+          "help": "machine-readable JSON output"
+        },
+        {
+          "name": "debug",
+          "flags": [
+            "--debug"
+          ],
+          "required": false,
+          "default": "False",
+          "choices": null,
+          "positional": false,
+          "help": "on error, print the redacted diagnostic (never a traceback)"
+        },
+        {
+          "name": "scope",
+          "flags": [
+            "--scope"
+          ],
+          "required": false,
+          "default": "project",
+          "choices": [
+            "project",
+            "workspace",
+            "user"
+          ],
+          "positional": false,
+          "help": null
         }
       ]
     },
@@ -2795,6 +2911,45 @@
     {
       "path": "hosts status",
       "help": null,
+      "arguments": [
+        {
+          "name": "root",
+          "flags": [
+            "--root"
+          ],
+          "required": false,
+          "default": ".",
+          "choices": null,
+          "positional": false,
+          "help": "workspace root (default: current dir)"
+        },
+        {
+          "name": "json",
+          "flags": [
+            "--json"
+          ],
+          "required": false,
+          "default": "False",
+          "choices": null,
+          "positional": false,
+          "help": "machine-readable JSON output"
+        },
+        {
+          "name": "debug",
+          "flags": [
+            "--debug"
+          ],
+          "required": false,
+          "default": "False",
+          "choices": null,
+          "positional": false,
+          "help": "on error, print the redacted diagnostic (never a traceback)"
+        }
+      ]
+    },
+    {
+      "path": "hosts matrix",
+      "help": "declared per-host capability matrix (not filesystem detection)",
       "arguments": [
         {
           "name": "root",

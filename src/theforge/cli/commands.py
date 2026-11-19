@@ -202,6 +202,16 @@ def cmd_doctor(args: argparse.Namespace) -> int:
     root = _root(args)
     registry = Registry(find_forge_dir(root))
     report = run_doctor(root, registry)
+    if getattr(args, "repair", False):
+        # §10.3 — doctor --repair is read-only diagnosis: it emits the
+        # same plan `install repair` shows without --yes. Never executes.
+        from theforge.install import service
+
+        try:
+            plan = service.repair(scope="project", root=root, approved=False)
+            report["repair_plan"] = plan.get("repair_plan")
+        except Exception as exc:  # repair planning must never kill the doctor
+            report["repair_plan"] = {"error": str(exc)}
     _warn(registry)
     _emit(args, report, render.doctor)
     return 0 if report["healthy"] else 1
@@ -878,7 +888,14 @@ def cmd_install_lifecycle(args: argparse.Namespace) -> int:
         elif verb == "doctor":
             out = service.doctor(scope=args.scope, root=root)
         elif verb == "repair":
-            out = service.repair(scope=args.scope, root=root, dry_run=args.dry_run)
+            # §10.3 — read-only plan by default; ``--yes`` is the explicit
+            # approval that executes it.
+            out = service.repair(
+                scope=args.scope,
+                root=root,
+                dry_run=args.dry_run,
+                approved=getattr(args, "yes", False),
+            )
         elif verb == "uninstall":
             out = service.uninstall(
                 scope=args.scope, root=root, purge=args.purge, dry_run=args.dry_run
@@ -939,7 +956,9 @@ def cmd_install_lifecycle(args: argparse.Namespace) -> int:
                 gateway_profile=getattr(args, "gateway_profile", None),
             )
         elif verb == "mcp-verify":
-            out = kit.mcp_verify(service._spec())
+            # Probe the argv the managed .mcp.json key actually declares —
+            # absolute, never a PATH lookup (§9.3).
+            out = kit.mcp_verify(service.mcp_spec())
         else:
             raise UsageError(f"install {verb}: unknown verb")
     except kit.InstallError as exc:
@@ -962,6 +981,15 @@ def cmd_install_lifecycle(args: argparse.Namespace) -> int:
     return (
         0 if out.get("status") in ("completed", "planned", "healthy", "unverified", "PASS") else 1
     )
+
+
+def cmd_install_footprint(args: argparse.Namespace) -> int:
+    """``install footprint`` — measured duplication, never restructure."""
+    from theforge.install import service
+
+    out = service.footprint(scope=args.scope, root=_root(args))
+    _emit(args, out, render.install_footprint)
+    return 0
 
 
 def cmd_installations(args: argparse.Namespace) -> int:
@@ -1846,6 +1874,19 @@ def cmd_hosts(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_hosts_matrix(args: argparse.Namespace) -> int:
+    """``hosts matrix`` — declared capability data per host (§9.1).
+
+    What each host *declares* it can consume — never inferred from
+    filesystem presence. Detection (which binary is on this machine) is
+    ``hosts list``.
+    """
+    from theforge.host_capabilities import host_matrix
+
+    _emit(args, host_matrix(), render.hosts_matrix)
+    return 0
+
+
 def cmd_hosts_activate(args: argparse.Namespace) -> int:
     """``hosts activate <host>`` — activation plan + honest receipt."""
     from theforge import _installkit as kit
@@ -2532,6 +2573,23 @@ def cmd_context_plan(args: argparse.Namespace) -> int:
         "budget_bytes": plan.budget_bytes,
         "est_level3_bytes": plan.est_level3_bytes,
         "metrics": plan.metrics,
+        # §8.3 selection evidence — confidence, alternatives and the
+        # explicit disambiguation reason (additive output).
+        "selection": plan.selection,
+        "confidence": plan.confidence,
+        "evidence": plan.evidence,
+        "forge_scores": plan.forge_scores,
+        "alternatives": plan.alternatives,
+        "disambiguation": plan.disambiguation,
     }
     _emit(args, doc, render.context_plan)
+    return 0
+
+
+def cmd_context_budget(args: argparse.Namespace) -> int:
+    """context.budget — per-category context bytes, honest token estimates."""
+    from theforge.context.budget import context_budget
+
+    doc = context_budget(_root(args))
+    _emit(args, doc, render.context_budget)
     return 0
