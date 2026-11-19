@@ -196,7 +196,11 @@ def test_mcp_managed_key_preserves_other_servers(tmp_path):
     kit.apply_install(ctx, approved=True)
     doc = json.loads(mcp.read_text())
     assert doc["mcpServers"]["other"] == {"command": "x"}
-    assert doc["mcpServers"]["forge-test"]["command"] == "forge-test"
+    entry = doc["mcpServers"]["forge-test"]
+    # §9.3 — PATH-independent argv: absolute shim or sys.executable -m
+    assert Path(entry["command"]).is_absolute()
+    if entry["args"] and entry["args"][0] == "-m":
+        assert entry["args"][1] == "forge_test"
     assert doc["unrelated"] is True
 
 
@@ -264,7 +268,7 @@ def test_repair_restores_missing_mcp_key_preserving_users(tmp_path):
     out = kit.repair(ctx)
     assert ".mcp.json" in out["repaired"]
     new = json.loads(mcp.read_text())
-    assert new["mcpServers"]["forge-test"]["command"] == "forge-test"
+    assert Path(new["mcpServers"]["forge-test"]["command"]).is_absolute()
     assert new["mcpServers"]["other"] == {"command": "x"}
     assert kit.status(ctx)["status"] == "healthy"
 

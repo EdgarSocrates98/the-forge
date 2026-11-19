@@ -146,3 +146,42 @@ def test_every_scope_emits_contract_docs(tmp_path, scope, monkeypatch):
     )
     rcpt = kit.apply_install(ctx, approved=True)
     assert rcpt["schema"] == "forge/InstallReceipt/v1"
+
+
+@pytest.mark.parametrize("scope", ["project", "user"])
+def test_mcp_argv_is_path_independent(tmp_path, scope, monkeypatch):
+    """§9.3 — the managed .mcp.json argv never depends on the host PATH:
+    an absolute registered shim wins; else sys.executable -m <package>."""
+    monkeypatch.setenv("FORGE_HOME_OVERRIDE", str(tmp_path / "home"))
+    spec_ = _spec()
+    root = tmp_path / "repo"
+    root.mkdir()
+    (root / ".git").mkdir()
+    state = tmp_path / "home" / ".forge-schema" if scope == "user" else root / spec_.state_dir
+    ctx = kit.InstallContext(
+        spec=spec_,
+        scope=scope,
+        root=tmp_path / "home" if scope == "user" else root,
+        state_dir=state,
+        profile="minimal",
+        hosts=(),
+        ledger=kit.Ledger.load(state),
+    )
+    argv = kit._mcp_argv(ctx)
+    assert Path(argv[0]).is_absolute()
+    # registered absolute shim wins over the interpreter fallback
+    manifest_dir = kit.installations_dir()
+    manifest_dir.mkdir(parents=True, exist_ok=True)
+    shim = tmp_path / "bin" / "forge-schema"
+    shim.parent.mkdir(parents=True, exist_ok=True)
+    shim.write_text("#!/bin/sh\n")
+    (manifest_dir / f"{spec_.forge_id}.json").write_text(
+        json.dumps({"cli": {"shim": str(shim)}}))
+    assert kit._mcp_argv(ctx)[0] == str(shim)
+    # explicit per-forge override still wins over both
+    ctx2 = kit.InstallContext(
+        spec=spec_, scope=scope,
+        root=tmp_path / "home" if scope == "user" else root,
+        state_dir=state, profile="minimal", hosts=(),
+        mcp_command_resolved=("/opt/x/bin", "run"))
+    assert kit._mcp_argv(ctx2) == ("/opt/x/bin", "run")
