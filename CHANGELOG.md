@@ -41,6 +41,12 @@ existing cycle without intentionally breaking the Forge Protocol.
   "no forge registered" and never widens to installing everything.
 - Regenerated `docs/evidence/federated-e2e.json` in the current
   `forge/FederatedE2E/v1` format.
+- `scripts/installkit/vendor.py` `SETUP_SH` template (+ repo `setup.sh`):
+  the unguarded `PY=$(command -v python3 || …)` substitution failed under
+  `set -euo pipefail` before `FORGE-PYTHON-NOT-FOUND` could print — a
+  vendored defect reproduced across every sibling `setup.sh` (silent
+  `rc=1` instead of named `rc=2`). Probe now ends `|| true`; sibling
+  copies are re-vendored in their own waves.
 
 ### Added
 
