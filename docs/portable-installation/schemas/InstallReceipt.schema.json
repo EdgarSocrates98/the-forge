@@ -230,6 +230,13 @@
       "additionalProperties": true,
       "description": "InstallContext.options snapshot: component selections made at install (e.g. asset_kinds, graph_studio)."
     },
+    "counts": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "integer"
+      },
+      "description": "Per-action managed-file counts (created/updated/unchanged/adopted/skipped) plus `written` and `written_bytes` — measured from what the apply actually did."
+    },
     "verification": {
       "type": "object",
       "required": [

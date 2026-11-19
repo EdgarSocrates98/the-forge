@@ -240,7 +240,7 @@ def test_wheel_install_lifecycle_outside_checkout(tmp_path: Path):
     assert victim.is_file()
     victim.unlink()
     out = _run(
-        [str(cli), "install", "repair", "--root", str(target), "--json"],
+        [str(cli), "install", "repair", "--yes", "--root", str(target), "--json"],
         cwd=target,
         env=env,
     )
