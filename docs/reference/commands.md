@@ -43,7 +43,7 @@ Rationale coverage: **38/38** first-level groups curated in `command-rationale.j
 - [`telemetry`](#telemetry) — 2 command(s)
 - [`trace`](#trace) — 1 command(s)
 - [`verify`](#verify) — 3 command(s)
-- [`workspace`](#workspace) — 2 command(s)
+- [`workspace`](#workspace) — 3 command(s)
 
 ## agents
 
@@ -2058,8 +2058,8 @@ theforge resources get [root] [json] [debug] <identity> [max_bytes] [offset] [in
 | `json` | no | — | machine-readable JSON output |
 | `debug` | no | — | on error, print the redacted diagnostic (never a traceback) |
 | `identity` | yes | — | <forge-id>:<resource-id> |
-| `max_bytes` | no | — | bytes to serve (default 262144; clamped to the 1 MiB hard ceiling, flagged `capped`) |
-| `offset` | no | — | window start; beyond EOF is a typed INVALID |
+| `max_bytes` | no | — | — |
+| `offset` | no | — | — |
 | `integrity` | no | — | hash the full file when it fits the integrity cap |
 
 <!-- keep:start -->
@@ -2156,7 +2156,7 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 **Syntax**
 
 ```text
-theforge setup [root] [json] [debug] [scope] [host] [profile] [gateway_profile] [components] [forge] [RELPATH] [yes] [dry_run]
+theforge setup [root] [json] [debug] [scope] [host] [profile] [gateway_profile] [preset] [components] [forge] [RELPATH] [yes] [dry_run]
 ```
 
 | argument/flag | required | default | description |
@@ -2168,6 +2168,7 @@ theforge setup [root] [json] [debug] [scope] [host] [profile] [gateway_profile] 
 | `host` | no | — | host integration; none keeps host files untouched |
 | `profile` | no | — | — |
 | `gateway_profile` | no | — | The Forge router execution budget |
+| `preset` | no | — | transparent alias onto --profile/--gateway-profile (economy→minimal+economy, balanced→recommended+balanced, full→full+deep, custom→your explicit flags) |
 | `components` | no | — | optional components csv: skills,agents,mcp,tui,graph-studio |
 | `forge` | no | — | limit family setup to one forge id |
 | `RELPATH` | no | — | workspace member for project-scope fan-out (repeatable) |
@@ -2618,6 +2619,29 @@ _free notes — errors, examples, next steps (hand-written, preserved)_
 ```text
 theforge workspace
 ```
+
+<!-- keep:start -->
+_free notes — errors, examples, next steps (hand-written, preserved)_
+<!-- keep:end -->
+
+### `workspace detect`
+
+**para que:** bounded local technology scan per member + advisory specialist recommendation (no provider process)
+
+- **por que:** descrição e administração do workspace `.forge/`
+- **quando usar:** configurar/inspecionar o workspace atual
+
+**Syntax**
+
+```text
+theforge workspace detect [root] [json] [debug]
+```
+
+| argument/flag | required | default | description |
+|---|---|---|---|
+| `root` | no | — | workspace root (default: current dir) |
+| `json` | no | — | machine-readable JSON output |
+| `debug` | no | — | on error, print the redacted diagnostic (never a traceback) |
 
 <!-- keep:start -->
 _free notes — errors, examples, next steps (hand-written, preserved)_

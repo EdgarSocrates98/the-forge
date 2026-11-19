@@ -276,6 +276,9 @@ warning.
 ```bash
 theforge setup                              # guided family onboarding (TTY)
 theforge setup --scope workspace --dry-run  # consolidated plan, nothing written
+theforge setup --preset balanced --dry-run  # transparent profile/gateway alias
+theforge workspace detect                   # bounded tech scan + advisory suggestion
+theforge workspace detect --json            # forge/WorkspaceDetection/v1 + recommendation
 theforge install auto --scope workspace --yes
 theforge install auto --forge spark-forge-aws --yes
 theforge install auto --scope workspace --member sub/repo --yes
@@ -291,6 +294,107 @@ theforge installations list
 project-scope install into the named member — the same governed argv
 path. `--host`, `--profile`, `--components`, `--gateway-profile` are
 propagated to every registered forge **that declares them**.
+
+## Cycle 16.1 — detection, recommendation, presets, declarative config, onboarding
+
+Setup adds five read-only layers on top of the same consolidated plan —
+none of them spawns a provider process or writes anything by itself.
+
+### Workspace technology detection (`forge/WorkspaceDetection/v1`)
+
+`workspace detect` and every setup/install-auto plan now carry a bounded
+per-member scan: depth ≤ 3, ≤ 200 files per member, ≤ 64 members, vendor/
+build/cache dirs skipped (`node_modules`, `dist`, `target`, `.venv`, …),
+secret-named files never opened. Detection is evidence-based — a
+directory is a member when it carries `.git`, a project manifest or an
+evidence marker (`requirements*.txt`, `*.tf`, `*.sln`, `pom.xml`, …);
+"many subdirectories" alone is never a workspace.
+
+| evidence | confidence |
+|---|---|
+| manifest / project file / dependency entry | `high` |
+| source tree without a manifest | `medium` |
+| limited inference | `low` |
+
+Detected: Python, Node, TypeScript, React, Next.js, Vue, Angular, Svelte,
+.NET, Java, Terraform, Bicep, Pulumi/CDKTF, PySpark, AWS Glue (PySpark +
+AWS composite), Databricks/Delta, FastAPI/Flask/Django, OpenAPI, and a
+`frontend` composite.
+
+### Advisory recommendation (`forge/SpecialistRecommendation/v1`)
+
+The plan also carries a *suggestion* — evidence-attributed, with
+`confidence`, `reason`, `role` (`primary`/`aux`), an `installed` flag
+against the bootstrap registry and named `alternatives` for ambiguous
+cases (bare `pyspark` → the cloud Spark candidates, never a guess). The
+mapping is data-driven: core code names no specialist — each suggestion
+is resolved against the declared `technologies`/`family` of the
+`theforge/ForgeKnowledge/v1` packages in `forge-knowledge/` (a new
+specialist onboards by shipping a package). Companion families
+(verification, observability, code navigation) are always `aux`; a
+language/runtime overlap alone never names a domain specialist. The
+`choices` block mirrors the setup question: `recommended` · `all` ·
+`manual` · `keep-existing` (the default). A suggestion never installs or
+activates anything by itself — selection still flows through the same
+approval-gated plan.
+
+### `--preset` — transparent aliases
+
+`--preset` resolves onto the existing profile vocabulary — visible in the
+plan's `setup.resolution` block before approval:
+
+| preset | --profile | --gateway-profile |
+|---|---|---|
+| `economy` | `minimal` | `economy` |
+| `balanced` | `recommended` | `balanced` |
+| `full` | `full` | `deep` |
+| `custom` | your explicit flags | your explicit flags |
+
+Precedence: **CLI flag > --preset > `forge.workspace.yaml` > default**.
+An explicit flag that contradicts the preset is a `UsageError`, never a
+silent override; a flag that repeats the preset value wins with `flag`
+provenance.
+
+### Declarative `forge:` block (`forge.workspace.yaml`)
+
+Optional, backward-compatible — the `forge_workspace: true` marker still
+parses. The reader is a strict stdlib YAML subset; anything outside it
+(anchors, tabs, flow mappings) is a warning, never a misparse, and
+secret-looking keys/values are dropped with a warning.
+
+```yaml
+kind: forge/Workspace/v1
+members:
+  - path: backend-api
+  - path: data-pipelines
+forge:
+  installation_profile: full        # minimal | recommended | full
+  gateway_profile: deep             # economy | balanced | deep
+  hosts: [claude, codex]            # [] = explicit "no host integration"
+  specialists:
+    mode: recommended               # all | recommended | manual
+    include: [api-forge]            # forge ids when mode == manual
+```
+
+Declared values are *defaults only* — every CLI flag and wizard choice
+overrides them; `specialists.mode: recommended` resolves to the primary
+suggestions ∩ registered forges and reports the selection in
+`setup.specialists.selected`.
+
+### Honest host states (`forge/HostOnboarding/v1`)
+
+Every setup/install-auto receipt ends with an `onboarding` block — one
+row per known host with a closed state vocabulary: `not_found`,
+`installed`, `in_path`, `configurable`, `integration_written`,
+`restart_needed`, `mcp_verified`, `validated`.
+
+Configured is **not** active: a bare `.codex/`/`.claude/` directory is
+`configurable` — presence, never readiness. `integration_written` /
+`restart_needed` mean this run actually wrote assets (distinguished by
+whether the host is installed). `mcp_verified` requires a real JSON-RPC
+handshake, which only runs after a successful apply — a dry-run or failed
+plan never spawns the server. `validated` requires an observed running
+host (`theforge hosts observe`) — setup never prints it.
 
 ## Selective uninstall
 

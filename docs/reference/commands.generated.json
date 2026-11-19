@@ -2,9 +2,9 @@
   "schema": "forge/CommandInventory/v1",
   "forge_id": "the-forge",
   "cli": "theforge",
-  "generated_at": "2026-11-18T00:20:38Z",
+  "generated_at": "2026-11-19T01:46:40Z",
   "generated_by": "doc_inventory.py/1",
-  "command_count": 108,
+  "command_count": 109,
   "commands": [
     {
       "path": "init",
@@ -183,6 +183,22 @@
           ],
           "positional": false,
           "help": "The Forge router execution budget"
+        },
+        {
+          "name": "preset",
+          "flags": [
+            "--preset"
+          ],
+          "required": false,
+          "default": null,
+          "choices": [
+            "economy",
+            "balanced",
+            "full",
+            "custom"
+          ],
+          "positional": false,
+          "help": "transparent alias onto --profile/--gateway-profile (economy→minimal+economy, balanced→recommended+balanced, full→full+deep, custom→your explicit flags)"
         },
         {
           "name": "components",
@@ -4003,6 +4019,45 @@
     {
       "path": "workspace show",
       "help": "describe the workspace (cached manifests only, no provider)",
+      "arguments": [
+        {
+          "name": "root",
+          "flags": [
+            "--root"
+          ],
+          "required": false,
+          "default": ".",
+          "choices": null,
+          "positional": false,
+          "help": "workspace root (default: current dir)"
+        },
+        {
+          "name": "json",
+          "flags": [
+            "--json"
+          ],
+          "required": false,
+          "default": "False",
+          "choices": null,
+          "positional": false,
+          "help": "machine-readable JSON output"
+        },
+        {
+          "name": "debug",
+          "flags": [
+            "--debug"
+          ],
+          "required": false,
+          "default": "False",
+          "choices": null,
+          "positional": false,
+          "help": "on error, print the redacted diagnostic (never a traceback)"
+        }
+      ]
+    },
+    {
+      "path": "workspace detect",
+      "help": "bounded local technology scan per member + advisory specialist recommendation (no provider process)",
       "arguments": [
         {
           "name": "root",

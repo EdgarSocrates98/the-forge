@@ -154,6 +154,14 @@ def build_parser() -> argparse.ArgumentParser:
         help="The Forge router execution budget",
     )
     setup.add_argument(
+        "--preset",
+        choices=("economy", "balanced", "full", "custom"),
+        default=None,
+        help="transparent alias onto --profile/--gateway-profile "
+        "(economy→minimal+economy, balanced→recommended+balanced, "
+        "full→full+deep, custom→your explicit flags)",
+    )
+    setup.add_argument(
         "--components",
         default=None,
         help="optional components csv: skills,agents,mcp,tui,graph-studio",
@@ -283,15 +291,17 @@ def build_parser() -> argparse.ArgumentParser:
     res_get.add_argument("identity", help="<forge-id>:<resource-id>")
     res_get.add_argument("--max-bytes", type=int, default=262_144)
     res_get.add_argument("--offset", type=int, default=0)
-    res_get.add_argument("--integrity", action="store_true",
-                         help="hash the full file when it fits the integrity cap")
+    res_get.add_argument(
+        "--integrity", action="store_true", help="hash the full file when it fits the integrity cap"
+    )
     res_get.set_defaults(handler=commands.cmd_resources_get)
 
     context = sub.add_parser(
         "context", help="progressive context routing (Onda 08)"
     ).add_subparsers(dest="context_command", required=True)
     ctx_plan = context.add_parser(
-        "plan", parents=[common],
+        "plan",
+        parents=[common],
         help="L1 metadata → L2 specialist → L3 bounded refs routing plan",
     )
     ctx_plan.add_argument("task", help="task description to route")
@@ -855,6 +865,12 @@ def build_parser() -> argparse.ArgumentParser:
     workspace.add_parser(
         "show", parents=[common], help="describe the workspace (cached manifests only, no provider)"
     ).set_defaults(handler=commands.cmd_workspace_show)
+    workspace.add_parser(
+        "detect",
+        parents=[common],
+        help="bounded local technology scan per member + advisory "
+        "specialist recommendation (no provider process)",
+    ).set_defaults(handler=commands.cmd_workspace_detect)
 
     explain = sub.add_parser("explain", parents=[common], help="explain a past run")
     explain.add_argument("run_id")
@@ -907,9 +923,9 @@ def build_parser() -> argparse.ArgumentParser:
     trace.add_argument("run_id")
     trace.set_defaults(handler=commands.cmd_trace)
 
-    telemetry = sub.add_parser(
-        "telemetry", help="telemetry export (OTLP)"
-    ).add_subparsers(dest="telemetry_command", required=True)
+    telemetry = sub.add_parser("telemetry", help="telemetry export (OTLP)").add_subparsers(
+        dest="telemetry_command", required=True
+    )
     telemetry_export = telemetry.add_parser(
         "export",
         parents=[common],
@@ -924,9 +940,7 @@ def build_parser() -> argparse.ArgumentParser:
         metavar="ID",
         help="every run carrying this correlation id + its orchestration receipt",
     )
-    telemetry_export.add_argument(
-        "--last", type=int, metavar="N", help="the newest N runs"
-    )
+    telemetry_export.add_argument("--last", type=int, metavar="N", help="the newest N runs")
     telemetry_export.add_argument(
         "--out",
         required=True,

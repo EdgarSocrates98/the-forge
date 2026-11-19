@@ -11,7 +11,7 @@ import json
 import os
 import re
 import tempfile
-from collections.abc import Iterable
+from collections.abc import Iterable, Sequence
 from pathlib import Path
 from typing import Any
 
@@ -217,7 +217,7 @@ def sync(
     manifests: Iterable[dict[str, Any]],
     *,
     root: Path | None = None,
-    forge: str | None = None,
+    forge: str | Sequence[str] | None = None,
     approved: bool = False,
     dry_run: bool = False,
     refresh: bool = True,
@@ -226,12 +226,15 @@ def sync(
 
     ``approved`` is required for any file write. Existing user-authored
     entries always win; only the marked The Forge block is replaced.
+    ``forge`` scopes the sync to one id or a set of ids (cycle 16.1 —
+    setup's declarative/recommended selection).
     """
     config_dir = user_config_dir()
     config_path = config_dir / "providers.toml"
     manifests = [m for m in manifests if isinstance(m, dict)]
     if forge is not None:
-        manifests = [m for m in manifests if m.get("forge_id") == forge]
+        wanted = {forge} if isinstance(forge, str) else {str(f) for f in forge}
+        manifests = [m for m in manifests if m.get("forge_id") in wanted]
 
     try:
         current = config_path.read_text(encoding="utf-8") if config_path.is_file() else ""

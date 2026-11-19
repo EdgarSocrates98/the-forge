@@ -37,7 +37,11 @@
     "iac",
     "observability",
     "opentelemetry",
-    "backstage"
+    "backstage",
+    "bicep",
+    "pulumi",
+    "cdktf",
+    "cloudformation"
   ],
   "environments": [
     "local",
