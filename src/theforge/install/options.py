@@ -15,10 +15,13 @@ is a ``UsageError``, never a silent override.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Final
+from typing import TYPE_CHECKING, Any, Final
 
 from theforge.errors import UsageError
 from theforge.workspace.config import WorkspaceConfig
+
+if TYPE_CHECKING:  # pragma: no cover - typing only
+    from collections.abc import Iterable
 
 PRESETS: Final[dict[str, tuple[str | None, str | None]]] = {
     "economy": ("minimal", "economy"),
@@ -142,12 +145,14 @@ def resolve(
             "source": "forge.workspace.yaml",
         }
         if specialists_mode == "manual":
-            if config.specialists_include:
-                forges = config.specialists_include
-            else:
+            # §4.4 — an empty manual selection stays empty (blocked receipt
+            # downstream as ``empty_manual_selection``); it never widens to
+            # "activate everything".
+            forges = config.specialists_include
+            if not config.specialists_include:
                 warnings.append(
                     "forge.workspace.yaml: specialists.mode 'manual' with empty "
-                    "include — every registered forge stays in scope"
+                    "include — empty selection, nothing will be delegated"
                 )
         # "recommended" is resolved by the caller — it needs the detection
         # pass to pick the primary suggestions ∩ registered forges.
@@ -177,4 +182,95 @@ def resolve(
     )
 
 
-__all__ = ["PRESETS", "SetupResolution", "resolve"]
+def resolve_recommended(
+    detection: dict[str, Any],
+    registered: Iterable[str],
+) -> tuple[tuple[str, ...], str | None]:
+    """``specialists.mode: recommended`` → primary suggestions ∩ registry.
+
+    Pure: ``detection``/``registered`` are caller-supplied evidence, so the
+    CLI and the wizard resolve identical selections from identical inputs.
+    Returns ``(selected, empty_state)`` — ``empty_state`` is the named §4.4
+    state when the selection comes out empty (``None`` otherwise):
+
+    - ``no_installed_runtimes``    — primary suggestions exist but none is
+      registered (install the runtime via the forge's own CLI first);
+    - ``recommendation_ambiguous`` — tied/subset alternatives, no primary —
+      ambiguity is named, never guessed;
+    - ``no_relevant_recommendation`` — nothing relevant was detected.
+    """
+    from theforge.workspace.recommend import recommend_specialists
+
+    rec = recommend_specialists(detection, registered=sorted(registered))
+    primaries = [s for s in rec.get("suggested") or () if s.get("role") == "primary"]
+    selected = tuple(str(s["forge_id"]) for s in primaries if s.get("installed"))
+    if selected:
+        return selected, None
+    if primaries:
+        return (), "no_installed_runtimes"
+    if rec.get("alternatives"):
+        return (), "recommendation_ambiguous"
+    return (), "no_relevant_recommendation"
+
+
+@dataclass(frozen=True)
+class WizardResolution:
+    """``resolve`` output packaged for the interactive wizard path.
+
+    ``forges``/``doc`` are what ``install_auto(forge=..., setup=...)`` must
+    receive so the wizard-approved plan is the CLI plan verbatim; the
+    per-field provenance lives in ``doc["resolution"]`` (``flag`` /
+    ``preset:<name>`` / ``forge.workspace.yaml`` / ``default``) and in
+    ``doc["specialists"]["source"]``.
+    """
+
+    resolution: SetupResolution
+    forges: tuple[str, ...] | None
+    doc: dict[str, Any]
+    empty_state: str | None = None  # named §4.4 state when forges == ()
+
+
+def wizard_defaults(
+    *,
+    config: WorkspaceConfig | None,
+    detection: dict[str, Any] | None = None,
+    registered: Iterable[str] = (),
+) -> WizardResolution:
+    """Resolve what the setup wizard pre-checks — no side effects.
+
+    The wizard path has no flags, so resolution is ``config > detection >
+    default``; the operator's answers remain the explicit tier. ``detection``
+    and ``registered`` are needed only when the declared mode is
+    ``recommended`` — the caller performs that bounded IO and passes the
+    result in, keeping this function a pure resolver.
+    """
+    res = resolve(
+        preset=None,
+        profile=None,
+        gateway_profile=None,
+        host=None,
+        forge=None,
+        config=config,
+    )
+    forges = res.forges
+    doc = res.doc
+    empty_state: str | None = None
+    if res.specialists_mode == "recommended":
+        forges, empty_state = resolve_recommended(detection or {}, registered)
+        doc = dict(res.doc)
+        specialists = dict(doc.get("specialists") or {})
+        specialists["selected"] = list(forges)
+        if empty_state is not None:
+            specialists["empty_state"] = empty_state
+        doc["specialists"] = specialists
+    return WizardResolution(resolution=res, forges=forges, doc=doc, empty_state=empty_state)
+
+
+__all__ = [
+    "PRESETS",
+    "SetupResolution",
+    "WizardResolution",
+    "resolve",
+    "resolve_recommended",
+    "wizard_defaults",
+]

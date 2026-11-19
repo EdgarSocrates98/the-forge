@@ -256,14 +256,18 @@ def select(
     *,
     ctx: UIContext | None = None,
     descriptions: list[str] | None = None,
+    default: int = 0,
 ) -> int | None:
-    """Arrow-key single select. Returns index, or None on cancel."""
+    """Arrow-key single select. Returns index, or None on cancel.
+
+    ``default`` is the initially focused index — used to pre-check a
+    resolved choice (declared defaults feed the wizard)."""
     ctx = ctx or UIContext.detect()
     if not ctx.interactive:
         raise NonInteractive("select requires a TTY")
     if not options:
         return None
-    idx = 0
+    idx = default if 0 <= default < len(options) else 0
     lines_drawn = 0
     with _RawMode():
         while True:

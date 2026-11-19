@@ -2226,7 +2226,6 @@ def cmd_setup(args: argparse.Namespace) -> int:
     from theforge.workspace import (
         detect_workspace,
         load_workspace_config,
-        recommend_specialists,
     )
 
     root = _root(args)
@@ -2286,21 +2285,19 @@ def cmd_setup(args: argparse.Namespace) -> int:
     if resolution.specialists_mode == "recommended":
         # Declared "activate recommended": resolve the suggestion's primary
         # forges against the installed registry — never the alternatives.
+        # Shared with the wizard path via options.resolve_recommended.
         detection = detect_workspace(root)
         registered = [str(m.get("forge_id") or "") for m in kit.installed_forges()]
-        recommendation = recommend_specialists(detection, registered=registered)
-        selected = tuple(
-            s["forge_id"]
-            for s in recommendation["suggested"]
-            if s.get("role") == "primary" and s.get("installed")
-        )
+        selected, sel_state = setup_options.resolve_recommended(detection, registered)
         forges = selected
-        setup_doc.setdefault("specialists", {})["selected"] = list(selected)
-        if not selected:
+        spec_doc = setup_doc.setdefault("specialists", {})
+        spec_doc["selected"] = list(selected)
+        if sel_state:
+            spec_doc["empty_state"] = sel_state
             print(
-                "theforge: warning: specialists.mode 'recommended' matched no "
-                "registered primary — empty delegation scope, nothing to "
-                "install (use mode 'all' or 'manual' to widen)",
+                f"theforge: warning: specialists.mode 'recommended' resolved to "
+                f"an empty selection ({sel_state}) — nothing will be delegated; "
+                "see the receipt's selection.next_action",
                 file=sys.stderr,
             )
 

@@ -2071,6 +2071,116 @@ def _attach_setup_blocks(
     )
 
 
+def _empty_selection_state(
+    *,
+    registry_empty: bool,
+    wanted: tuple[str, ...] | None,
+    setup: dict[str, Any] | None,
+    recommendation: dict[str, Any] | None,
+) -> tuple[str, str, str]:
+    """Named §4.4 reason a delegation run found nothing to install.
+
+    Every name carries the operator-facing ``next_action`` — a blocked
+    receipt must guide, never just fail. An explicit empty selection
+    (``wanted == ()``) is distinguished from a truly empty registry, and
+    recommended-mode empties are subclassed from the real recommendation
+    evidence — never guessed."""
+    if registry_empty:
+        return (
+            "no_registered_forges",
+            "nenhuma forge registrada em ~/.forge/installations — rode o setup",
+            "instale uma forge especialista via o CLI proprio dela, depois repita o setup",
+        )
+    mode = ((setup or {}).get("specialists") or {}).get("mode")
+    if mode == "recommended":
+        suggested = (recommendation or {}).get("suggested") or []
+        primaries = [s for s in suggested if isinstance(s, dict) and s.get("role") == "primary"]
+        if primaries:
+            ids = ", ".join(sorted(str(s.get("forge_id")) for s in primaries))
+            return (
+                "no_installed_runtimes",
+                f"specialists recomendados mas nao instalados: {ids}",
+                "instale o runtime de cada forge sugerida via o CLI proprio dela, "
+                "depois repita o setup",
+            )
+        alternatives = (recommendation or {}).get("alternatives") or []
+        if alternatives:
+            ids = ", ".join(
+                sorted(
+                    str(a.get("forge_id")) for a in alternatives if isinstance(a, dict)
+                )
+            )
+            return (
+                "recommendation_ambiguous",
+                f"recomendacao ambigua — alternativas empatadas: {ids}; "
+                "nenhuma escolhida automaticamente",
+                "escolha explicitamente via --forge <id> ou "
+                "specialists.mode=manual + include em forge.workspace.yaml",
+            )
+        return (
+            "no_relevant_recommendation",
+            "specialists.mode 'recommended' nao encontrou especialista relevante "
+            "para a deteccao da workspace",
+            "use specialists.mode 'all' ou 'manual' + include para um escopo explicito",
+        )
+    return (
+        "empty_manual_selection",
+        "selecao de forges vazia — a filtragem explicita nao reteve nada "
+        "(nunca alargada para 'todas')",
+        "informe --forge <id> ou specialists.include em forge.workspace.yaml; "
+        "omita o filtro para todas as registradas",
+    )
+
+
+def _post_selection_state(
+    *,
+    results: list[dict[str, Any]],
+    installation: dict[str, Any],
+) -> tuple[str, str, str] | None:
+    """Named §4.4 states derivable from real apply/plan evidence.
+
+    Fired only when a uniform outcome lets the receipt be precise:
+    every selected forge unsupported, every delegated exe unresolvable,
+    or every managed path already converged."""
+    if not results:
+        return None
+    statuses = [str(r.get("status")) for r in results]
+    if all(s == "unsupported" for s in statuses):
+        return (
+            "no_supported_component",
+            "a selecao e valida, mas nenhuma forge declarou surface de install "
+            "que atenda aos parametros pedidos",
+            "verifique o manifesto de cada forge (install.flags) ou rode "
+            "`theforge specialists status` para o que cada uma aceita",
+        )
+    if all(
+        r.get("status") == "blocked" and "nao resolvido" in str(r.get("detail"))
+        for r in results
+    ):
+        return (
+            "no_installed_runtimes",
+            "nenhum runtime das forges selecionadas resolve no PATH/shim",
+            "instale o CLI de cada forge selecionada, depois repita o setup",
+        )
+    classes = [
+        str((f or {}).get("classification"))
+        for f in (installation.get("forges") or [])
+        if isinstance(f, dict)
+    ]
+    if (
+        classes
+        and len(classes) == len(results)
+        and all(c == "reused" for c in classes)
+        and all(s in ("completed", "planned") for s in statuses)
+    ):
+        return (
+            "all_already_active",
+            "todas as forges selecionadas ja estavam ativas — nada a mudar",
+            "nada a fazer; `theforge doctor` confirma o estado",
+        )
+    return None
+
+
 def install_auto(
     *,
     scope: str = "project",
@@ -2127,6 +2237,8 @@ def install_auto(
             ws_detection, registered=[str(m.get("forge_id") or "") for m in found]
         )
 
+    wanted: tuple[str, ...] | None = None
+    registry_empty = not found
     if forge is not None:
         wanted = (forge,) if isinstance(forge, str) else tuple(forge)
         registered = {str(m.get("forge_id") or "") for m in found}
@@ -2141,11 +2253,19 @@ def install_auto(
     checks: list[dict[str, Any]] = []
     results: list[dict[str, Any]] = []
     if not found:
+        # §4.4 — the blocked receipt names WHY the delegation scope is
+        # empty; an explicit empty selection is never widened to "all".
+        state, detail, next_action = _empty_selection_state(
+            registry_empty=registry_empty,
+            wanted=wanted,
+            setup=setup,
+            recommendation=recommendation,
+        )
         checks.append(
             {
-                "id": "registry",
+                "id": "registry" if registry_empty else "selection",
                 "status": "BLOCKED",
-                "detail": "nenhuma forge registrada em ~/.forge/installations — rode o setup",
+                "detail": detail,
             }
         )
         blocked_receipt: dict[str, Any] = {
@@ -2155,6 +2275,12 @@ def install_auto(
             "scope": scope,
             "target_root": str(target),
             "checks": checks,
+            "selection": {
+                "state": state,
+                "requested": sorted(wanted) if wanted is not None else None,
+                "detail": detail,
+                "next_action": next_action,
+            },
             "managed_files": [],
             "forges": [],
             "verification": {"status": "FAIL"},
@@ -2455,6 +2581,17 @@ def install_auto(
         recommendation=recommendation,
         setup=setup,
     )
+    # §4.4 — name the uniform post-apply outcomes (never guessed; only
+    # when the evidence is uniform across the whole selection).
+    post_state = _post_selection_state(results=results, installation=installation)
+    if post_state is not None:
+        post_name, post_detail, post_next = post_state
+        receipt["selection"] = {
+            "state": post_name,
+            "requested": sorted(wanted) if wanted is not None else None,
+            "detail": post_detail,
+            "next_action": post_next,
+        }
     receipt["lifecycle"] = lifecycle.receipt_block(receipt)
     if scope == "workspace":
         receipt["workspace"] = _workspace_report(

@@ -836,3 +836,289 @@ def test_daily_ops_verbs_run_from_workspace_root(forge_home: Path, ws: Path, arg
     assert "Traceback" not in proc.stderr
     if "--json" in args and proc.stdout.strip():
         json.loads(proc.stdout)
+
+
+# ---------------------------------------------------------------------------
+# Cycle 16.1.1 wave-01 WS2 — shared resolver, named empty states, wizard parity
+# ---------------------------------------------------------------------------
+
+
+def _register_bad_exe(forge_home: Path, fid: str) -> None:
+    """Registered forge whose runtime is genuinely missing."""
+    inst = forge_home / ".forge" / "installations"
+    inst.mkdir(parents=True, exist_ok=True)
+    (inst / f"{fid}.json").write_text(
+        json.dumps(
+            {
+                "forge_id": fid,
+                "cli": {"name": fid},
+                "install_command": [f"{fid}-definitely-missing-cli", "install"],
+                "installation_kind": "content",
+            }
+        ),
+        "utf-8",
+    )
+
+
+def _register_unsupported(forge_home: Path, fid: str) -> None:
+    """Registered forge whose install surface cannot take --yes/--root."""
+    inst = forge_home / ".forge" / "installations"
+    inst.mkdir(parents=True, exist_ok=True)
+    (inst / f"{fid}.json").write_text(
+        json.dumps(
+            {
+                "forge_id": fid,
+                "cli": {"name": fid},
+                "install": {"flags": ["--out"]},
+                "install_command": ["{python}", "x.py"],
+                "installation_kind": "content",
+            }
+        ),
+        "utf-8",
+    )
+
+
+def _detection(*techs: str) -> dict:
+    return {
+        "schema": "forge/WorkspaceDetection/v1",
+        "members": [
+            {
+                "path": "svc",
+                "techs": list(techs),
+                "evidence": [
+                    {"tech": t, "kind": "marker", "confidence": "high"} for t in techs
+                ],
+            }
+        ]
+        if techs
+        else [],
+        "technologies": {},
+    }
+
+
+def test_manual_empty_include_never_widens(forge_home: Path, ws: Path) -> None:
+    """§4.4 — ``specialists.mode: manual`` + empty ``include`` resolves to a
+    real empty selection, not 'every registered forge'."""
+    _register_stub(forge_home, "stub-a")
+    _register_stub(forge_home, "stub-b")
+    (ws / "forge.workspace.yaml").write_text(
+        "forge:\n  specialists:\n    mode: manual\n    include: []\n", "utf-8"
+    )
+    config = load_workspace_config(ws)
+    res = setup_options.resolve(
+        preset=None, profile=None, gateway_profile=None, host=None, forge=None, config=config
+    )
+    assert res.forges == ()
+    assert any("manual" in w and "empty" in w for w in res.warnings)
+    out = service.install_auto(
+        scope="project", root=ws, forge=res.forges, dry_run=True, setup=res.doc
+    )
+    assert out["status"] == "failed"
+    assert out["selection"]["state"] == "empty_manual_selection"
+    assert out["selection"]["requested"] == []
+    assert out["selection"]["next_action"]
+    assert out["forges"] == []  # two registered forges untouched — never widened
+    assert out["checks"][0]["id"] == "selection"
+
+
+def test_empty_selection_named_states(forge_home: Path, ws: Path) -> None:
+    """§4.4 — each reachable empty-selection path gets its own name."""
+    # registry truly empty
+    out = service.install_auto(scope="project", root=ws, forge=(), dry_run=True)
+    assert out["selection"]["state"] == "no_registered_forges"
+    assert out["checks"][0]["id"] == "registry"
+
+    _register_stub(forge_home, "stub-a")
+
+    # explicit empty filter, no setup context
+    out = service.install_auto(scope="project", root=ws, forge=(), dry_run=True)
+    assert out["selection"]["state"] == "empty_manual_selection"
+    assert out["forges"] == []
+
+    # recommended mode, nothing detected → no relevant recommendation
+    out = service.install_auto(
+        scope="project",
+        root=ws,
+        forge=(),
+        dry_run=True,
+        setup={"specialists": {"mode": "recommended"}},
+        detection=_detection(),
+    )
+    assert out["selection"]["state"] == "no_relevant_recommendation"
+
+    # recommended mode, primary suggested but not installed
+    out = service.install_auto(
+        scope="project",
+        root=ws,
+        forge=(),
+        dry_run=True,
+        setup={"specialists": {"mode": "recommended"}},
+        detection=_detection("fastapi"),
+    )
+    assert out["selection"]["state"] == "no_installed_runtimes"
+    assert "api-forge" in out["selection"]["detail"]
+
+    # recommended mode, tied alternatives → ambiguity named, never guessed
+    out = service.install_auto(
+        scope="project",
+        root=ws,
+        forge=(),
+        dry_run=True,
+        setup={"specialists": {"mode": "recommended"}},
+        detection=_detection("pyspark"),
+    )
+    assert out["selection"]["state"] == "recommendation_ambiguous"
+    assert "spark-forge" in out["selection"]["detail"]
+
+
+def test_post_selection_states(forge_home: Path, ws: Path) -> None:
+    """§4.4 — uniform post-apply outcomes get named too."""
+    _register_unsupported(forge_home, "nope-forge")
+    out = service.install_auto(
+        scope="project", root=ws, forge="nope-forge", dry_run=True
+    )
+    assert out["selection"]["state"] == "no_supported_component"
+    assert out["selection"]["next_action"]
+
+    _register_bad_exe(forge_home, "gone-forge")
+    out = service.install_auto(
+        scope="project", root=ws, forge="gone-forge", dry_run=True
+    )
+    assert out["selection"]["state"] == "no_installed_runtimes"
+    assert out["selection"]["next_action"]
+
+    # everything already converged → all reused
+    _register_stub(forge_home, "stub-again")
+    out = service.install_auto(
+        scope="project", root=ws, forge="stub-again", dry_run=True
+    )
+    assert out["status"] == "planned"
+    assert out["selection"]["state"] == "all_already_active"
+    assert "theforge doctor" in out["selection"]["next_action"]
+
+
+def test_wizard_defaults_pure_resolver(ws: Path) -> None:
+    """F-03 — the wizard consumes the same pure resolver as the CLI."""
+    (ws / "forge.workspace.yaml").write_text(
+        "forge:\n  installation_profile: full\n  gateway_profile: deep\n"
+        "  hosts: [codex]\n  specialists:\n    mode: manual\n    include: [a-forge]\n",
+        "utf-8",
+    )
+    wiz = setup_options.wizard_defaults(config=load_workspace_config(ws))
+    assert wiz.resolution.profile == "full"
+    assert wiz.resolution.gateway_profile == "deep"
+    assert wiz.resolution.host == "codex"
+    assert wiz.forges == ("a-forge",)
+    assert wiz.empty_state is None
+    res_doc = wiz.doc["resolution"]
+    assert res_doc["profile"]["source"] == "forge.workspace.yaml"
+    assert res_doc["gateway-profile"]["value"] == "deep"
+
+
+def test_setup_wizard_consumes_declared_defaults(
+    forge_home: Path, ws: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """F-03 — ``run_setup_wizard`` resolves forge.workspace.yaml + registry
+    BEFORE prompting; ``install_fn`` receives the same install_auto kwargs
+    route as ``theforge setup`` (plan parity)."""
+    import theforge.ui.wizard as wizmod
+
+    _register_stub(forge_home, "stub-forge")
+    (ws / "forge.workspace.yaml").write_text(
+        "forge:\n  installation_profile: full\n  gateway_profile: deep\n"
+        "  hosts: [codex]\n  specialists:\n    mode: manual\n    include: [stub-forge]\n",
+        "utf-8",
+    )
+    config = load_workspace_config(ws)
+    res = setup_options.resolve(
+        preset=None, profile=None, gateway_profile=None, host=None, forge=None, config=config
+    )
+    cli_kwargs: dict = {
+        "scope": "project",
+        "root": ws,
+        "forge": res.forges,
+        "members": (),
+        "host": res.host,
+        "profile": res.profile,
+        "components": ("agents", "graph-studio", "mcp", "skills", "tui"),
+        "gateway_profile": res.gateway_profile,
+        "setup": res.doc,
+        "detection": None,
+    }
+
+    captured: list[dict] = []
+    monkeypatch.setattr(
+        service,
+        "install_auto",
+        lambda **kw: captured.append(dict(kw)) or {"status": "planned", "checks": []},
+    )
+    monkeypatch.setattr(sys, "platform", "win32")
+    monkeypatch.setattr(wizmod, "env_check_rows", lambda: [])
+    keys = iter(["\r"] * 5)  # scope, profile, execution, components, hosts — all defaults
+    monkeypatch.setattr("msvcrt.getwch", lambda: next(keys))
+    monkeypatch.setattr("builtins.input", lambda *a, **k: "n")  # decline apply
+    from theforge.ui.kit import UIContext
+
+    ctx = UIContext(interactive=True, color=False, unicode=True, width=80)
+    rc = wizmod.run_setup_wizard(root=ws, ctx=ctx)
+    assert rc == 130  # operator declined at the confirm step
+    assert captured, "dry-run plan must hit install_auto exactly once"
+    plan_kwargs = captured[0]
+    assert plan_kwargs["dry_run"] is True
+    for key in (
+        "scope", "root", "forge", "members", "host", "profile",
+        "components", "gateway_profile", "setup", "detection",
+    ):
+        assert plan_kwargs[key] == cli_kwargs[key], (
+            f"{key}: {plan_kwargs[key]!r} != {cli_kwargs[key]!r}"
+        )
+    # provenance rows reach the review screen
+    out = capsys.readouterr().out
+    assert "full (workspace)" in out
+    assert "deep (workspace)" in out
+    assert "codex (workspace)" in out
+    assert "stub-forge (workspace)" in out
+
+
+def test_setup_wizard_empty_recommended_note(
+    forge_home: Path, ws: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """F-04 — a recommended-mode empty selection surfaces its named state
+    to the operator instead of silently widening."""
+    import theforge.ui.wizard as wizmod
+
+    _register_stub(forge_home, "stub-forge")  # registered but irrelevant techs
+    (ws / "forge.workspace.yaml").write_text(
+        "forge:\n  specialists:\n    mode: recommended\n", "utf-8"
+    )
+    monkeypatch.setattr(
+        service,
+        "install_auto",
+        lambda **kw: {"status": "failed", "checks": [], "selection": {"state": "x"}},
+    )
+    monkeypatch.setattr(sys, "platform", "win32")
+    monkeypatch.setattr(wizmod, "env_check_rows", lambda: [])
+    keys = iter(["\r"] * 5)
+    monkeypatch.setattr("msvcrt.getwch", lambda: next(keys))
+    monkeypatch.setattr("builtins.input", lambda *a, **k: "n")
+    from theforge.ui.kit import UIContext
+
+    ctx = UIContext(interactive=True, color=False, unicode=True, width=80)
+    rc = wizmod.run_setup_wizard(root=ws, ctx=ctx)
+    assert rc in (0, 1, 130)
+    out = capsys.readouterr().out
+    assert "empty selection" in out
+    assert "no_relevant_recommendation" in out
+
+
+def test_cli_setup_empty_manual_blocks_named(forge_home: Path, ws: Path) -> None:
+    """CLI level: declarative manual+empty include blocks with the named state."""
+    _register_stub(forge_home, "stub-a")
+    (ws / "forge.workspace.yaml").write_text(
+        "forge:\n  specialists:\n    mode: manual\n    include: []\n", "utf-8"
+    )
+    proc = cli(ws, "setup", "--dry-run", "--json", home=forge_home)
+    assert proc.returncode == 1
+    doc = json.loads(proc.stdout[proc.stdout.index("{"):])
+    assert doc["selection"]["state"] == "empty_manual_selection"
+    assert doc["forges"] == []

@@ -101,16 +101,34 @@ def run_wizard(
     ctx: UIContext | None = None,
     out_json: bool = False,
     family: bool = False,
+    defaults: dict[str, Any] | None = None,
 ) -> int:
     """Interactive install wizard. Returns exit code.
 
     ``install_fn(**kwargs)`` is the forge's real install service
     (``host``/``scope``/``profile``/``yes``/``dry_run`` kwargs).
     ``doctor_fn`` optionally verifies post-install.
+
+    ``defaults`` optionally carries resolved values + provenance
+    (``{"field": {"value": ..., "source": ...}}``); each select/multi-select
+    pre-checks the resolved choice and the review shows its source
+    (``CLI|preset:<name>|workspace|detected|default``). Operator answers
+    always win — a default is only the initial focus/checked state.
     """
     ctx = ctx or UIContext.detect()
     if not ctx.interactive:
         raise NonInteractive("install wizard requires a TTY")
+    defaults = defaults or {}
+
+    def _resolved(key: str) -> tuple[Any, str | None]:
+        entry = defaults.get(key)
+        if not isinstance(entry, dict):
+            return None, None
+        return entry.get("value"), entry.get("source")
+
+    def _prov(key: str) -> str:
+        src = _resolved(key)[1]
+        return f" ({src})" if src else ""
 
     _banner(ctx, forge_name)
     env_rows = env_check_rows()
@@ -124,30 +142,38 @@ def run_wizard(
 
     # --- scope ---------------------------------------------------------------
     scopes = _scope_choices(ctx)
+    scope_val, _ = _resolved("scope")
     idx = select(
         i18n.t("install_scope_q", ctx.language),
         [_SCOPE_LABELS[s] for s in scopes],
         ctx=ctx,
+        default=scopes.index(scope_val) if scope_val in scopes else 0,
     )
     if idx is None:
         return 130
     scope = scopes[idx]
 
     # --- profile -------------------------------------------------------------
+    profile_val, _ = _resolved("profile")
     idx = select(
         i18n.t("install_profile_q", ctx.language),
         [_PROFILE_LABELS[p] for p in _PROFILES],
         ctx=ctx,
+        default=_PROFILES.index(profile_val) if profile_val in _PROFILES else 0,
     )
     if idx is None:
         return 130
     profile = _PROFILES[idx]
 
     # --- execution profile --------------------------------------------------
+    gateway_val, _ = _resolved("gateway_profile")
     idx = select(
         i18n.t("install_gateway_profile_q", ctx.language),
         [_GATEWAY_LABELS[p] for p in _GATEWAY_PROFILES],
         ctx=ctx,
+        default=_GATEWAY_PROFILES.index(gateway_val)
+        if gateway_val in _GATEWAY_PROFILES
+        else _GATEWAY_PROFILES.index("balanced"),
     )
     if idx is None:
         return 130
@@ -178,6 +204,9 @@ def run_wizard(
         "full": {"skills", "agents", "mcp", "tui", "graph-studio"},
     }
     comp_checked = _profile_defaults.get(profile, set())
+    comp_val, _ = _resolved("components")
+    if comp_val is not None:
+        comp_checked = set(comp_val)
     print(_c(ctx, "2", "  component choices (economy loads optional knowledge/evals on demand):"))
     for component in _COMP_ORDER:
         print(f"    {component:<13} {_COMP_DETAILS[component]}")
@@ -192,15 +221,25 @@ def run_wizard(
     components = tuple(sorted(_COMP_ORDER[i] for i in comp_chosen))
 
     # --- hosts ---------------------------------------------------------------
-    detected = {
-        i
-        for i, h in enumerate(hosts_available)
-        if any(h in r[0].lower() and r[1] == "Available" for r in env_rows)
-    }
+    host_val, _ = _resolved("hosts")
+    if host_val is None:
+        # No declared/resolved preference → pre-check detected binaries.
+        checked_hosts = {
+            i
+            for i, h in enumerate(hosts_available)
+            if any(h in r[0].lower() and r[1] == "Available" for r in env_rows)
+        }
+    elif host_val == "all":
+        checked_hosts = set(range(len(hosts_available)))
+    elif host_val in ("none", ""):
+        checked_hosts = set()
+    else:
+        wanted_hosts = {h.strip() for h in str(host_val).split(",") if h.strip()}
+        checked_hosts = {i for i, h in enumerate(hosts_available) if h in wanted_hosts}
     chosen = multi_select(
         i18n.t("install_hosts_q", ctx.language),
         list(hosts_available),
-        checked=detected,
+        checked=checked_hosts,
         ctx=ctx,
     )
     if chosen is None:
@@ -231,14 +270,33 @@ def run_wizard(
 
     planned = plan.get("planned") or plan.get("planned_files") or plan.get("writes") or []
     rows: list[tuple[str, str]] = [
-        ("scope", scope),
-        ("profile", profile),
-        ("execution", gateway_profile),
+        ("scope", scope + _prov("scope")),
+        ("profile", profile + _prov("profile")),
+        ("execution", gateway_profile + _prov("gateway_profile")),
         ("mode", "family" if family else "this forge"),
         ("components", ", ".join(components) or "none"),
-        ("hosts", host_arg or "none"),
+        ("hosts", (host_arg or "none") + _prov("hosts")),
         ("managed writes", str(len(planned) if isinstance(planned, list) else planned)),
     ]
+    spec_entry = defaults.get("specialists")
+    if isinstance(spec_entry, dict):
+        spec_sel = spec_entry.get("value")
+        if spec_sel is None:
+            spec_label = "all registered"
+        elif spec_sel:
+            spec_label = ", ".join(str(f) for f in spec_sel)
+        else:
+            spec_label = "none — empty selection"
+        spec_src = spec_entry.get("source")
+        spec_state = spec_entry.get("state")
+        rows.append(
+            (
+                "specialists",
+                spec_label
+                + (f" ({spec_src})" if spec_src else "")
+                + (f" — {spec_state}" if spec_state else ""),
+            )
+        )
     # install-2.1 — the consolidated plan on the review screen: workspace
     # root, discovered members, registered forges and the closed plan
     # categories (new/updated/reused/preserved/conflict/unsupported).
@@ -302,15 +360,41 @@ def run_wizard(
     return 0 if status == "completed" else 1
 
 
+_PROV_LABELS = {
+    "flag": "CLI",
+    "forge.workspace.yaml": "workspace",
+    "default": "default",
+}
+
+
+def _prov_label(source: object) -> str:
+    """Map ``resolve`` provenance to the display vocabulary."""
+    text = str(source or "default")
+    if text.startswith("preset:"):
+        return text
+    return _PROV_LABELS.get(text, text)
+
+
 def run_setup_wizard(
     *,
     root: Any = None,
     ctx: UIContext | None = None,
     out_json: bool = False,
 ) -> int:
-    """Family onboarding over the same real plan/approval/apply wizard."""
+    """Family onboarding over the same real plan/approval/apply wizard.
+
+    Resolves ``forge.workspace.yaml`` (+ detection when the declared
+    specialists mode is ``recommended``) BEFORE asking — the wizard
+    pre-checks the resolved value for each field and the review prints its
+    provenance. The approved plan takes the same ``install_auto`` kwargs
+    route as ``theforge setup`` (``forge=``, ``setup=``, ``detection=``),
+    so declarative and wizard plans are identical for equal inputs.
+    """
     try:
         service = importlib.import_module("theforge.install.service")
+        options = importlib.import_module("theforge.install.options")
+        workspace = importlib.import_module("theforge.workspace")
+        kit = importlib.import_module("theforge._installkit")
     except ModuleNotFoundError as exc:
         if exc.name == "theforge" or (exc.name or "").startswith("theforge."):
             print(
@@ -320,11 +404,87 @@ def run_setup_wizard(
             return 2
         raise
 
+    base = Path(root) if root else Path.cwd()
+    config = workspace.load_workspace_config(base)
+    # Recommended needs the detection pass + the live registry; resolve the
+    # mode first (pure) so detection runs exactly when the CLI would run it
+    # — identical ``install_auto`` kwargs ⇒ identical plan.
+    detection: dict[str, Any] | None = None
+    registered: list[str] = []
+    pre = options.resolve(
+        preset=None,
+        profile=None,
+        gateway_profile=None,
+        host=None,
+        forge=None,
+        config=config,
+    )
+    if pre.specialists_mode == "recommended":
+        detection = workspace.detect_workspace(base)
+        registered = sorted(
+            str(m.get("forge_id") or "") for m in kit.installed_forges()
+        )
+    try:
+        wiz = options.wizard_defaults(
+            config=config,
+            detection=detection,
+            registered=registered,
+        )
+    except Exception as exc:  # same refusal surface as the CLI resolver
+        print(f"setup resolution failed: {exc}", file=sys.stderr)
+        return 2
+    for warning in wiz.resolution.warnings:
+        print(f"theforge: warning: {warning}", file=sys.stderr)
+
+    res_doc = wiz.doc.get("resolution") or {}
+
+    def _field_src(name: str) -> str:
+        entry = res_doc.get(name) or {}
+        return _prov_label(entry.get("source"))
+
+    spec_doc = wiz.doc.get("specialists") or {}
+    if wiz.resolution.specialists_mode == "recommended":
+        spec_src = "detected"
+    else:
+        spec_src = _prov_label(spec_doc.get("source"))
+    if wiz.empty_state is not None:
+        print(
+            _c(
+                ctx or UIContext.detect(),
+                "33",
+                f"  note: specialists resolved to an empty selection "
+                f"({wiz.empty_state}) — the plan will explain the next step",
+            )
+        )
+
+    defaults: dict[str, Any] = {
+        "scope": {"value": "project", "source": "default"},
+        "profile": {"value": wiz.resolution.profile, "source": _field_src("profile")},
+        "gateway_profile": {
+            "value": wiz.resolution.gateway_profile,
+            "source": _field_src("gateway-profile"),
+        },
+        "hosts": {"value": wiz.resolution.host, "source": _field_src("host")},
+        "specialists": {
+            "value": wiz.forges,
+            "source": spec_src,
+            "state": wiz.empty_state,
+        },
+    }
+
     return run_wizard(
         forge_name="the-forge family",
-        install_fn=lambda **kw: service.install_auto(root=root, **kw),
+        install_fn=lambda **kw: service.install_auto(
+            root=root,
+            forge=wiz.forges,
+            members=(),
+            setup=wiz.doc,
+            detection=detection,
+            **kw,
+        ),
         doctor_fn=lambda **kw: service.doctor(root=root, **kw),
         ctx=ctx,
         out_json=out_json,
         family=True,
+        defaults=defaults,
     )
