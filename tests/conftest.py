@@ -300,6 +300,15 @@ FILE_MARKERS: dict[str, tuple[str, ...]] = {
     # cycle-16 install-2.1: WorkspaceInstallation/v2, consolidated plan,
     # cross-forge ownership inventory, typed delegation (ADR-0065)
     "test_workspace_installation.py": ("unit", "contract", "integration"),
+    # cycle-16.1 FRENTE A: hard read limits (§5.4), lifecycle states (§5.3),
+    # fail-closed evals (§5.1), offline proof (§5.2), uninstall safety (§5.5),
+    # sha↔evidence binding (§5.6)
+    "test_resource_limits.py": ("unit", "security"),
+    "test_install_lifecycle.py": ("unit", "contract"),
+    "test_federated_e2e.py": ("unit", "integration"),
+    "test_offline_e2e.py": ("e2e", "security"),
+    "test_federated_uninstall.py": ("integration", "security"),
+    "test_evidence_binding.py": ("unit",),
 }
 
 
