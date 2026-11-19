@@ -565,7 +565,9 @@ def _mcp_argv_resolved(ctx: "InstallContext") -> tuple[str, ...]:
     """
     if not ctx.spec.mcp_command:
         return ()
-    tail = ctx.spec.mcp_command[1:]
+    head, *tail = ctx.spec.mcp_command
+    if Path(head).is_absolute():
+        return tuple(ctx.spec.mcp_command)
     manifest = _load_json(
         installations_dir() / f"{ctx.spec.forge_id}.json", {})
     shim = (manifest.get("cli") or {}).get("shim")
@@ -1260,7 +1262,7 @@ def _write_receipt(state_dir: Path, receipt: dict[str, Any]) -> Path:
 
 def status(ctx: InstallContext) -> dict[str, Any]:
     ledger = Ledger.load(ctx.state_dir)
-    drift = ledger.drift(ctx.root, ctx.spec, mcp_argv=ctx.mcp_command_resolved)
+    drift = ledger.drift(ctx.root, ctx.spec, mcp_argv=_mcp_argv(ctx))
     ok = sum(1 for d in drift if d["status"] == "ok")
     bad = [d for d in drift if d["status"] != "ok"]
     receipts = (
@@ -1302,7 +1304,7 @@ def doctor(ctx: InstallContext) -> dict[str, Any]:
             "repairable": False,
         }
     )
-    for d in ledger.drift(ctx.root, ctx.spec, mcp_argv=ctx.mcp_command_resolved):
+    for d in ledger.drift(ctx.root, ctx.spec, mcp_argv=_mcp_argv(ctx)):
         if d["status"] != "ok":
             unsafe = d["status"] == "unsafe"
             checks.append(
@@ -1421,7 +1423,7 @@ def repair(ctx: InstallContext) -> dict[str, Any]:
     ledger = Ledger.load(ctx.state_dir)
     drift = [
         d
-        for d in ledger.drift(ctx.root, ctx.spec, mcp_argv=ctx.mcp_command_resolved)
+        for d in ledger.drift(ctx.root, ctx.spec, mcp_argv=_mcp_argv(ctx))
         if d["status"] != "ok"
     ]
     fixed, kept, skipped = [], [], []
