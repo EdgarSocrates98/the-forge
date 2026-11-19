@@ -11,6 +11,7 @@ from theforge.contracts.verdicts import (
     acceptance,
     is_blocking,
     is_success,
+    is_unverified,
 )
 
 
@@ -49,5 +50,6 @@ def test_acceptance_rules_partition_the_set() -> None:
         assert is_blocking(v)
     for v in (Verdict.BLOCKED, Verdict.SKIPPED, Verdict.NOT_APPLICABLE, Verdict.UNVERIFIED):
         assert acceptance(v) is Acceptance.UNVERIFIED
+        assert is_unverified(v)
         assert not is_success(v)
         assert not is_blocking(v)

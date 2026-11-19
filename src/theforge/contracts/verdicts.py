@@ -83,3 +83,9 @@ def is_success(v: Verdict | str) -> bool:
 
 def is_blocking(v: Verdict | str) -> bool:
     return acceptance(v) is Acceptance.BLOCKING
+
+
+def is_unverified(v: Verdict | str) -> bool:
+    """Inconclusive — no proof either way. Distinct from blocking: an
+    inconclusive *required* claim cannot certify, but it is not a disproof."""
+    return acceptance(v) is Acceptance.UNVERIFIED

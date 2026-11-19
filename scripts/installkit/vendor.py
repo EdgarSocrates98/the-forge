@@ -40,7 +40,7 @@ SETUP_SH = """#!/usr/bin/env bash
 # Forge bootstrap — vendored entry point. See scripts/forge_bootstrap.py.
 set -euo pipefail
 cd "$(dirname "$0")"
-PY="$(command -v python3 || command -v python || command -v py)"
+PY="$(command -v python3 || command -v python || command -v py || true)"
 if [ -z "$PY" ]; then
   printf '  x setup: FORGE-PYTHON-NOT-FOUND - no python on PATH (need %s)\\n' "$PYTHON_SPEC" >&2
   printf '    remedy: install Python and reopen the shell\\n' >&2

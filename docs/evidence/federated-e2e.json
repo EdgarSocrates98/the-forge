@@ -1,8 +1,26 @@
 {
   "schema": "forge/FederatedE2E/v1",
-  "generated_at": "2026-11-12T19:44:49.739784+00:00",
-  "source_workspace": "E:\\projetos\\FORJAS",
+  "generated_at": "2026-11-19T16:50:51.720075+00:00",
+  "source_workspace": "/home/edgar/Documentos/projetos/forjas",
+  "commands": [
+    {
+      "argv": [
+        "/home/edgar/Documentos/projetos/forjas/.wt-tf-1611/scripts/federated_e2e.py",
+        "--workspace",
+        "/home/edgar/Documentos/projetos/forjas",
+        "--out",
+        "docs/evidence/federated-e2e.json"
+      ]
+    }
+  ],
+  "environment": {
+    "python": "3.12.3",
+    "implementation": "CPython",
+    "platform": "Linux-7.0.0-43-generic-x86_64-with-glibc2.39",
+    "executable": "/usr/bin/python3"
+  },
   "forge_checkouts": [
+    ".wt-tf-1611",
     "api-forge",
     "api-sentinel-forge",
     "code-atlas-forge",
@@ -15,14 +33,34 @@
     "product-forge",
     "spark-forge-aws",
     "spark-forge-azure",
-    "the-forge",
-    "the-forge-adapter-fix"
+    "the-forge"
   ],
+  "tested_commit": {
+    "repo": "the-forge",
+    "sha": "93d85de8a468b8f2be3738495f073357b8333ae4",
+    "captured_by": "git rev-parse --verify HEAD (hardened runner)"
+  },
+  "repo_shas": {
+    ".wt-tf-1611": "5187c501be2e3ea7b5de095b29e661862303fd01",
+    "api-forge": "71484f447898ef28fc59ff8e0cc17964f386cd05",
+    "api-sentinel-forge": "50f0c659c4e202b2e0511162843249b622db681c",
+    "code-atlas-forge": "b66ffb2eb33f95ace7394ba5deaf5c9a641e4e43",
+    "data-sentinel-forge": "0b62dbfb09476fc8677bfd84e6d4e1bbbc654585",
+    "forge-agent-bridge": "c9316e793defb932bd47b3f0acf797de396fdc59",
+    "forge-doctor-api": "db118b7fe2c8875d2a1007f18926764e0acf2563",
+    "forge-doctor-data": "918043bc7da272611168cbaa7beb7e28c888d48c",
+    "forge-lens": "5b694686d15132881e259182a9e9967971dbba05",
+    "platform-forge": "0661561cbff273dc3aacbfe5a7bcf4e853663c65",
+    "product-forge": "12432a8b43e1fa7df40bb9f8ecc2be79e3f71ed5",
+    "spark-forge-aws": "da02de0aaad740e9fcc3a779f999459829ea1f32",
+    "spark-forge-azure": "c5cf2409a307ae460b43b85e9d7027825d0783b0",
+    "the-forge": "93d85de8a468b8f2be3738495f073357b8333ae4"
+  },
   "scenarios": {
     "A-aws-standalone": {
       "id": "A-aws-standalone",
       "workspace": {
-        "dir": "C:\\Users\\edgar\\AppData\\Local\\Temp\\forjas-e2e-w3_aytr6\\A-aws-standalone",
+        "dir": "/tmp/forjas-e2e-_ewh82hv/A-aws-standalone",
         "forges": [
           {
             "forge": "spark-forge-aws",
@@ -51,12 +89,12 @@
           "ok": true
         }
       ],
-      "verdict": "pass"
+      "verdict": "PASS"
     },
     "B-aws-full": {
       "id": "B-aws-full",
       "workspace": {
-        "dir": "C:\\Users\\edgar\\AppData\\Local\\Temp\\forjas-e2e-w3_aytr6\\B-aws-full",
+        "dir": "/tmp/forjas-e2e-_ewh82hv/B-aws-full",
         "forges": [
           {
             "forge": "spark-forge-aws",
@@ -117,12 +155,12 @@
           "ok": true
         }
       ],
-      "verdict": "pass"
+      "verdict": "PASS"
     },
     "C-apis": {
       "id": "C-apis",
       "workspace": {
-        "dir": "C:\\Users\\edgar\\AppData\\Local\\Temp\\forjas-e2e-w3_aytr6\\C-apis",
+        "dir": "/tmp/forjas-e2e-_ewh82hv/C-apis",
         "forges": [
           {
             "forge": "api-forge",
@@ -160,7 +198,7 @@
         "code-atlas-forge",
         "forge-doctor-api"
       ],
-      "resources": 604,
+      "resources": 602,
       "checks": [
         {
           "check": "discovered-forges",
@@ -175,12 +213,12 @@
           "ok": true
         }
       ],
-      "verdict": "pass"
+      "verdict": "PASS"
     },
     "D-azure": {
       "id": "D-azure",
       "workspace": {
-        "dir": "C:\\Users\\edgar\\AppData\\Local\\Temp\\forjas-e2e-w3_aytr6\\D-azure",
+        "dir": "/tmp/forjas-e2e-_ewh82hv/D-azure",
         "forges": [
           {
             "forge": "spark-forge-azure",
@@ -225,12 +263,12 @@
           "ok": true
         }
       ],
-      "verdict": "pass"
+      "verdict": "PASS"
     },
     "E-product": {
       "id": "E-product",
       "workspace": {
-        "dir": "C:\\Users\\edgar\\AppData\\Local\\Temp\\forjas-e2e-w3_aytr6\\E-product",
+        "dir": "/tmp/forjas-e2e-_ewh82hv/E-product",
         "forges": [
           {
             "forge": "product-forge",
@@ -275,12 +313,12 @@
           "ok": true
         }
       ],
-      "verdict": "pass"
+      "verdict": "PASS"
     },
     "F-platform": {
       "id": "F-platform",
       "workspace": {
-        "dir": "C:\\Users\\edgar\\AppData\\Local\\Temp\\forjas-e2e-w3_aytr6\\F-platform",
+        "dir": "/tmp/forjas-e2e-_ewh82hv/F-platform",
         "forges": [
           {
             "forge": "platform-forge",
@@ -325,13 +363,20 @@
           "ok": true
         }
       ],
-      "verdict": "pass"
+      "verdict": "PASS"
     },
     "G-all": {
       "id": "G-all",
       "workspace": {
-        "dir": "C:\\Users\\edgar\\AppData\\Local\\Temp\\forjas-e2e-w3_aytr6\\G-all",
+        "dir": "/tmp/forjas-e2e-_ewh82hv/G-all",
         "forges": [
+          {
+            "forge": ".wt-tf-1611",
+            "materialized": true,
+            "resources_declared": 41,
+            "files_copied": 36,
+            "files_missing": 5
+          },
           {
             "forge": "api-forge",
             "materialized": true,
@@ -422,17 +467,11 @@
             "resources_declared": 41,
             "files_copied": 36,
             "files_missing": 5
-          },
-          {
-            "forge": "the-forge-adapter-fix",
-            "materialized": true,
-            "resources_declared": 0,
-            "files_copied": 0,
-            "files_missing": 0
           }
         ]
       },
       "roots": [
+        ".wt-tf-1611",
         "api-forge",
         "api-sentinel-forge",
         "code-atlas-forge",
@@ -445,10 +484,9 @@
         "product-forge",
         "spark-forge-aws",
         "spark-forge-azure",
-        "the-forge",
-        "the-forge-adapter-fix"
+        "the-forge"
       ],
-      "resources": 1392,
+      "resources": 1430,
       "checks": [
         {
           "check": "discovered-forges",
@@ -463,7 +501,7 @@
           "ok": true
         }
       ],
-      "verdict": "pass"
+      "verdict": "PASS"
     },
     "H-no-git": {
       "id": "H-no-git",
@@ -478,18 +516,52 @@
           "ok": true
         }
       ],
-      "verdict": "pass"
+      "verdict": "PASS"
     },
     "I-offline": {
       "id": "I-offline",
-      "evidence": "discovery/retrieval/plan read only local filesystem",
+      "evidence": "discovery, list, get and plan executed over the materialized workspace while socket.socket / socket.create_connection / socket.getaddrinfo recorded and exploded every attempt — zero outbound attempts is proven, not assumed. Honest boundary (mirrors tests/test_offline_e2e.py): NOT claimed offline — provider/subprocess CLIs calling cloud services, `theforge install update` (pip index), remote registry sync (registry/remote.py) and bootstrap --allow-download.",
+      "blocked_surface": [
+        "socket.socket",
+        "socket.create_connection",
+        "socket.getaddrinfo"
+      ],
+      "command_context": "in-process: resolver_for (discover_roots + ResourceResolver), resolver.list(), resolver.get(<available id>), plan_context() over the materialized workspace, all under the socket block",
+      "operations": {
+        "roots": 14,
+        "resources": 1430,
+        "get": ".wt-tf-1611:forge-api",
+        "plan_primary": "spark-forge-aws"
+      },
+      "outbound_attempts": [],
+      "injected_probe": "socket.socket() attempted inside the block — must explode",
       "checks": [
         {
-          "check": "fs-only-resolution",
+          "check": "net-block-intercepts",
+          "ok": true
+        },
+        {
+          "check": "offline-discovery",
+          "ok": true
+        },
+        {
+          "check": "offline-list",
+          "ok": true
+        },
+        {
+          "check": "offline-get",
+          "ok": true
+        },
+        {
+          "check": "offline-plan",
+          "ok": true
+        },
+        {
+          "check": "zero-outbound-attempts",
           "ok": true
         }
       ],
-      "verdict": "pass"
+      "verdict": "PASS"
     },
     "J-partial-failure": {
       "id": "J-partial-failure",
@@ -503,19 +575,19 @@
           "ok": true
         }
       ],
-      "verdict": "pass"
+      "verdict": "PASS"
     },
     "K-resource-discovery": {
       "id": "K-resource-discovery",
       "kind_counts": {
-        "skill": 178,
-        "agent": 163,
+        "skill": 214,
+        "agent": 160,
         "knowledge": 709,
         "rule": 70,
-        "contract": 69,
+        "contract": 70,
         "eval": 31,
         "example": 9,
-        "fixture": 163,
+        "fixture": 167,
         "protocol": 0,
         "command": 0,
         "config": 0
@@ -538,12 +610,12 @@
           "ok": true
         }
       ],
-      "verdict": "pass"
+      "verdict": "PASS"
     },
     "L-portal-cli": {
       "id": "L-portal-cli",
-      "portal_total": 1392,
-      "cli_total": 1392,
+      "portal_total": 1430,
+      "cli_total": 1430,
       "checks": [
         {
           "check": "same-per-forge-counts",
@@ -554,7 +626,7 @@
           "ok": true
         }
       ],
-      "verdict": "pass"
+      "verdict": "PASS"
     },
     "M-upgrade": {
       "id": "M-upgrade",
@@ -568,7 +640,7 @@
           "ok": true
         }
       ],
-      "verdict": "pass"
+      "verdict": "PASS"
     },
     "N-uninstall": {
       "id": "N-uninstall",
@@ -586,33 +658,33 @@
           "ok": true
         }
       ],
-      "verdict": "pass"
+      "verdict": "PASS"
     },
     "O-context-economy": {
       "id": "O-context-economy",
       "matrix": [
         {
           "forges": 1,
-          "l1_scanned": 1,
+          "l1_refs_scanned": 280,
           "l3_refs": 6,
           "l3_est_bytes": 7524
         },
         {
           "forges": 3,
-          "l1_scanned": 3,
+          "l1_refs_scanned": 859,
           "l3_refs": 7,
           "l3_est_bytes": 7985
         },
         {
           "forges": 8,
-          "l1_scanned": 8,
+          "l1_refs_scanned": 824,
           "l3_refs": 3,
           "l3_est_bytes": 7948
         },
         {
           "forges": 12,
-          "l1_scanned": 12,
-          "l3_refs": 8,
+          "l1_refs_scanned": 1238,
+          "l3_refs": 7,
           "l3_est_bytes": 7985
         }
       ],
@@ -626,7 +698,7 @@
           "ok": true
         }
       ],
-      "verdict": "pass"
+      "verdict": "PASS"
     }
   },
   "evals": {
@@ -642,7 +714,11 @@
         "accepted": [
           "spark-forge-aws"
         ],
-        "ok": true
+        "ok": true,
+        "id": "routing:glue emr spark job oom shuffle skew",
+        "required": true,
+        "state": "ok",
+        "verdict": "PASS"
       },
       {
         "task": "openapi contract breaking change rest api",
@@ -656,7 +732,11 @@
           "api-forge",
           "forge-doctor-api"
         ],
-        "ok": true
+        "ok": true,
+        "id": "routing:openapi contract breaking change rest api",
+        "required": true,
+        "state": "ok",
+        "verdict": "PASS"
       },
       {
         "task": "index codebase symbols call graph",
@@ -670,7 +750,11 @@
           "code-atlas-forge",
           "forge-doctor-api"
         ],
-        "ok": true
+        "ok": true,
+        "id": "routing:index codebase symbols call graph",
+        "required": true,
+        "state": "ok",
+        "verdict": "PASS"
       },
       {
         "task": "data quality quarantine validation rules",
@@ -685,7 +769,11 @@
           "forge-doctor-data",
           "spark-forge-aws"
         ],
-        "ok": true
+        "ok": true,
+        "id": "routing:data quality quarantine validation rules",
+        "required": true,
+        "state": "ok",
+        "verdict": "PASS"
       },
       {
         "task": "databricks synapse adls fabric spark job",
@@ -698,34 +786,131 @@
         "accepted": [
           "spark-forge-azure"
         ],
-        "ok": true
+        "ok": true,
+        "id": "routing:databricks synapse adls fabric spark job",
+        "required": true,
+        "state": "ok",
+        "verdict": "PASS"
       },
       {
         "task": "zzzqxkvbnm wqkfj",
         "workspace": "G-all",
         "primary": null,
         "ok": true,
-        "note": "no fabricated route on zero-match terms"
+        "note": "no fabricated route on zero-match terms",
+        "id": "routing:zzzqxkvbnm wqkfj",
+        "required": true,
+        "state": "ok",
+        "verdict": "PASS"
       }
     ],
     "resources": [
       {
         "case": "right-resource",
-        "identity": "api-forge:api-forge-architecture",
+        "identity": ".wt-tf-1611:forge-api",
         "ok": true,
-        "sha256": "006e6eef2e67"
+        "sha256": "4ac9854e3f50",
+        "id": "resources:right-resource",
+        "required": true,
+        "state": "ok",
+        "verdict": "PASS"
       },
       {
         "case": "nonexistent",
         "ok": true,
-        "kind": "resource_not_installed"
+        "kind": "resource_not_installed",
+        "id": "resources:nonexistent",
+        "required": true,
+        "state": "ok",
+        "verdict": "PASS"
       },
       {
         "case": "manifest-poisoning-traversal",
         "ok": true,
-        "note": "contract validation refuses traversal locations"
+        "note": "contract validation refuses traversal locations",
+        "id": "resources:manifest-poisoning-traversal",
+        "required": true,
+        "state": "ok",
+        "verdict": "PASS"
       }
     ]
+  },
+  "certification_verdict": "PASS",
+  "gating": {
+    "blocking_reasons": [],
+    "unverified_reasons": [],
+    "eval_reasons": [],
+    "required_coverage": {
+      "required": 14,
+      "passed": 14,
+      "failed": 0,
+      "inconclusive": 0
+    },
+    "scenario_inventory": [
+      {
+        "id": "A-aws-standalone",
+        "required": true
+      },
+      {
+        "id": "B-aws-full",
+        "required": true
+      },
+      {
+        "id": "C-apis",
+        "required": true
+      },
+      {
+        "id": "D-azure",
+        "required": true
+      },
+      {
+        "id": "E-product",
+        "required": true
+      },
+      {
+        "id": "F-platform",
+        "required": true
+      },
+      {
+        "id": "G-all",
+        "required": true
+      },
+      {
+        "id": "H-no-git",
+        "required": true
+      },
+      {
+        "id": "I-offline",
+        "required": true
+      },
+      {
+        "id": "J-partial-failure",
+        "required": true
+      },
+      {
+        "id": "K-resource-discovery",
+        "required": true
+      },
+      {
+        "id": "L-portal-cli",
+        "required": false,
+        "not_applicable": "portal/CLI parity needs the forge-portal checkout's portal_core package — environment-dependent; absent it the runner emits UNVERIFIED instead of fabricating parity"
+      },
+      {
+        "id": "M-upgrade",
+        "required": true
+      },
+      {
+        "id": "N-uninstall",
+        "required": true
+      },
+      {
+        "id": "O-context-economy",
+        "required": true
+      }
+    ],
+    "required_evals": 9,
+    "optional_evals": 0
   },
   "summary": {
     "scenarios": {
@@ -736,6 +921,7 @@
     "evals": {
       "ok": 9,
       "total": 9
-    }
+    },
+    "certification_verdict": "PASS"
   }
 }

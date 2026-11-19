@@ -15,13 +15,27 @@ required eval that fails, never runs, or reports a contradictory result
 blocks the run. The runner's own exception or an unreadable receipt is a
 blocking outcome (exit 2), never a silent pass. Evals carry ``required``
 to distinguish gate binding from informational probes.
+
+Scenario gate (cycle 16.1.1 §4.1): scenarios are declared in the
+versioned ``SCENARIOS`` inventory. Every required scenario must prove
+``PASS`` — FAIL/ERROR blocks, and an inconclusive outcome
+(UNVERIFIED/BLOCKED/SKIPPED/NOT_APPLICABLE, a missing or unparseable
+verdict) lands in ``unverified_reasons``: a distinct list that is equally
+fatal to the exit code. A required scenario absent from the receipt never
+ran — blocking ``scenario-not-run``. A scenario key emitted outside the
+inventory is a harness contract violation — blocking
+``scenario-undeclared``. Optional scenarios (``required: False``) may be
+inconclusive without blocking, but the inventory must carry their
+justification; a FAIL is never forgiven by optionality.
 """
 
 from __future__ import annotations
 
 import argparse
 import json
+import platform
 import shutil
+import socket
 import sys
 import tempfile
 import traceback
@@ -38,7 +52,11 @@ from theforge.context.resources import (  # noqa: E402
     ResourceResolver,
     discover_roots,
 )
-from theforge.contracts.verdicts import Verdict, is_blocking  # noqa: E402
+from theforge.contracts.verdicts import (  # noqa: E402
+    Verdict,
+    is_blocking,
+    is_unverified,
+)
 
 SCENARIO_FORGES: dict[str, list[str]] = {
     "A-aws-standalone": ["spark-forge-aws"],
@@ -90,6 +108,49 @@ RESOURCE_KINDS = [
     "command",
     "config",
 ]
+
+# --- scenario inventory (cycle 16.1.1 §4.1 — versioned, fail-closed) ----
+# Every key emitted into ``results`` MUST be declared here: a receipt
+# carrying an undeclared scenario is a harness contract violation
+# (blocking). ``required`` defaults True; a required scenario that does
+# not prove PASS cannot certify — FAIL/ERROR blocks, anything else lands
+# in ``unverified_reasons``. ``required: False`` is reserved for
+# environment-dependent scenarios and MUST carry a justification.
+SCENARIOS: tuple[dict[str, Any], ...] = (
+    {"id": "A-aws-standalone", "required": True},
+    {"id": "B-aws-full", "required": True},
+    {"id": "C-apis", "required": True},
+    {"id": "D-azure", "required": True},
+    {"id": "E-product", "required": True},
+    {"id": "F-platform", "required": True},
+    {"id": "G-all", "required": True},
+    {"id": "H-no-git", "required": True},
+    {"id": "I-offline", "required": True},
+    {"id": "J-partial-failure", "required": True},
+    {"id": "K-resource-discovery", "required": True},
+    {
+        "id": "L-portal-cli",
+        "required": False,
+        "not_applicable": (
+            "portal/CLI parity needs the forge-portal checkout's "
+            "portal_core package — environment-dependent; absent it the "
+            "runner emits UNVERIFIED instead of fabricating parity"
+        ),
+    },
+    {"id": "M-upgrade", "required": True},
+    {"id": "N-uninstall", "required": True},
+    {"id": "O-context-economy", "required": True},
+)
+
+SCENARIO_SPEC: dict[str, dict[str, Any]] = {s["id"]: s for s in SCENARIOS}
+
+# The inventory is the contract: every A–F subset id must be declared and
+# every optional scenario must carry its justification.
+assert set(SCENARIO_FORGES) <= set(SCENARIO_SPEC), "subset scenario missing from inventory"
+assert all(
+    s.get("required", True) or str(s.get("not_applicable") or s.get("optional") or "").strip()
+    for s in SCENARIOS
+), "optional scenario without a justification"
 
 
 def _manifest_of(repo: Path) -> dict[str, Any] | None:
@@ -237,23 +298,99 @@ def finalize_evals(receipt: dict[str, Any]) -> list[str]:
     return reasons
 
 
-def compute_gating(receipt: dict[str, Any]) -> list[str]:
-    """Every blocking reason across scenarios and evals — exit 0 iff empty."""
-    reasons: list[str] = []
-    for sid, s in (receipt.get("scenarios") or {}).items():
-        verdict = s.get("verdict")
-        if verdict is None:
-            reasons.append(f"scenario:{sid}:missing-verdict")
+def scenario_gate(receipt: dict[str, Any]) -> dict[str, Any]:
+    """Fail-closed scenario gate (§4.1) over the ``SCENARIOS`` inventory.
+
+    Returns ``blocking`` reasons (disproofs and harness violations),
+    ``unverified`` reasons (required-but-inconclusive — a distinct list,
+    equally fatal to the exit code) and ``coverage`` counts over the
+    required scenarios. Optional scenarios may be inconclusive without a
+    reason; nothing may be undeclared, and a FAIL is never optional.
+    """
+    scenarios = receipt.get("scenarios") or {}
+    blocking: list[str] = []
+    unverified: list[str] = []
+    required_ids = {s["id"] for s in SCENARIOS if s.get("required", True)}
+    coverage = {"required": len(required_ids), "passed": 0, "failed": 0, "inconclusive": 0}
+    # A declared-required scenario absent from the receipt never ran —
+    # that is a harness gap, blocking as scenario-not-run.
+    for sid in sorted(required_ids - set(scenarios)):
+        blocking.append(f"scenario-not-run:{sid}")
+        coverage["inconclusive"] += 1
+    for sid in sorted(scenarios):
+        entry = scenarios[sid]
+        spec = SCENARIO_SPEC.get(sid)
+        if spec is None:
+            blocking.append(f"scenario-undeclared:{sid}")
+        required = True if spec is None else bool(spec.get("required", True))
+        if not isinstance(entry, dict):
+            blocking.append(f"scenario:{sid}:invalid-entry")
+            if spec is not None and required:
+                coverage["inconclusive"] += 1
+            continue
+        raw = entry.get("verdict")
+        if raw is None:
+            # No verdict means no proof. For a declared required scenario
+            # that is inconclusive; for an undeclared one it folds into
+            # the harness violation already blocking.
+            if spec is None:
+                blocking.append(f"scenario:{sid}:missing-verdict")
+            elif required:
+                unverified.append(f"scenario:{sid}:missing-verdict")
+                coverage["inconclusive"] += 1
             continue
         try:
-            if is_blocking(verdict):
-                reasons.append(f"scenario:{sid}:{verdict}")
+            verdict = Verdict.parse(raw)
         except ValueError:
-            reasons.append(f"scenario:{sid}:invalid-verdict:{verdict!r}")
-    # finalize_evals is idempotent — callers may invoke it earlier for the
-    # per-eval breakdown; recomputing yields the same reasons.
-    reasons.extend(finalize_evals(receipt))
-    return sorted(set(reasons))
+            blocking.append(f"scenario:{sid}:invalid-verdict:{raw!r}")
+            if spec is not None and required:
+                coverage["inconclusive"] += 1
+            continue
+        if verdict is Verdict.PASS:
+            if spec is not None and required:
+                coverage["passed"] += 1
+        elif is_blocking(verdict):
+            blocking.append(f"scenario:{sid}:{verdict.value}")
+            if spec is not None and required:
+                coverage["failed"] += 1
+        elif is_unverified(verdict):
+            # Inconclusive — allowed only for declared-optional scenarios
+            # (justification lives in the inventory); for undeclared ones
+            # it adds evidence to the violation already blocking.
+            if spec is None:
+                blocking.append(f"scenario:{sid}:{verdict.value}")
+            elif required:
+                unverified.append(f"scenario-inconclusive:{sid}:{verdict.value}")
+                coverage["inconclusive"] += 1
+        else:  # pragma: no cover — ACCEPTANCE covers the closed set
+            blocking.append(f"scenario:{sid}:invalid-verdict:{raw!r}")
+    return {"blocking": blocking, "unverified": unverified, "coverage": coverage}
+
+
+def gate_report(receipt: dict[str, Any]) -> dict[str, Any]:
+    """Full gate evaluation — blocking + required-inconclusive reasons,
+    required-scenario coverage, and the certification verdict, computed in
+    one pass so receipt and exit code can never diverge."""
+    gate = scenario_gate(receipt)
+    eval_reasons = finalize_evals(receipt)
+    blocking = sorted(set(gate["blocking"]) | set(eval_reasons))
+    unverified = sorted(set(gate["unverified"]))
+    return {
+        "blocking_reasons": blocking,
+        "unverified_reasons": unverified,
+        "eval_reasons": eval_reasons,
+        "required_coverage": gate["coverage"],
+        "certification_verdict": "PASS" if not (blocking or unverified) else "FAIL",
+    }
+
+
+def compute_gating(receipt: dict[str, Any]) -> list[str]:
+    """Every blocking reason across scenarios and evals — certification is
+    PASS only when this list *and* ``gate_report(...)['unverified_reasons']``
+    are both empty."""
+    report = gate_report(receipt)
+    reasons: list[str] = report["blocking_reasons"]
+    return reasons
 
 
 def _validate_receipt(path: Path) -> list[str]:
@@ -266,12 +403,23 @@ def _validate_receipt(path: Path) -> list[str]:
         return [f"receipt-unreadable: {exc}"]
     if not isinstance(doc, dict):
         return ["receipt-unreadable: top level is not an object"]
-    for key in ("schema", "scenarios", "evals", "summary", "gating"):
+    for key in ("schema", "scenarios", "evals", "summary", "gating", "certification_verdict"):
         if key not in doc:
             errors.append(f"receipt-invalid: missing {key!r}")
     if doc.get("schema") != "forge/FederatedE2E/v1":
         errors.append(f"receipt-invalid: schema {doc.get('schema')!r}")
     return errors
+
+
+def _environment() -> dict[str, str]:
+    """Interpreter provenance for the receipt (§4.1) — version, platform,
+    executable — so a certification names exactly what produced it."""
+    return {
+        "python": platform.python_version(),
+        "implementation": platform.python_implementation(),
+        "platform": platform.platform(),
+        "executable": sys.executable,
+    }
 
 
 def scenario_subset(ws: Path, forges: dict[str, Path], sid: str, ids: list[str]) -> dict[str, Any]:
@@ -295,29 +443,136 @@ def scenario_subset(ws: Path, forges: dict[str, Path], sid: str, ids: list[str])
     }
 
 
+class _OutboundBlocked(Exception):
+    """Raised by the socket exploder inside the offline block — an
+    outbound attempt is recorded, then detonates before reaching the wire."""
+
+
+def offline_scenario(workspace_dir: Path) -> dict[str, Any]:
+    """Instrumented offline proof (§4.2) for ``I-offline``.
+
+    ``socket.socket``/``create_connection``/``getaddrinfo`` are patched to
+    record-then-explode — modeled on the ``net_police`` fixture of
+    ``tests/test_offline_e2e.py`` — while the scenario's real filesystem
+    operations run underneath: root discovery + ``ResourceResolver`` over
+    the already-materialized workspace, ``list()``, ``get()`` on a real
+    resource id and ``plan_context``. An injected ``socket.socket()``
+    attempt proves the block is not a no-op; ``attempts == []`` afterwards
+    is proof, not hope. Originals are restored in ``finally``.
+    """
+    attempts: list[str] = []
+
+    def _explode(*args: object, **kwargs: object) -> None:
+        attempts.append(repr(args)[:160])
+        raise _OutboundBlocked(f"outbound connection attempt: {args!r}")
+
+    ops: dict[str, Any] = {}
+    checks: list[dict[str, Any]] = []
+    saved = (socket.socket, socket.create_connection, socket.getaddrinfo)
+    socket.socket = _explode  # type: ignore[misc,assignment]
+    socket.create_connection = _explode  # type: ignore[assignment]
+    socket.getaddrinfo = _explode  # type: ignore[assignment]
+    try:
+        # Injected-attempt proof — the block must intercept, not no-op.
+        try:
+            socket.socket().close()
+            checks.append(check(False, "net-block-intercepts"))
+        except _OutboundBlocked:
+            checks.append(check(True, "net-block-intercepts"))
+        injected = len(attempts)  # the probe above is accounted; leaks start here
+        try:
+            resolver = resolver_for(workspace_dir)
+            checks.append(check(bool(resolver.roots), "offline-discovery"))
+            ops["roots"] = len(resolver.roots)
+
+            refs = resolver.list()
+            checks.append(check(bool(refs), "offline-list"))
+            ops["resources"] = len(refs)
+
+            target = next((r for r in refs if r.entry.availability == "available"), None)
+            body = resolver.get(target.identity, max_bytes=4096) if target else None
+            checks.append(check(bool(body and body.text), "offline-get"))
+            ops["get"] = target.identity if target else "no available resource"
+
+            plan = plan_context("spark glue job performance", resolver)
+            checks.append(check(plan.level1_forges > 0, "offline-plan"))
+            ops["plan_primary"] = plan.level2_forge
+        except Exception as exc:  # noqa: BLE001 — a failed op is evidence of
+            # failure, not a runner crash; labels not yet emitted fail below.
+            ops["error"] = f"{type(exc).__name__}: {exc}"
+        for label in ("offline-discovery", "offline-list", "offline-get", "offline-plan"):
+            if not any(c["check"] == label for c in checks):
+                checks.append(check(False, label))
+        checks.append(check(attempts[injected:] == [], "zero-outbound-attempts"))
+    finally:
+        socket.socket = saved[0]  # type: ignore[misc]
+        socket.create_connection = saved[1]
+        socket.getaddrinfo = saved[2]
+    return {
+        "id": "I-offline",
+        "evidence": (
+            "discovery, list, get and plan executed over the materialized "
+            "workspace while socket.socket / socket.create_connection / "
+            "socket.getaddrinfo recorded and exploded every attempt — zero "
+            "outbound attempts is proven, not assumed. Honest boundary "
+            "(mirrors tests/test_offline_e2e.py): NOT claimed offline — "
+            "provider/subprocess CLIs calling cloud services, `theforge "
+            "install update` (pip index), remote registry sync "
+            "(registry/remote.py) and bootstrap --allow-download."
+        ),
+        "blocked_surface": [
+            "socket.socket",
+            "socket.create_connection",
+            "socket.getaddrinfo",
+        ],
+        "command_context": (
+            "in-process: resolver_for (discover_roots + ResourceResolver), "
+            "resolver.list(), resolver.get(<available id>), plan_context() "
+            "over the materialized workspace, all under the socket block"
+        ),
+        "operations": ops,
+        "outbound_attempts": attempts[injected:],
+        "injected_probe": "socket.socket() attempted inside the block — must explode",
+        "checks": checks,
+    }
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--workspace", default=str(Path(__file__).resolve().parents[2]))
     ap.add_argument("--out", default=None)
     args = ap.parse_args(argv)
+    invoked = [str(Path(__file__).resolve()), *(sys.argv[1:] if argv is None else argv)]
     try:
-        return _execute(args)
+        return _execute(args, invoked)
     except Exception as exc:  # noqa: BLE001 — the runner's own failure is
         # a blocking outcome, never a silent pass (§5.1).
         out = Path(args.out) if args.out else Path("federated-e2e-receipt.json")
+        # The gate still applies: every required scenario is honestly
+        # not-run when the runner dies before producing evidence.
+        gate = scenario_gate({"scenarios": {}})
         error_receipt = {
             "schema": "forge/FederatedE2E/v1",
             "generated_at": datetime.now(UTC).isoformat(),
             "source_workspace": str(Path(args.workspace)),
+            "commands": [{"argv": invoked}],
+            "environment": _environment(),
+            "certification_verdict": "FAIL",
             "scenarios": {},
             "evals": {"routing": [], "resources": []},
             "summary": {
                 "scenarios": {"pass": 0, "fail": 0, "unverified": 0},
                 "evals": {"ok": 0, "total": 0},
+                "certification_verdict": "FAIL",
             },
             "gating": {
-                "blocking_reasons": [f"runner-error:{type(exc).__name__}: {exc}"],
+                "blocking_reasons": sorted(
+                    {f"runner-error:{type(exc).__name__}: {exc}", *gate["blocking"]}
+                ),
+                "unverified_reasons": sorted(set(gate["unverified"])),
                 "eval_reasons": [],
+                "required_coverage": gate["coverage"],
+                "scenario_inventory": [dict(s) for s in SCENARIOS],
             },
             "runner_error": {
                 "type": type(exc).__name__,
@@ -337,7 +592,7 @@ def main(argv: list[str] | None = None) -> int:
         return 2
 
 
-def _execute(args: argparse.Namespace) -> int:
+def _execute(args: argparse.Namespace, invoked: list[str]) -> int:
     ws_src = Path(args.workspace)
     forges = {
         p.name: p for p in ws_src.iterdir() if p.is_dir() and (p / "forge.agentic.json").is_file()
@@ -353,6 +608,8 @@ def _execute(args: argparse.Namespace) -> int:
         "schema": "forge/FederatedE2E/v1",
         "generated_at": datetime.now(UTC).isoformat(),
         "source_workspace": str(ws_src),
+        "commands": [{"argv": invoked}],
+        "environment": _environment(),
         "forge_checkouts": sorted(forges),
         "tested_commit": {
             "repo": "the-forge",
@@ -401,12 +658,8 @@ def _execute(args: argparse.Namespace) -> int:
             ],
         }
 
-        # ---- I: offline ----------------------------------------------------
-        results["I-offline"] = {
-            "id": "I-offline",
-            "evidence": "discovery/retrieval/plan read only local filesystem",
-            "checks": [check(True, "fs-only-resolution")],
-        }
+        # ---- I: offline — instrumented, not asserted (§4.2) ---------------
+        results["I-offline"] = offline_scenario(Path(results["G-all"]["workspace"]["dir"]))
 
         # ---- J: partial failure (corrupt manifest tolerated) ---------------
         jdir = tmpdir / "J-partial"
@@ -640,14 +893,22 @@ def _execute(args: argparse.Namespace) -> int:
     eq = sum(1 for e in receipt["evals"]["resources"] if e.get("ok"))
     et = len(receipt["evals"]["routing"]) + len(receipt["evals"]["resources"])
 
-    # ---- §5.1 fail-closed gating ------------------------------------------
-    # Evals are normalized (id/required/verdict/state) and every blocking
-    # reason — scenario or eval — is named on the receipt.
-    eval_reasons = finalize_evals(receipt)
-    blocking = compute_gating(receipt)
+    # ---- §5.1/§4.1 fail-closed gating --------------------------------------
+    # One gate_report computes blocking reasons (scenario disproofs and
+    # harness violations + eval reasons), required-inconclusive reasons
+    # (``unverified_reasons`` — distinct list, equally fatal), coverage and
+    # the certification verdict, so receipt and exit code cannot diverge.
+    report = gate_report(receipt)
+    blocking = report["blocking_reasons"]
+    unverified = report["unverified_reasons"]
+    eval_reasons = report["eval_reasons"]
+    receipt["certification_verdict"] = report["certification_verdict"]
     receipt["gating"] = {
         "blocking_reasons": blocking,
+        "unverified_reasons": unverified,
         "eval_reasons": eval_reasons,
+        "required_coverage": report["required_coverage"],
+        "scenario_inventory": [dict(s) for s in SCENARIOS],
         "required_evals": sum(
             1 for entries in receipt["evals"].values() for e in entries if e.get("required")
         ),
@@ -658,6 +919,7 @@ def _execute(args: argparse.Namespace) -> int:
     receipt["summary"] = {
         "scenarios": {"pass": rp, "fail": rf, "unverified": ru},
         "evals": {"ok": ep + eq, "total": et},
+        "certification_verdict": report["certification_verdict"],
     }
 
     out = Path(args.out) if args.out else Path("federated-e2e-receipt.json")
@@ -670,13 +932,18 @@ def _execute(args: argparse.Namespace) -> int:
     if read_errors:
         blocking = sorted(set(blocking) | set(read_errors))
         receipt["gating"]["blocking_reasons"] = blocking
+        receipt["certification_verdict"] = "FAIL"
+        receipt["summary"]["certification_verdict"] = "FAIL"
         out.write_text(json.dumps(receipt, indent=2, ensure_ascii=False), encoding="utf-8")
     for sid, s in receipt["scenarios"].items():
         print(f"  {sid:24s} {s.get('verdict')}")
     print(f"  evals ok={ep + eq}/{et}  scenarios pass={rp} fail={rf} unverified={ru}")
+    print(f"  certification_verdict={receipt['certification_verdict']}")
     for reason in blocking:
         print(f"  BLOCKED {reason}")
-    return 0 if not blocking else 1
+    for reason in unverified:
+        print(f"  UNVERIFIED-REQUIRED {reason}")
+    return 0 if receipt["certification_verdict"] == "PASS" else 1
 
 
 if __name__ == "__main__":

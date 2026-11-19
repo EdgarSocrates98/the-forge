@@ -208,9 +208,15 @@ def _receipt(scenarios: dict | None = None, evals: dict | None = None) -> dict:
     }
 
 
+def _all_required_pass() -> dict:
+    """Receipt shape where every inventory-required scenario proved PASS —
+    the only scenario set that may leave the gate empty (§4.1)."""
+    return {s["id"]: {"verdict": "PASS"} for s in fe.SCENARIOS if s.get("required", True)}
+
+
 def test_gating_clean_receipt_has_no_reasons() -> None:
     rc = _receipt(
-        scenarios={"S1": {"verdict": "PASS"}},
+        scenarios=_all_required_pass(),
         evals={
             "routing": [{"task": t, "ok": True} for _s, t, _a in fe.ROUTING_EVALS]
             + [{"task": "zzzqxkvbnm wqkfj", "ok": True}],
@@ -257,6 +263,7 @@ def test_gating_contradictory_eval_blocks() -> None:
 
 def test_gating_optional_eval_failure_not_blocking() -> None:
     rc = _receipt(
+        scenarios=_all_required_pass(),
         evals={
             "routing": [{"task": t, "ok": True} for _s, t, _a in fe.ROUTING_EVALS]
             + [{"task": "zzzqxkvbnm wqkfj", "ok": True}]
@@ -266,7 +273,7 @@ def test_gating_optional_eval_failure_not_blocking() -> None:
                 {"case": "nonexistent", "ok": True},
                 {"case": "manifest-poisoning-traversal", "ok": True},
             ],
-        }
+        },
     )
     assert fe.compute_gating(rc) == []
 
@@ -310,8 +317,14 @@ def test_full_run_exit_zero_with_sha_binding(tmp_path: Path) -> None:
     rc = fe.main(["--workspace", str(ws), "--out", str(out)])
     receipt = json.loads(out.read_text(encoding="utf-8"))
     assert rc == 0, receipt["gating"]["blocking_reasons"]
+    assert receipt["certification_verdict"] == "PASS"
     assert receipt["gating"]["blocking_reasons"] == []
+    assert receipt["gating"]["unverified_reasons"] == []
     assert receipt["gating"]["required_evals"] > 0
+    cov = receipt["gating"]["required_coverage"]
+    assert cov["passed"] == cov["required"] > 0
+    assert receipt["commands"][0]["argv"]
+    assert receipt["environment"]["python"]
     # SHA↔evidence binding (§5.6): captured live, equals rev-parse HEAD.
     if shutil.which("git"):
         head = subprocess.run(
@@ -358,6 +371,7 @@ def test_deliberate_eval_failure_fails_closed(tmp_path: Path) -> None:
     rc = fe.main(["--workspace", str(ws), "--out", str(out)])
     receipt = json.loads(out.read_text(encoding="utf-8"))
     assert rc == 1
+    assert receipt["certification_verdict"] == "FAIL"
     assert any(
         r.startswith("eval-failed:routing:") or r.startswith("eval-not-run:routing:")
         for r in receipt["gating"]["blocking_reasons"]

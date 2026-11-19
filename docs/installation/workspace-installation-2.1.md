@@ -381,6 +381,36 @@ overrides them; `specialists.mode: recommended` resolves to the primary
 suggestions ∩ registered forges and reports the selection in
 `setup.specialists.selected`.
 
+### One resolver for CLI, wizard and Portal (cycle 16.1.1 §4.3)
+
+`theforge setup` with no flags on a TTY opens the interactive wizard —
+**the same option resolver feeds it**. Before the first question the
+wizard resolves `forge.workspace.yaml` + workspace detection through
+`theforge.install.options` and pre-checks each resolved default, showing
+its provenance in the review screen (`(workspace)`, `(preset:balanced)`,
+`(detected)`, `(default)`). Your answers sit at the explicit tier, so an
+unchanged wizard run produces exactly the plan the declarative config
+resolved — same `install_auto` kwargs, same approval gate. The Portal's
+setup apply submits through the same plan path.
+
+### Empty specialist selection is a named state, not an error (§4.4)
+
+When the selection resolves empty, the receipt's `selection` block names
+**why** plus a `next_action` — it never widens to "install everything":
+
+| state | meaning | next_action |
+|---|---|---|
+| `no_registered_forges` | `~/.forge/installations` is empty | install runtimes via `forge` CLI |
+| `no_relevant_recommendation` | `mode: recommended` matched no registered primary | keep config, list forges, choose `all`/`manual` |
+| `empty_manual_selection` | `mode: manual`/`include` (or `--forge`) resolved to nothing | fix the include list or member paths |
+| `all_already_active` | selection resolves to forges already installed | no-op or `repair` |
+| `no_supported_component` | profile/components filter left nothing installable | widen profile or components |
+| `no_installed_runtimes` / `recommendation_ambiguous` | declared when the resolver reaches them | per `next_action` |
+
+An empty registry is still a `BLOCKED` check — but the detail now says
+which of these states fired instead of always claiming "no forge
+registered".
+
 ### Honest host states (`forge/HostOnboarding/v1`)
 
 Every setup/install-auto receipt ends with an `onboarding` block — one

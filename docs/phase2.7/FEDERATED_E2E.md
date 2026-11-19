@@ -6,32 +6,46 @@ scenarios include authorization refusal, wrong workspace, conflict, rollback,
 redaction, body-free traces, package installation and Portal integration.
 Unavailable external providers remain `BLOCKED`, never simulated as success.
 
-## Fail-closed gating (cycle 16.1 §5.1)
+## Fail-closed gating (cycle 16.1 §5.1, hardened in 16.1.1 §4.1)
 
-`scripts/federated_e2e.py` exits `0` only when **every** scenario and **every**
-required eval is clean. The gate is `compute_gating(receipt)`:
+`scripts/federated_e2e.py` exits `0` only when **every required scenario is
+`PASS`** and **every required eval is clean**. Scenario requiredness is no
+longer implicit — a versioned `SCENARIOS` inventory declares every emitted
+scenario id with `required` (default `true`) or an explicit justification
+(e.g. `L-portal-cli` is optional where `portal_core` is absent). Emitting a
+scenario the inventory does not declare is itself a blocking outcome, so no
+required claim can be silently renamed away.
 
-- per-eval entries are normalized to `{id, required, verdict, state, detail}`;
-  `state` is a closed set: `ok | failed | not-run | contradictory | invalid`;
-- a required eval that failed, never ran, contradicted itself
-  (`ok: true` alongside `FAIL`/`ERROR` or an `error` field), or has no result
-  field is a blocking reason — optional evals (`required: false`) are counted
-  but never block;
-- every expected eval id (`EXPECTED_ROUTING_EVALS`,
-  `EXPECTED_RESOURCE_EVALS`) must appear — a missing one blocks as
-  `eval-not-run:<id>`;
-- scenario verdicts outside `PASS`/`SKIP` (e.g. `FAIL`, `BLOCKED`, or a
-  missing verdict) block;
-- the written receipt is re-read and validated — an unreadable or
-  structurally corrupt receipt adds `receipt-*` blocking reasons;
-- a runner exception produces an error receipt (`runner_error` + traceback)
-  and exit `2`; a clean run exits `0`, any blocking reason exits `1`.
+The gate distinguishes **disproof** from **inconclusion**:
 
-All blocking reasons land on `receipt["gating"]["blocking_reasons"]` with
-required/optional eval counts. Regression coverage:
-`tests/test_federated_e2e.py` (deliberate eval failure, missing evals,
-contradiction, receipt errors, runner exception, subprocess exit-code
-propagation).
+- `blocking_reasons` — scenario `FAIL`/`ERROR`/unknown-verdict, a required
+  scenario absent from the receipt (`scenario-not-run`), an undeclared
+  scenario id, eval failures, corrupt/unreadable receipt, runner exception
+  (exit `2`);
+- `unverified_reasons` — a required scenario that is `UNVERIFIED`,
+  `BLOCKED`, `SKIPPED` or `NOT_APPLICABLE`: no proof either way. These do
+  **not** masquerade as failures, but they are equally fatal to
+  certification — a required claim without proof is not `PRODUCTION_READY`.
+- optional/inventory-justified scenarios may be inconclusive without
+  blocking; an optional `FAIL` still blocks (optionality forgives
+  inconclusion, never disproof).
+
+Per-eval rules are unchanged: entries normalize to
+`{id, required, verdict, state, detail}` with closed state
+`ok | failed | not-run | contradictory | invalid`; a required eval that
+failed, never ran, contradicted itself or lacks a result blocks as
+`eval-*`; `EXPECTED_ROUTING_EVALS`/`EXPECTED_RESOURCE_EVALS` must all
+appear.
+
+The receipt now carries `certification_verdict`
+(`"PASS"` only when both reason lists are empty), `commands` (argv),
+`environment` (python/platform), `gating.required_coverage`
+(`{required, passed, failed, inconclusive}`), `gating.unverified_reasons`
+and `gating.scenario_inventory`, alongside the existing SHA binding. Exit
+codes: `0` iff verdict PASS, `1` on any gating failure, `2` on runner
+crash. Regression coverage: `tests/test_federated_e2e.py` +
+`tests/test_federated_e2e_gating.py` (every inconclusive state, empty
+scenario set, unknown verdicts, eval negatives, receipt validation).
 
 ## SHA ↔ evidence binding (cycle 16.1 §5.6)
 
@@ -42,12 +56,18 @@ carries the same binding. When git cannot prove the commit the field is
 `None` and the gap is honest — a missing SHA is never invented. Coverage:
 `tests/test_evidence_binding.py`.
 
-## Offline boundary (cycle 16.1 §5.2)
+## Offline boundary (cycle 16.1 §5.2, real proof in 16.1.1 §4.2)
 
 The deterministic core performs no outbound network I/O — proven, not
-assumed: `tests/test_offline_e2e.py` instruments socket creation, connection
+assumed. `tests/test_offline_e2e.py` instruments socket creation, connection
 and DNS resolution to fail loudly under install → plan → resources → status →
-uninstall and asserts zero attempts. The declared client boundary is pinned:
+uninstall and asserts zero attempts; the `I-offline` federated scenario
+repeats the same instrumentation **inside the runner** — it patches
+`socket.socket`/`create_connection`/`getaddrinfo` to record-then-explode,
+runs discovery, resource listing/retrieval and `plan_context` over the
+materialized workspace underneath, proves the block is live with an injected
+outbound probe, and passes only on `zero-outbound-attempts` (the attempt log
+is bound to the scenario evidence). The declared client boundary is pinned:
 `theforge/registry/remote.py` (remote registry sync) is the only network
 client import in the core; `_forge_portal*`/`graphstudio` are loopback
 **server** boundaries; `service.update` shells out to `pip` and is not

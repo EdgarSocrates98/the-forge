@@ -726,6 +726,7 @@ class TheForgePortal(fp.PortalAdapter):
                 profile=profile,
                 components=components,
                 gateway_profile=gateway_profile,
+                setup={"source": "portal", "plan": dict(plan_input)},
                 dry_run=True,
             )
         except kit.InstallError as e:
@@ -765,6 +766,7 @@ class TheForgePortal(fp.PortalAdapter):
                 profile=plan.get("profile", "recommended"),
                 components=tuple(plan.get("components") or ()) or None,
                 gateway_profile=plan.get("gateway_profile"),
+                setup={"source": "portal", "plan": dict(plan)},
                 dry_run=False,
                 yes=True,
             )
