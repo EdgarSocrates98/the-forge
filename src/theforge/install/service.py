@@ -2429,7 +2429,7 @@ def install_auto(
         "created_at": kit._utc_now(),
         "created_by": f"theforge/{__version__}",
     }
-    _rid_keys = (
+    _agg_rid_keys = (
         "forge_id",
         "operation",
         "scope",
@@ -2441,7 +2441,7 @@ def install_auto(
         "created_at",
     )
     receipt["receipt_id"] = (
-        f"sha256:{kit._sha(kit._json_bytes({k: receipt.get(k) for k in _rid_keys}))}"
+        f"sha256:{kit._sha(kit._json_bytes({k: receipt.get(k) for k in _agg_rid_keys}))}"
     )
     _attach_setup_blocks(
         receipt,
