@@ -456,8 +456,6 @@ _GOOD = {
     "ACTIVE_NOW",
     "DONE",
     "SUPPORTED",
-    "VERIFIED",
-    "CERTIFIED",
 }
 _BAD = {
     "FAIL",
@@ -477,8 +475,6 @@ _WARN = {
     "NOT_INSTALLED",
     "PENDING",
     "MODIFIED",
-    "APPLIED",
-    "PARTIALLY_APPLIED",
 }
 
 
@@ -530,20 +526,12 @@ def format_status_doc(doc: dict[str, Any], *, ctx: UIContext | None = None) -> s
     out.append(_c(ctx, "1", title))
     out.append(_c(ctx, "2", bar * min(ctx.width - 1, max(10, cell_width(title) + 4))))
 
-    lifecycle_state = (doc.get("lifecycle") or {}).get("state")
     meta = [
         _kv(
             ctx,
             t("doc_status", ctx.language),
             doc.get("status")
             and state_color(ctx, str(doc["status"]), str(doc["status"]).upper())
-            or None,
-        ),
-        _kv(
-            ctx,
-            t("doc_lifecycle", ctx.language),
-            lifecycle_state
-            and state_color(ctx, str(lifecycle_state), str(lifecycle_state))
             or None,
         ),
         _kv(ctx, t("doc_target", ctx.language), doc.get("target_root")),

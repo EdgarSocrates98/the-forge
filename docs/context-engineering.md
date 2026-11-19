@@ -58,14 +58,20 @@ measured bytes. A `level3_budget < 0` is rejected up front
 `theforge resources get` (`ResourceResolver.get`) serves one resource
 under hard limits:
 
-- **bounded window** — `max_bytes` (default 262 144); `offset` paginates
-  large files; `truncated`/`served_bytes` report the served window
-  honestly;
-- **typed rejection** — negative `max_bytes`/`offset` raise
-  `ResourceErrorKind.INVALID`; missing, undeclared or unavailable
-  resources fail with typed kinds (`NOT_INSTALLED`, `NOT_INDEXED`,
-  `UNAVAILABLE`, `BLOCKED_BY_POLICY`, `PERMISSION_DENIED`, `CORRUPTED`)
-  — never disguised as an empty result;
+- **bounded window with a hard ceiling** — `max_bytes` (default 262 144)
+  is clamped to the internal `MAX_READ_BYTES` (1 MiB) ceiling; a larger
+  request is served at the ceiling and flagged `capped: true` — a caller
+  cannot widen the limit by asking for more. `offset` paginates large
+  files; `truncated`/`served_bytes` report the served window honestly;
+- **typed rejection** — negative `max_bytes`/`offset`, non-integer or
+  boolean values, and offsets beyond EOF raise
+  `ResourceErrorKind.INVALID` (offset exactly at EOF is a legal empty
+  window); missing, undeclared or unavailable resources fail with typed
+  kinds (`NOT_INSTALLED`, `NOT_INDEXED`, `UNAVAILABLE`,
+  `BLOCKED_BY_POLICY`, `PERMISSION_DENIED`, `CORRUPTED`) — never
+  disguised as an empty result;
+- **regular files only** — FIFOs, devices and sockets are refused
+  before any read; undecodable content surfaces as `CORRUPTED`;
 - **containment** — locations must resolve inside the declaring root;
   symlink escapes are refused;
 - **denied content** — executables, archives and key material

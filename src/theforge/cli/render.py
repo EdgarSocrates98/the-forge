@@ -1732,7 +1732,14 @@ def install_doc(data: dict[str, Any]) -> str:
     """
     from theforge.ui.kit import UIContext, format_status_doc
 
-    return format_status_doc(data, ctx=UIContext.detect())
+    text = format_status_doc(data, ctx=UIContext.detect())
+    # forge/InstallLifecycle/v1 — the vendored UI kit is byte-locked to
+    # sibling repos, so the lifecycle line is appended here rather than
+    # inside format_status_doc.
+    lifecycle_state = (data.get("lifecycle") or {}).get("state")
+    if lifecycle_state:
+        text += f"\nlifecycle: {lifecycle_state}"
+    return text
 
 
 def installations(data: dict[str, Any]) -> str:
