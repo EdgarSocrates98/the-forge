@@ -415,6 +415,49 @@
       ],
       "description": "forge/HostOnboarding/v1 summary emitted after successful apply."
     },
+    "selection": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "description": "Named post-apply selection state (cycle-16.1.1 §4.4): emitted only when the outcome is uniform across the whole selection — never guessed.",
+      "properties": {
+        "state": {
+          "type": "string",
+          "enum": [
+            "no_registered_forges",
+            "no_installed_runtimes",
+            "recommendation_ambiguous",
+            "no_relevant_recommendation",
+            "empty_manual_selection",
+            "no_supported_component",
+            "all_already_active"
+          ]
+        },
+        "requested": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "string"
+          }
+        },
+        "detail": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "next_action": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
     "conflicts": {
       "type": [
         "array",
