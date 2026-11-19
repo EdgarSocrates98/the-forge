@@ -1195,8 +1195,59 @@ def _created_by(distribution: str) -> str:
         return distribution
 
 
+SCHEMA_LIFECYCLE = "forge/InstallLifecycle/v1"
+
+_BLOCKED_STATUSES = frozenset({"blocked", "refused", "unsupported", "declined"})
+"""Receipt ``status`` values that mean a gate refused the operation."""
+
+
+def _receipt_lifecycle(doc: dict[str, Any]) -> dict[str, Any]:
+    """Derive the ``forge/InstallLifecycle/v1`` block of a receipt.
+
+    The state is a *view* over ``status`` + ``verification`` — the same
+    closed derivation the-forge applies in ``install/lifecycle.py`` so a
+    reader recomputing it reaches the same answer. ``planned`` →
+    ``applied`` → ``verified`` is the success line; gate refusals are
+    ``blocked``, errors ``failed``, evidence gaps ``unverified``.
+    """
+    status = str(doc.get("status") or "")
+    verification = str((doc.get("verification") or {}).get("status") or "")
+    if status == "planned":
+        state, detail = "planned", "plan emitted — nothing written"
+    elif status in _BLOCKED_STATUSES:
+        state, detail = "blocked", f"gate refusal: {status}"
+    elif status == "completed":
+        if verification == "PASS":
+            state, detail = "verified", "writes executed and receipt checks pass"
+        elif verification == "FAIL":
+            state, detail = "failed", "writes executed but verification failed"
+        else:
+            state, detail = (
+                "applied",
+                f"writes executed; verification {verification or 'absent'}",
+            )
+    elif status == "failed":
+        checks = [c for c in doc.get("checks") or [] if isinstance(c, dict)]
+        if checks and all(
+            c.get("status") in ("BLOCKED", "UNVERIFIED", "NOT_APPLICABLE") for c in checks
+        ):
+            state, detail = "blocked", "every check gated — nothing applied"
+        else:
+            state, detail = "failed", "operation errored"
+    elif status == "unverified" or not status:
+        state, detail = "unverified", "no operation evidence"
+    else:
+        state, detail = (
+            "unverified",
+            f"status {status!r} outside the known receipt vocabulary",
+        )
+    return {"schema": SCHEMA_LIFECYCLE, "state": state, "detail": detail}
+
+
 def _write_receipt(state_dir: Path, receipt: dict[str, Any]) -> Path:
     ts = _utc_now().replace(":", "").replace("-", "")
+    # derived at write time — after the final status/verification is known
+    receipt["lifecycle"] = _receipt_lifecycle(receipt)
     path = state_dir / RECEIPTS_DIR / f"{receipt['operation']}-{ts}.json"
     _atomic_write(path, _json_bytes(receipt))
     return path
