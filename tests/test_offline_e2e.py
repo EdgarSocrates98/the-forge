@@ -105,7 +105,7 @@ def test_resource_resolution_and_context_plan_stay_local(
     )
     body = forge / "skills" / "demo" / "SKILL.md"
     body.parent.mkdir(parents=True)
-    body.write_text("# demo\n", encoding="utf-8")
+    body.write_bytes(b"# demo\n")
 
     res = _resolver(tmp_path / "ws")
     assert res.list() and res.search("demo")
