@@ -306,6 +306,8 @@ FILE_MARKERS: dict[str, tuple[str, ...]] = {
     "test_resource_limits.py": ("unit", "security"),
     "test_install_lifecycle.py": ("unit", "contract"),
     "test_federated_e2e.py": ("unit", "integration"),
+    # cycle-16.1.1 WAVE-01: fail-closed scenario gate + real I-offline proof (§4)
+    "test_federated_e2e_gating.py": ("unit", "integration"),
     "test_offline_e2e.py": ("e2e", "security"),
     "test_federated_uninstall.py": ("integration", "security"),
     "test_evidence_binding.py": ("unit",),
