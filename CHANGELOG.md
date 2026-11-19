@@ -16,6 +16,32 @@ existing cycle without intentionally breaking the Forge Protocol.
 
 ## [Unreleased]
 
+### Fixed (cycle 16.1.1 wave-01)
+
+- `scripts/federated_e2e.py`: fail-closed certification gate — a versioned
+  `SCENARIOS` inventory declares requiredness per scenario; a required
+  scenario that is `UNVERIFIED`/`BLOCKED`/`SKIPPED`/`NOT_APPLICABLE`, missing
+  or unparseable now prevents `certification_verdict: "PASS"` (reported
+  separately in `gating.unverified_reasons`), instead of exiting 0. Receipt
+  gains `certification_verdict`, `commands`, `environment`,
+  `required_coverage` and `scenario_inventory`.
+- `I-offline` scenario: replaced the `check(True)` placeholder with real
+  in-runner instrumentation — `socket.socket`/`create_connection`/
+  `getaddrinfo` are patched to record-then-explode while discovery,
+  resource retrieval and `plan_context` run underneath; an injected probe
+  proves the block live; `zero-outbound-attempts` is the pass criterion.
+- `setup` wizard now consumes the same option resolver as the CLI:
+  `forge.workspace.yaml` declared defaults and detection feed the wizard's
+  pre-checked answers with visible provenance — identical answers and
+  declarative config produce identical `install_auto` plans.
+- Empty specialist selection is a named state (`selection.state` +
+  `next_action`): `no_registered_forges`, `no_relevant_recommendation`,
+  `empty_manual_selection`, `all_already_active`, `no_supported_component`
+  — an empty `mode: recommended`/`manual` selection no longer reports
+  "no forge registered" and never widens to installing everything.
+- Regenerated `docs/evidence/federated-e2e.json` in the current
+  `forge/FederatedE2E/v1` format.
+
 ### Added
 
 - `theforge telemetry export`: persisted run telemetry + orchestration
