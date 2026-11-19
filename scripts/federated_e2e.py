@@ -8,6 +8,13 @@ reason, never a pass.
 
 Usage:
     python scripts/federated_e2e.py --workspace <dir> [--out receipt.json]
+
+Fail-closed certification (cycle 16.1 §5.1): the exit code is 0 only when
+no blocking failure exists across scenarios *and* required evals. A
+required eval that fails, never runs, or reports a contradictory result
+blocks the run. The runner's own exception or an unreadable receipt is a
+blocking outcome (exit 2), never a silent pass. Evals carry ``required``
+to distinguish gate binding from informational probes.
 """
 
 from __future__ import annotations
@@ -17,12 +24,14 @@ import json
 import shutil
 import sys
 import tempfile
+import traceback
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
+from theforge.context.git import head_sha  # noqa: E402
 from theforge.context.plan import plan_context  # noqa: E402
 from theforge.context.resources import (  # noqa: E402
     ResourceFailure,
@@ -34,11 +43,17 @@ from theforge.contracts.verdicts import Verdict, is_blocking  # noqa: E402
 SCENARIO_FORGES: dict[str, list[str]] = {
     "A-aws-standalone": ["spark-forge-aws"],
     "B-aws-full": [
-        "spark-forge-aws", "data-sentinel-forge", "the-forge",
-        "forge-doctor-data", "code-atlas-forge",
+        "spark-forge-aws",
+        "data-sentinel-forge",
+        "the-forge",
+        "forge-doctor-data",
+        "code-atlas-forge",
     ],
     "C-apis": [
-        "api-forge", "api-sentinel-forge", "forge-doctor-api", "code-atlas-forge",
+        "api-forge",
+        "api-sentinel-forge",
+        "forge-doctor-api",
+        "code-atlas-forge",
     ],
     "D-azure": ["spark-forge-azure", "forge-doctor-data", "code-atlas-forge"],
     "E-product": ["product-forge", "the-forge", "forge-agent-bridge"],
@@ -47,21 +62,33 @@ SCENARIO_FORGES: dict[str, list[str]] = {
 
 ROUTING_EVALS: list[tuple[str, str, set[str]]] = [
     # (scenario workspace, task, acceptable primary forges)
-    ("B-aws-full", "glue emr spark job oom shuffle skew",
-     {"spark-forge-aws"}),
-    ("C-apis", "openapi contract breaking change rest api",
-     {"api-forge", "forge-doctor-api"}),
-    ("C-apis", "index codebase symbols call graph",
-     {"code-atlas-forge", "api-forge", "forge-doctor-api"}),
-    ("B-aws-full", "data quality quarantine validation rules",
-     {"data-sentinel-forge", "forge-doctor-data", "spark-forge-aws"}),
-    ("D-azure", "databricks synapse adls fabric spark job",
-     {"spark-forge-azure"}),
+    ("B-aws-full", "glue emr spark job oom shuffle skew", {"spark-forge-aws"}),
+    ("C-apis", "openapi contract breaking change rest api", {"api-forge", "forge-doctor-api"}),
+    (
+        "C-apis",
+        "index codebase symbols call graph",
+        {"code-atlas-forge", "api-forge", "forge-doctor-api"},
+    ),
+    (
+        "B-aws-full",
+        "data quality quarantine validation rules",
+        {"data-sentinel-forge", "forge-doctor-data", "spark-forge-aws"},
+    ),
+    ("D-azure", "databricks synapse adls fabric spark job", {"spark-forge-azure"}),
 ]
 
 RESOURCE_KINDS = [
-    "skill", "agent", "knowledge", "rule", "contract",
-    "eval", "example", "fixture", "protocol", "command", "config",
+    "skill",
+    "agent",
+    "knowledge",
+    "rule",
+    "contract",
+    "eval",
+    "example",
+    "fixture",
+    "protocol",
+    "command",
+    "config",
 ]
 
 
@@ -100,9 +127,11 @@ def materialize_forge(src: Path, dst: Path) -> dict[str, Any]:
             if key == "location":
                 missing += 1
     return {
-        "forge": manifest.get("id", src.name), "materialized": True,
+        "forge": manifest.get("id", src.name),
+        "materialized": True,
         "resources_declared": len(manifest.get("resources", [])),
-        "files_copied": copied, "files_missing": missing,
+        "files_copied": copied,
+        "files_missing": missing,
     }
 
 
@@ -122,10 +151,15 @@ def resolver_for(ws_dir: Path) -> ResourceResolver:
     # matches them as checkout members via their forge.agentic.json
     # marker (gitless members are first-class). `explicit` still pairs
     # each dir with its id — dedup keeps one root per (fid, path).
-    explicit = [
-        (p.name, p) for p in sorted(ws_dir.iterdir())
-        if p.is_dir() and (p / "forge.agentic.json").is_file()
-    ] if ws_dir.is_dir() else []
+    explicit = (
+        [
+            (p.name, p)
+            for p in sorted(ws_dir.iterdir())
+            if p.is_dir() and (p / "forge.agentic.json").is_file()
+        ]
+        if ws_dir.is_dir()
+        else []
+    )
     return ResourceResolver(
         discover_roots(workspace_root=ws_dir, explicit=explicit, scan_installed=False)
     )
@@ -133,6 +167,111 @@ def resolver_for(ws_dir: Path) -> ResourceResolver:
 
 def check(condition: bool, label: str) -> dict[str, Any]:
     return {"check": label, "ok": bool(condition)}
+
+
+# --- eval gating (cycle 16.1 §5.1 — fail-closed) ----------------------------
+
+_NOT_RUN_VERDICTS = frozenset({"SKIPPED", "UNVERIFIED", "BLOCKED", "NOT_APPLICABLE"})
+
+# Required eval ids — the gate knows what MUST run; an absent entry is a
+# not-run eval, never silently forgiven.
+EXPECTED_ROUTING_EVALS: tuple[str, ...] = tuple(
+    f"routing:{task}" for _sid, task, _accept in ROUTING_EVALS
+) + ("routing:zzzqxkvbnm wqkfj",)
+EXPECTED_RESOURCE_EVALS: tuple[str, ...] = (
+    "resources:right-resource",
+    "resources:nonexistent",
+    "resources:manifest-poisoning-traversal",
+)
+
+
+def eval_state(entry: dict[str, Any]) -> tuple[str, str]:
+    """Classify one eval entry — closed outcome set, contradiction-first.
+
+    Returns ``(state, reason)``; state ∈ ok | failed | not-run |
+    contradictory | invalid.
+    """
+    verdict = str(entry.get("verdict") or "").upper()
+    if verdict in _NOT_RUN_VERDICTS:
+        return "not-run", str(entry.get("reason") or verdict)
+    has_ok = "ok" in entry
+    ok = bool(entry.get("ok"))
+    error = entry.get("error")
+    if verdict in ("FAIL", "ERROR"):
+        if ok:
+            return "contradictory", f"ok=true with verdict {verdict}"
+        return "failed", str(error or verdict)
+    if not has_ok:
+        return "invalid", "no result field"
+    if ok and error:
+        return "contradictory", f"ok=true with error {error!r}"
+    if ok:
+        return "ok", ""
+    return "failed", str(error or entry.get("detail") or "ok=false")
+
+
+def finalize_evals(receipt: dict[str, Any]) -> list[str]:
+    """Normalize eval entries (id, required, verdict, state) and return
+    the eval blocking reasons — a required eval that fails, never ran or
+    contradicts itself blocks certification."""
+    reasons: list[str] = []
+    expected = {
+        "routing": list(EXPECTED_ROUTING_EVALS),
+        "resources": list(EXPECTED_RESOURCE_EVALS),
+    }
+    evals = receipt.get("evals") or {}
+    for kind in sorted(set(evals) | set(expected)):
+        seen: set[str] = set()
+        for i, entry in enumerate(evals.get(kind) or []):
+            eid = str(entry.get("id") or f"{kind}:{entry.get('task') or entry.get('case') or i}")
+            entry["id"] = eid
+            entry.setdefault("required", True)
+            state, reason = eval_state(entry)
+            entry["state"] = state
+            entry.setdefault("verdict", "PASS" if state == "ok" else "FAIL")
+            seen.add(eid)
+            if entry["required"] and state != "ok":
+                reasons.append(f"eval-{state}:{eid} — {reason or 'no detail'}")
+        for missing in sorted(set(expected.get(kind, ())) - seen):
+            reasons.append(f"eval-not-run:{missing} — expected eval never executed")
+    return reasons
+
+
+def compute_gating(receipt: dict[str, Any]) -> list[str]:
+    """Every blocking reason across scenarios and evals — exit 0 iff empty."""
+    reasons: list[str] = []
+    for sid, s in (receipt.get("scenarios") or {}).items():
+        verdict = s.get("verdict")
+        if verdict is None:
+            reasons.append(f"scenario:{sid}:missing-verdict")
+            continue
+        try:
+            if is_blocking(verdict):
+                reasons.append(f"scenario:{sid}:{verdict}")
+        except ValueError:
+            reasons.append(f"scenario:{sid}:invalid-verdict:{verdict!r}")
+    # finalize_evals is idempotent — callers may invoke it earlier for the
+    # per-eval breakdown; recomputing yields the same reasons.
+    reasons.extend(finalize_evals(receipt))
+    return sorted(set(reasons))
+
+
+def _validate_receipt(path: Path) -> list[str]:
+    """Read the written receipt back — a receipt that cannot be re-read or
+    lacks the contract sections is a blocking outcome, not a pass."""
+    errors: list[str] = []
+    try:
+        doc = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        return [f"receipt-unreadable: {exc}"]
+    if not isinstance(doc, dict):
+        return ["receipt-unreadable: top level is not an object"]
+    for key in ("schema", "scenarios", "evals", "summary", "gating"):
+        if key not in doc:
+            errors.append(f"receipt-invalid: missing {key!r}")
+    if doc.get("schema") != "forge/FederatedE2E/v1":
+        errors.append(f"receipt-invalid: schema {doc.get('schema')!r}")
+    return errors
 
 
 def scenario_subset(ws: Path, forges: dict[str, Path], sid: str, ids: list[str]) -> dict[str, Any]:
@@ -147,31 +286,80 @@ def scenario_subset(ws: Path, forges: dict[str, Path], sid: str, ids: list[str])
         check(len(resolver.list()) > 0, "catalog-nonempty"),
     ]
     return {
-        "id": sid, "workspace": info,
-        "roots": sorted(roots), "resources": len(resolver.list()),
-        "checks": checks, "resolver": resolver,
+        "id": sid,
+        "workspace": info,
+        "roots": sorted(roots),
+        "resources": len(resolver.list()),
+        "checks": checks,
+        "resolver": resolver,
     }
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--workspace", default=str(Path(__file__).resolve().parents[2]))
     ap.add_argument("--out", default=None)
-    args = ap.parse_args()
+    args = ap.parse_args(argv)
+    try:
+        return _execute(args)
+    except Exception as exc:  # noqa: BLE001 — the runner's own failure is
+        # a blocking outcome, never a silent pass (§5.1).
+        out = Path(args.out) if args.out else Path("federated-e2e-receipt.json")
+        error_receipt = {
+            "schema": "forge/FederatedE2E/v1",
+            "generated_at": datetime.now(UTC).isoformat(),
+            "source_workspace": str(Path(args.workspace)),
+            "scenarios": {},
+            "evals": {"routing": [], "resources": []},
+            "summary": {
+                "scenarios": {"pass": 0, "fail": 0, "unverified": 0},
+                "evals": {"ok": 0, "total": 0},
+            },
+            "gating": {
+                "blocking_reasons": [f"runner-error:{type(exc).__name__}: {exc}"],
+                "eval_reasons": [],
+            },
+            "runner_error": {
+                "type": type(exc).__name__,
+                "detail": str(exc),
+                "traceback": traceback.format_exc(),
+            },
+        }
+        try:
+            out.parent.mkdir(parents=True, exist_ok=True)
+            out.write_text(
+                json.dumps(error_receipt, indent=2, ensure_ascii=False), encoding="utf-8"
+            )
+            print(f"receipt -> {out}", file=sys.stderr)
+        except OSError as wexc:
+            print(f"receipt unwritable: {wexc}", file=sys.stderr)
+        print(f"runner error — {type(exc).__name__}: {exc}", file=sys.stderr)
+        return 2
+
+
+def _execute(args: argparse.Namespace) -> int:
     ws_src = Path(args.workspace)
     forges = {
-        p.name: p for p in ws_src.iterdir()
-        if p.is_dir() and (p / "forge.agentic.json").is_file()
+        p.name: p for p in ws_src.iterdir() if p.is_dir() and (p / "forge.agentic.json").is_file()
     }
     the_forge = ws_src / "the-forge"
     if the_forge.is_dir() and "the-forge" not in forges:
         forges["the-forge"] = the_forge
 
+    # SHA↔evidence binding (§5.6): the tested commit is captured live from
+    # `git rev-parse --verify HEAD` per checkout — never hand-written.
+    repo_shas = {fid: head_sha(p) for fid, p in sorted(forges.items())}
     receipt: dict[str, Any] = {
         "schema": "forge/FederatedE2E/v1",
         "generated_at": datetime.now(UTC).isoformat(),
         "source_workspace": str(ws_src),
         "forge_checkouts": sorted(forges),
+        "tested_commit": {
+            "repo": "the-forge",
+            "sha": repo_shas.get("the-forge"),
+            "captured_by": "git rev-parse --verify HEAD (hardened runner)",
+        },
+        "repo_shas": {k: v for k, v in repo_shas.items() if v},
         "scenarios": {},
         "evals": {"routing": [], "resources": []},
     }
@@ -194,14 +382,23 @@ def main() -> int:
 
         # ---- H: no .git — implicit in materialization ---------------------
         h = results["G-all"]
-        h_git = check(not any((Path(f["dir"]) / ".git").exists()
-                              for f in [x["workspace"] for x in results.values()]),
-                      "no-.git-anywhere")
+        h_git = check(
+            not any(
+                (Path(f["dir"]) / ".git").exists()
+                for f in [x["workspace"] for x in results.values()]
+            ),
+            "no-.git-anywhere",
+        )
         results["H-no-git"] = {
             "id": "H-no-git",
             "evidence": "materialized workspaces carry no .git; discovery is manifest-based",
-            "checks": [h_git, check(len(h["roots"]) == len(forges) or len(h["roots"]) > 0,
-                                    "discovery-works-without-git")],
+            "checks": [
+                h_git,
+                check(
+                    len(h["roots"]) == len(forges) or len(h["roots"]) > 0,
+                    "discovery-works-without-git",
+                ),
+            ],
         }
 
         # ---- I: offline ----------------------------------------------------
@@ -222,8 +419,10 @@ def main() -> int:
         results["J-partial-failure"] = {
             "id": "J-partial-failure",
             "checks": [
-                check("spark-forge-aws" in j_ok_roots and "api-forge" in j_ok_roots,
-                      "healthy-forges-still-discovered"),
+                check(
+                    "spark-forge-aws" in j_ok_roots and "api-forge" in j_ok_roots,
+                    "healthy-forges-still-discovered",
+                ),
                 check("bad-forge" not in j_ok_roots, "corrupt-forge-excluded-not-crashing"),
             ],
         }
@@ -233,7 +432,8 @@ def main() -> int:
         kind_counts = {k: len(gr.list(kind=k)) for k in RESOURCE_KINDS}
         present = [k for k, c in kind_counts.items() if c > 0]
         results["K-resource-discovery"] = {
-            "id": "K-resource-discovery", "kind_counts": kind_counts,
+            "id": "K-resource-discovery",
+            "kind_counts": kind_counts,
             "checks": [
                 check(len(present) >= 6, f">=6 kinds discoverable (found {len(present)})"),
                 check(kind_counts["skill"] > 0, "skills present"),
@@ -255,7 +455,8 @@ def main() -> int:
             for ref in gr.list():
                 cli_counts[ref.forge_id] = cli_counts.get(ref.forge_id, 0) + 1
             results["L-portal-cli"] = {
-                "id": "L-portal-cli", "portal_total": len(portal.get("resources", [])),
+                "id": "L-portal-cli",
+                "portal_total": len(portal.get("resources", [])),
                 "cli_total": len(gr.list()),
                 "checks": [
                     check(portal_counts == cli_counts, "same-per-forge-counts"),
@@ -263,9 +464,12 @@ def main() -> int:
                 ],
             }
         except Exception as exc:  # pragma: no cover - environment dependent
-            results["L-portal-cli"] = {"id": "L-portal-cli",
-                                       "verdict": Verdict.UNVERIFIED.value,
-                                       "reason": f"portal import failed: {exc}", "checks": []}
+            results["L-portal-cli"] = {
+                "id": "L-portal-cli",
+                "verdict": Verdict.UNVERIFIED.value,
+                "reason": f"portal import failed: {exc}",
+                "checks": [],
+            }
 
         # ---- M: upgrade/migration — state preserved ------------------------
         mdir = tmpdir / "M-upgrade"
@@ -294,34 +498,42 @@ def main() -> int:
             "id": "N-uninstall",
             "checks": [
                 check("api-forge" not in n_roots, "removed-forge-gone"),
-                check("spark-forge-aws" in n_roots and "product-forge" in n_roots,
-                      "siblings-untouched"),
+                check(
+                    "spark-forge-aws" in n_roots and "product-forge" in n_roots,
+                    "siblings-untouched",
+                ),
                 check(len(nr.list()) > 0, "remaining-catalogs-intact"),
             ],
         }
 
         # ---- O: context economy vs forge count -----------------------------
         o_rows = []
-        for size, ids in [(1, ["spark-forge-aws"]),
-                          (3, ["spark-forge-aws", "api-forge", "product-forge"]),
-                          (8, sorted(forges)[:8]),
-                          (12, sorted(forges)[:12])]:
+        for size, ids in [
+            (1, ["spark-forge-aws"]),
+            (3, ["spark-forge-aws", "api-forge", "product-forge"]),
+            (8, sorted(forges)[:8]),
+            (12, sorted(forges)[:12]),
+        ]:
             odir = tmpdir / f"O-{size}"
             make_workspace(odir, forges, ids)
             orr = resolver_for(odir)
             plan = plan_context("spark glue job performance", orr, level3_budget=8000)
-            o_rows.append({
-                "forges": len(orr.roots),
-                "l1_refs_scanned": plan.metrics.get("l1_refs_scanned",
-                                                    plan.level1_forges),
-                "l3_refs": len(plan.level3_refs),
-                "l3_est_bytes": plan.est_level3_bytes,
-            })
+            o_rows.append(
+                {
+                    "forges": len(orr.roots),
+                    "l1_refs_scanned": plan.metrics.get("l1_refs_scanned", plan.level1_forges),
+                    "l3_refs": len(plan.level3_refs),
+                    "l3_est_bytes": plan.est_level3_bytes,
+                }
+            )
         o_ok = all(row["l3_est_bytes"] <= 8000 and row["l3_refs"] <= 12 for row in o_rows)
         results["O-context-economy"] = {
-            "id": "O-context-economy", "matrix": o_rows,
-            "checks": [check(o_ok, "l3-bounded-regardless-of-forge-count"),
-                       check(all(r["l3_refs"] <= 12 for r in o_rows), "max-refs-cap")],
+            "id": "O-context-economy",
+            "matrix": o_rows,
+            "checks": [
+                check(o_ok, "l3-bounded-regardless-of-forge-count"),
+                check(all(r["l3_refs"] <= 12 for r in o_rows), "max-refs-cap"),
+            ],
         }
 
         # ---- Onda 14.1 routing evals ---------------------------------------
@@ -329,23 +541,32 @@ def main() -> int:
             rr = resolvers.get(sid)
             if rr is None or not rr.roots:
                 receipt["evals"]["routing"].append(
-                    {"task": task, "verdict": Verdict.SKIPPED.value,
-                     "reason": "workspace empty"})
+                    {"task": task, "verdict": Verdict.SKIPPED.value, "reason": "workspace empty"}
+                )
                 continue
             plan = plan_context(task, rr)
             hit = plan.level2_forge in accept if plan.level2_forge else False
-            receipt["evals"]["routing"].append({
-                "task": task, "workspace": sid, "primary": plan.level2_forge,
-                "aux": plan.level2_aux, "accepted": sorted(accept), "ok": hit,
-            })
+            receipt["evals"]["routing"].append(
+                {
+                    "task": task,
+                    "workspace": sid,
+                    "primary": plan.level2_forge,
+                    "aux": plan.level2_aux,
+                    "accepted": sorted(accept),
+                    "ok": hit,
+                }
+            )
         # negative: gibberish must not fabricate confident routing
         plan_neg = plan_context("zzzqxkvbnm wqkfj", resolvers["G-all"])
-        receipt["evals"]["routing"].append({
-            "task": "zzzqxkvbnm wqkfj", "workspace": "G-all",
-            "primary": plan_neg.level2_forge,
-            "ok": plan_neg.level2_forge is None,
-            "note": "no fabricated route on zero-match terms",
-        })
+        receipt["evals"]["routing"].append(
+            {
+                "task": "zzzqxkvbnm wqkfj",
+                "workspace": "G-all",
+                "primary": plan_neg.level2_forge,
+                "ok": plan_neg.level2_forge is None,
+                "note": "no fabricated route on zero-match terms",
+            }
+        )
 
         # ---- Onda 14.2 resource evals --------------------------------------
         some = next((r for r in gr.list() if r.entry.availability == "available"), None)
@@ -353,29 +574,50 @@ def main() -> int:
         if some is not None:
             try:
                 body = gr.get(some.identity, max_bytes=4096)
-                ev.append({"case": "right-resource", "identity": some.identity,
-                           "ok": bool(body.text), "sha256": (body.sha256 or "")[:12]})
+                ev.append(
+                    {
+                        "case": "right-resource",
+                        "identity": some.identity,
+                        "ok": bool(body.text),
+                        "sha256": (body.sha256 or "")[:12],
+                    }
+                )
             except ResourceFailure as exc:
                 ev.append({"case": "right-resource", "ok": False, "error": exc.kind.value})
         try:
             gr.describe("no-such-forge:ghost")
             ev.append({"case": "nonexistent", "ok": False, "error": "no refusal raised"})
         except ResourceFailure as exc:
-            ev.append({"case": "nonexistent", "ok": exc.kind.value in
-                       {"resource_not_installed", "resource_not_indexed"},
-                       "kind": exc.kind.value})
+            ev.append(
+                {
+                    "case": "nonexistent",
+                    "ok": exc.kind.value in {"resource_not_installed", "resource_not_indexed"},
+                    "kind": exc.kind.value,
+                }
+            )
         # traversal entry rejected by contract parse (manifest error, not crash)
         tdir = tmpdir / "T-poison"
         tdir.mkdir()
-        (tdir / "forge.agentic.json").write_text(json.dumps({
-            "schema": "forge/AgenticManifest/v1", "id": "evil", "name": "evil",
-            "version": "0.0.0",
-            "resources": [{"id": "x", "kind": "knowledge", "location": "../outside.md"}],
-        }), encoding="utf-8")
+        (tdir / "forge.agentic.json").write_text(
+            json.dumps(
+                {
+                    "schema": "forge/AgenticManifest/v1",
+                    "id": "evil",
+                    "name": "evil",
+                    "version": "0.0.0",
+                    "resources": [{"id": "x", "kind": "knowledge", "location": "../outside.md"}],
+                }
+            ),
+            encoding="utf-8",
+        )
         tr = resolver_for(tdir)
-        ev.append({"case": "manifest-poisoning-traversal",
-                   "ok": "evil" not in {r.forge_id for r in tr.roots},
-                   "note": "contract validation refuses traversal locations"})
+        ev.append(
+            {
+                "case": "manifest-poisoning-traversal",
+                "ok": "evil" not in {r.forge_id for r in tr.roots},
+                "note": "contract validation refuses traversal locations",
+            }
+        )
 
         # ---- verdicts — closed taxonomy, acceptance via contracts.verdicts --
         for _sid, r in results.items():
@@ -387,18 +629,32 @@ def main() -> int:
                 if checks and all(c["ok"] for c in checks)
                 else (Verdict.UNVERIFIED.value if not checks else Verdict.FAIL.value)
             )
-        receipt["scenarios"] = {k: dict(v)
-                                for k, v in results.items()}
+        receipt["scenarios"] = {k: dict(v) for k, v in results.items()}
 
-    rp = sum(1 for s in receipt["scenarios"].values()
-             if s.get("verdict") == Verdict.PASS.value)
-    rf = sum(1 for s in receipt["scenarios"].values()
-             if s.get("verdict") == Verdict.FAIL.value)
-    ru = sum(1 for s in receipt["scenarios"].values()
-             if s.get("verdict") == Verdict.UNVERIFIED.value)
+    rp = sum(1 for s in receipt["scenarios"].values() if s.get("verdict") == Verdict.PASS.value)
+    rf = sum(1 for s in receipt["scenarios"].values() if s.get("verdict") == Verdict.FAIL.value)
+    ru = sum(
+        1 for s in receipt["scenarios"].values() if s.get("verdict") == Verdict.UNVERIFIED.value
+    )
     ep = sum(1 for e in receipt["evals"]["routing"] if e.get("ok"))
     eq = sum(1 for e in receipt["evals"]["resources"] if e.get("ok"))
     et = len(receipt["evals"]["routing"]) + len(receipt["evals"]["resources"])
+
+    # ---- §5.1 fail-closed gating ------------------------------------------
+    # Evals are normalized (id/required/verdict/state) and every blocking
+    # reason — scenario or eval — is named on the receipt.
+    eval_reasons = finalize_evals(receipt)
+    blocking = compute_gating(receipt)
+    receipt["gating"] = {
+        "blocking_reasons": blocking,
+        "eval_reasons": eval_reasons,
+        "required_evals": sum(
+            1 for entries in receipt["evals"].values() for e in entries if e.get("required")
+        ),
+        "optional_evals": sum(
+            1 for entries in receipt["evals"].values() for e in entries if not e.get("required")
+        ),
+    }
     receipt["summary"] = {
         "scenarios": {"pass": rp, "fail": rf, "unverified": ru},
         "evals": {"ok": ep + eq, "total": et},
@@ -408,12 +664,19 @@ def main() -> int:
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(receipt, indent=2, ensure_ascii=False), encoding="utf-8")
     print(f"receipt -> {out}")
+    # Read-back gate: the persisted receipt must parse and carry the
+    # contract sections — an unreadable/corrupt receipt is blocking.
+    read_errors = _validate_receipt(out)
+    if read_errors:
+        blocking = sorted(set(blocking) | set(read_errors))
+        receipt["gating"]["blocking_reasons"] = blocking
+        out.write_text(json.dumps(receipt, indent=2, ensure_ascii=False), encoding="utf-8")
     for sid, s in receipt["scenarios"].items():
         print(f"  {sid:24s} {s.get('verdict')}")
     print(f"  evals ok={ep + eq}/{et}  scenarios pass={rp} fail={rf} unverified={ru}")
-    return 0 if not any(
-        is_blocking(s.get("verdict")) for s in receipt["scenarios"].values()
-    ) else 1
+    for reason in blocking:
+        print(f"  BLOCKED {reason}")
+    return 0 if not blocking else 1
 
 
 if __name__ == "__main__":

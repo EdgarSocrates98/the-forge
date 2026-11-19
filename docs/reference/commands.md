@@ -2058,8 +2058,8 @@ theforge resources get [root] [json] [debug] <identity> [max_bytes] [offset] [in
 | `json` | no | — | machine-readable JSON output |
 | `debug` | no | — | on error, print the redacted diagnostic (never a traceback) |
 | `identity` | yes | — | <forge-id>:<resource-id> |
-| `max_bytes` | no | — | — |
-| `offset` | no | — | — |
+| `max_bytes` | no | — | bytes to serve (default 262144; clamped to the 1 MiB hard ceiling, flagged `capped`) |
+| `offset` | no | — | window start; beyond EOF is a typed INVALID |
 | `integrity` | no | — | hash the full file when it fits the integrity cap |
 
 <!-- keep:start -->

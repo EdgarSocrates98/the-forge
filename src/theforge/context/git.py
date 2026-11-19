@@ -40,6 +40,7 @@ __all__ = [
     "GitRunner",
     "GitState",
     "git_env",
+    "head_sha",
     "read_git_state",
     "run_git",
 ]
@@ -234,6 +235,23 @@ def read_git_state(
         return _unavailable("git: not available")
     except Exception as exc:  # 3.4: never raise; any failure is a limitation
         return _unavailable(f"git: failed ({type(exc).__name__})")
+
+
+def head_sha(
+    root: Path,
+    *,
+    executable: str | None = None,
+    runner: GitRunner | None = None,
+    timeout_s: float = GIT_TIMEOUT_S,
+) -> str | None:
+    """The tested commit SHA for evidence binding — ``git rev-parse --verify
+    HEAD`` captured at run time through the hardened runner (no transport, no
+    credential env), never hand-written. ``None`` when git cannot prove it
+    (absent binary, not a repository, refusal) — the caller records the gap,
+    it never invents a SHA."""
+    state = read_git_state(root, executable=executable, runner=runner, timeout_s=timeout_s)
+    head = state.summary.head
+    return head if state.summary.available and head else None
 
 
 def _unavailable(limitation: str) -> GitState:

@@ -23,6 +23,28 @@
       }
     },
     "repair_hint": {"type": ["string", "null"]},
+    "lifecycle": {
+      "type": "object",
+      "required": ["schema", "state"],
+      "properties": {
+        "schema": {"const": "forge/InstallLifecycle/v1"},
+        "state": {
+          "enum": [
+            "planned",
+            "blocked",
+            "failed",
+            "applied",
+            "partially_applied",
+            "verified",
+            "unverified",
+            "ready",
+            "certified"
+          ]
+        },
+        "detail": {"type": "string"}
+      },
+      "additionalProperties": false
+    },
     "context": {
       "type": "object",
       "properties": {

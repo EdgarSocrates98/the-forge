@@ -23,6 +23,7 @@ from typing import Any
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
+from theforge.context.git import head_sha  # noqa: E402
 from theforge.context.resources import (  # noqa: E402
     ResourceResolver,
     discover_roots,
@@ -48,12 +49,13 @@ def audit_contracts(ws: Path, repos: list[Path]) -> dict[str, Any]:
     total_res = missing_loc = 0
     for repo in repos:
         for copy in repo.rglob(VENDORED):
-            if any(p in copy.parts for p in
-                   (".git", "node_modules", ".venv", "venv", "site-packages")):
+            if any(
+                p in copy.parts for p in (".git", "node_modules", ".venv", "venv", "site-packages")
+            ):
                 continue  # installed artifacts drift until reinstall — not source parity
-            parity.append(check(
-                sha(copy) == canon_sha, f"vendored:{repo.name}:{copy.parent.name}",
-                copy.name))
+            parity.append(
+                check(sha(copy) == canon_sha, f"vendored:{repo.name}:{copy.parent.name}", copy.name)
+            )
         mp = repo / "forge.agentic.json"
         if not mp.is_file():
             continue
@@ -70,11 +72,15 @@ def audit_contracts(ws: Path, repos: list[Path]) -> dict[str, Any]:
             total_res += 1
             if not (repo / loc).exists():  # collection resources may be dirs
                 missing_loc += 1
-    loc_ok.append(check(missing_loc == 0, "catalog-locations-on-disk",
-                        f"{missing_loc}/{total_res} declared locations absent"))
+    loc_ok.append(
+        check(
+            missing_loc == 0,
+            "catalog-locations-on-disk",
+            f"{missing_loc}/{total_res} declared locations absent",
+        )
+    )
     checks = parity + manifest_ok + loc_ok
-    return {"parity_copies": len(parity), "resources_checked": total_res,
-            "checks": checks}
+    return {"parity_copies": len(parity), "resources_checked": total_res, "checks": checks}
 
 
 def audit_hosts(ws: Path, repos: list[Path]) -> dict[str, Any]:
@@ -87,18 +93,29 @@ def audit_hosts(ws: Path, repos: list[Path]) -> dict[str, Any]:
         doc = json.loads(mp.read_text(encoding="utf-8"))
         fid = doc.get("id") or repo.name
         declared = doc.get("host_adapters") or []
-        checks.append(check(
-            bool(declared), f"host-adapters-declared:{fid}",
-            ",".join(declared) or "none"))
+        checks.append(
+            check(bool(declared), f"host-adapters-declared:{fid}", ",".join(declared) or "none")
+        )
         if doc.get("mcp_command") and not doc.get("mcp_verify_tool"):
-            checks.append({"check": f"mcp-verify-undeclared:{fid}", "ok": True,
-                           "detail": "OBSERVED gap — mcp_command without mcp_verify_tool"})
+            checks.append(
+                {
+                    "check": f"mcp-verify-undeclared:{fid}",
+                    "ok": True,
+                    "detail": "OBSERVED gap — mcp_command without mcp_verify_tool",
+                }
+            )
     # canonical agent specs + renderer (host dirs are generated/gitignored)
     specs = list((ws / "the-forge" / "agentic" / "agents").glob("*.toml"))
-    checks.append(check(len(specs) >= 8, "canonical-agent-specs:the-forge",
-                        f"{len(specs)} AgentSpec/v1"))
-    checks.append(check((ws / "the-forge" / "src" / "theforge" / "agents.py").is_file(),
-                        "agent-renderer:the-forge", "agents.py"))
+    checks.append(
+        check(len(specs) >= 8, "canonical-agent-specs:the-forge", f"{len(specs)} AgentSpec/v1")
+    )
+    checks.append(
+        check(
+            (ws / "the-forge" / "src" / "theforge" / "agents.py").is_file(),
+            "agent-renderer:the-forge",
+            "agents.py",
+        )
+    )
     return {"checks": checks}
 
 
@@ -110,8 +127,7 @@ def audit_portability_security(ws: Path) -> dict[str, Any]:
         tdir = Path(tmp) / "ws with spaces"
         src = ws / "spark-forge-aws"
         (tdir / "spark-forge-aws").mkdir(parents=True)
-        shutil.copy2(src / "forge.agentic.json",
-                     tdir / "spark-forge-aws" / "forge.agentic.json")
+        shutil.copy2(src / "forge.agentic.json", tdir / "spark-forge-aws" / "forge.agentic.json")
         doc = json.loads((src / "forge.agentic.json").read_text(encoding="utf-8"))
         copied = 0
         for e in doc.get("resources") or []:
@@ -121,19 +137,23 @@ def audit_portability_security(ws: Path) -> dict[str, Any]:
                 tgt.parent.mkdir(parents=True, exist_ok=True)
                 shutil.copy2(src / loc, tgt)
                 copied += 1
-        rr = ResourceResolver(discover_roots(
-            explicit=[("spark-forge-aws", tdir / "spark-forge-aws")],
-            scan_installed=False))
+        rr = ResourceResolver(
+            discover_roots(
+                explicit=[("spark-forge-aws", tdir / "spark-forge-aws")], scan_installed=False
+            )
+        )
         checks += [
             check(len(rr.roots) == 1, "spaces-in-path:discovery", str(tdir)),
-            check(copied > 0 and not (tdir / ".git").exists(),
-                  "zip-no-git:materialized", f"{copied} files"),
+            check(
+                copied > 0 and not (tdir / ".git").exists(),
+                "zip-no-git:materialized",
+                f"{copied} files",
+            ),
         ]
         avail = [r for r in rr.list() if r.entry.availability == "available"]
         if avail:
             body = rr.get(avail[0].identity, max_bytes=8192)
-            checks.append(check(bool(body.text), "spaces-in-path:bounded-get",
-                                avail[0].identity))
+            checks.append(check(bool(body.text), "spaces-in-path:bounded-get", avail[0].identity))
         # traversal + symlink escape refused
         for bad_id, make in (
             ("traversal", None),
@@ -150,13 +170,21 @@ def audit_portability_security(ws: Path) -> dict[str, Any]:
                     link.symlink_to(tdir, target_is_directory=True)
                 except OSError:
                     loc = "../outside-secret.txt"  # no symlink perm → traversal case
-            (bad / "forge.agentic.json").write_text(json.dumps({
-                "schema": "forge/SpecialistAgenticManifest/v1", "id": f"evil-{bad_id}",
-                "name": "evil", "version": "0.0.0",
-                "resources": [{"id": "x", "kind": "knowledge", "location": loc}],
-            }), encoding="utf-8")
-            rr2 = ResourceResolver(discover_roots(
-                explicit=[(f"evil-{bad_id}", bad)], scan_installed=False))
+            (bad / "forge.agentic.json").write_text(
+                json.dumps(
+                    {
+                        "schema": "forge/SpecialistAgenticManifest/v1",
+                        "id": f"evil-{bad_id}",
+                        "name": "evil",
+                        "version": "0.0.0",
+                        "resources": [{"id": "x", "kind": "knowledge", "location": loc}],
+                    }
+                ),
+                encoding="utf-8",
+            )
+            rr2 = ResourceResolver(
+                discover_roots(explicit=[(f"evil-{bad_id}", bad)], scan_installed=False)
+            )
             # Manifest-level traversal poisons contract parse → root refused.
             # In-manifest relative paths (incl. symlinked dirs) parse fine —
             # the refusal then happens at bounded retrieval via containment.
@@ -172,20 +200,28 @@ def audit_portability_security(ws: Path) -> dict[str, Any]:
         # secret redaction on get
         good = tdir / "with-secret"
         good.mkdir(exist_ok=True)
-        (good / "note.md").write_text(
-            "token=AKIAIOSFODNN7EXAMPLE here", encoding="utf-8")
-        (good / "forge.agentic.json").write_text(json.dumps({
-            "schema": "forge/SpecialistAgenticManifest/v1", "id": "with-secret",
-            "name": "ws", "version": "0.0.0",
-            "resources": [{"id": "note", "kind": "knowledge", "location": "note.md"}],
-        }), encoding="utf-8")
-        rr3 = ResourceResolver(discover_roots(
-            explicit=[("with-secret", good)], scan_installed=False))
+        (good / "note.md").write_text("token=AKIAIOSFODNN7EXAMPLE here", encoding="utf-8")
+        (good / "forge.agentic.json").write_text(
+            json.dumps(
+                {
+                    "schema": "forge/SpecialistAgenticManifest/v1",
+                    "id": "with-secret",
+                    "name": "ws",
+                    "version": "0.0.0",
+                    "resources": [{"id": "note", "kind": "knowledge", "location": "note.md"}],
+                }
+            ),
+            encoding="utf-8",
+        )
+        rr3 = ResourceResolver(
+            discover_roots(explicit=[("with-secret", good)], scan_installed=False)
+        )
         try:
             body = rr3.get("with-secret:note", max_bytes=4096)
             text = body.text or ""
-            checks.append(check("AKIAIOSFODNN7EXAMPLE" not in text,
-                                "adversarial:secret-redacted", text[:60]))
+            checks.append(
+                check("AKIAIOSFODNN7EXAMPLE" not in text, "adversarial:secret-redacted", text[:60])
+            )
         except Exception as exc:
             checks.append(check(False, "adversarial:secret-redacted", str(exc)))
     return {"checks": checks}
@@ -199,21 +235,36 @@ def main() -> int:
     ws = Path(args.workspace)
     repos = [p for p in ws.iterdir() if p.is_dir() and (p / "forge.agentic.json").is_file()]
 
+    # SHA↔evidence binding (§5.6): the audited commits are captured live
+    # from `git rev-parse --verify HEAD` — never hand-written.
+    repo_shas = {p.name: head_sha(p) for p in repos}
     receipt: dict[str, Any] = {
         "schema": "forge/FinalAudit/v1",
         "generated_at": datetime.now(UTC).isoformat(),
         "workspace": str(ws),
         "repos": sorted(p.name for p in repos),
+        "tested_commit": {
+            "repo": "the-forge",
+            "sha": repo_shas.get("the-forge"),
+            "captured_by": "git rev-parse --verify HEAD (hardened runner)",
+        },
+        "repo_shas": {k: v for k, v in repo_shas.items() if v},
     }
     receipt["contracts"] = audit_contracts(ws, repos)
     receipt["hosts"] = audit_hosts(ws, repos)
     receipt["portability_security"] = audit_portability_security(ws)
 
-    all_checks = (receipt["contracts"]["checks"] + receipt["hosts"]["checks"]
-                  + receipt["portability_security"]["checks"])
+    all_checks = (
+        receipt["contracts"]["checks"]
+        + receipt["hosts"]["checks"]
+        + receipt["portability_security"]["checks"]
+    )
     fails = [c for c in all_checks if not c["ok"]]
-    receipt["summary"] = {"checks": len(all_checks), "fail": len(fails),
-                          "failures": [f"{c['check']} {c['detail']}" for c in fails[:20]]}
+    receipt["summary"] = {
+        "checks": len(all_checks),
+        "fail": len(fails),
+        "failures": [f"{c['check']} {c['detail']}" for c in fails[:20]],
+    }
     out = Path(args.out) if args.out else Path("final-audit.json")
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(receipt, indent=2, ensure_ascii=False), encoding="utf-8")

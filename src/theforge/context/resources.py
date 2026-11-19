@@ -34,6 +34,11 @@ from theforge.specialists import catalog_resources
 DEFAULT_MAX_BYTES = 262_144
 """Default read window for ``get`` — bounded retrieval per §10.5."""
 
+MAX_READ_BYTES = 1_048_576
+"""Internal hard ceiling for ``get``: the served window can never exceed
+this, no matter what ``max_bytes`` the caller passes. Larger requests are
+clamped and flagged ``capped`` in the content envelope (§10.5)."""
+
 MAX_LISTING = 500
 """Max entries when a declared location resolves to a directory."""
 
@@ -43,9 +48,29 @@ served bytes is reported instead and flagged as partial."""
 
 DENY_SUFFIXES = frozenset(
     {
-        ".exe", ".dll", ".so", ".dylib", ".bin", ".com", ".bat", ".ps1",
-        ".pyc", ".pyo", ".whl", ".zip", ".tar", ".gz", ".7z", ".jar",
-        ".sqlite", ".sqlite3", ".db", ".pem", ".key", ".pfx", ".p12",
+        ".exe",
+        ".dll",
+        ".so",
+        ".dylib",
+        ".bin",
+        ".com",
+        ".bat",
+        ".ps1",
+        ".pyc",
+        ".pyo",
+        ".whl",
+        ".zip",
+        ".tar",
+        ".gz",
+        ".7z",
+        ".jar",
+        ".sqlite",
+        ".sqlite3",
+        ".db",
+        ".pem",
+        ".key",
+        ".pfx",
+        ".p12",
     }
 )
 """Executables, archives and key material are never served as resources
@@ -134,6 +159,7 @@ class ResourceContent:
     sha256: str | None = None
     sha256_scope: str | None = None  # "window" | "file"
     listing_truncated: bool = False
+    capped: bool = False  # request window clamped to MAX_READ_BYTES
 
 
 def _load_manifest_at(path: Path) -> AgenticManifest | None:
@@ -206,9 +232,7 @@ def discover_roots(
         if key in seen:
             return
         seen.add(key)
-        roots.append(
-            ForgeResourceRoot(forge_id=fid, root=root, origin=origin, manifest=manifest)
-        )
+        roots.append(ForgeResourceRoot(forge_id=fid, root=root, origin=origin, manifest=manifest))
 
     if workspace_root is not None:
         from theforge import _installkit as kit
@@ -224,9 +248,16 @@ def discover_roots(
             return
         # Wheel-embedded manifests sit in a meta-dir (``_data``, ``data``,
         # ``forge``); the resource root is the package dir itself.
-        pkg_root = mp.parent.parent if mp.parent.name in {
-            "_data", "data", "forge",
-        } else mp.parent
+        pkg_root = (
+            mp.parent.parent
+            if mp.parent.name
+            in {
+                "_data",
+                "data",
+                "forge",
+            }
+            else mp.parent
+        )
         fid = _manifest_forge_id(mp)
         if fid:
             _add(fid, pkg_root, "installed", manifest_path=mp)
@@ -266,9 +297,7 @@ class ResourceResolver:
     """Search, describe and retrieve cataloged resources across roots."""
 
     def __init__(self, roots: Iterable[ForgeResourceRoot]) -> None:
-        self._roots: list[ForgeResourceRoot] = sorted(
-            roots, key=lambda r: (r.forge_id, r.origin)
-        )
+        self._roots: list[ForgeResourceRoot] = sorted(roots, key=lambda r: (r.forge_id, r.origin))
 
     @property
     def roots(self) -> list[ForgeResourceRoot]:
@@ -399,9 +428,21 @@ class ResourceResolver:
         """Bounded, contained, redacted read of one resource (§10.5-10.6).
 
         Directory locations serve a bounded listing; files serve a text
-        window. ``integrity=True`` hashes the whole file when it fits the
+        window. The window is hard-capped at ``MAX_READ_BYTES`` — a larger
+        ``max_bytes`` is clamped, never honored (flagged ``capped``).
+        ``integrity=True`` hashes the whole file when it fits the
         integrity cap, else the served window (flagged ``sha256_scope``).
         """
+        if not isinstance(max_bytes, int) or isinstance(max_bytes, bool):
+            raise ResourceFailure(
+                ResourceErrorKind.INVALID,
+                f"max_bytes must be an int, got {max_bytes!r}",
+            )
+        if not isinstance(offset, int) or isinstance(offset, bool):
+            raise ResourceFailure(
+                ResourceErrorKind.INVALID,
+                f"offset must be an int, got {offset!r}",
+            )
         if max_bytes < 0:
             raise ResourceFailure(
                 ResourceErrorKind.INVALID,
@@ -412,6 +453,10 @@ class ResourceResolver:
                 ResourceErrorKind.INVALID,
                 f"offset must be >= 0, got {offset}",
             )
+        # Hard ceiling — the caller cannot widen the read window past the
+        # internal cap simply by increasing the argument (§10.5).
+        capped = max_bytes > MAX_READ_BYTES
+        window = min(max_bytes, MAX_READ_BYTES)
         ref = self.describe(identity)
         target = self._resolve_safe(ref)
         if not target.exists():
@@ -434,6 +479,13 @@ class ResourceResolver:
                 entries=names[:MAX_LISTING],
                 listing_truncated=len(names) > MAX_LISTING,
             )
+        if not target.is_file():
+            # FIFOs, sockets and devices: resolved inside the root yet not
+            # servable — a blocking read on a special file must never happen.
+            raise ResourceFailure(
+                ResourceErrorKind.UNAVAILABLE,
+                f"{identity}: declared location is not a regular file",
+            )
         if target.suffix.lower() in DENY_SUFFIXES:
             raise ResourceFailure(
                 ResourceErrorKind.BLOCKED_BY_POLICY,
@@ -441,20 +493,32 @@ class ResourceResolver:
             )
         try:
             size = target.stat().st_size
-            with target.open("rb") as fh:
-                if offset:
-                    fh.seek(offset)
-                raw = fh.read(max_bytes + 1)
         except PermissionError as exc:
             raise ResourceFailure(
                 ResourceErrorKind.PERMISSION_DENIED, f"{identity}: {exc}"
             ) from exc
         except OSError as exc:
+            raise ResourceFailure(ResourceErrorKind.UNAVAILABLE, f"{identity}: {exc}") from exc
+        if offset > size:
+            # Beyond-EOF is a caller error, not an empty page — the EOF
+            # marker is exactly ``offset == size``.
             raise ResourceFailure(
-                ResourceErrorKind.UNAVAILABLE, f"{identity}: {exc}"
+                ResourceErrorKind.INVALID,
+                f"{identity}: offset {offset} beyond end of file ({size} bytes)",
+            )
+        try:
+            with target.open("rb") as fh:
+                if offset:
+                    fh.seek(offset)
+                raw = fh.read(window + 1)
+        except PermissionError as exc:
+            raise ResourceFailure(
+                ResourceErrorKind.PERMISSION_DENIED, f"{identity}: {exc}"
             ) from exc
-        truncated = len(raw) > max_bytes
-        raw = raw[:max_bytes]
+        except OSError as exc:
+            raise ResourceFailure(ResourceErrorKind.UNAVAILABLE, f"{identity}: {exc}") from exc
+        truncated = len(raw) > window
+        raw = raw[:window]
         try:
             text = raw.decode("utf-8")
             encoding = "utf-8"
@@ -487,6 +551,7 @@ class ResourceResolver:
             redacted=(redacted != text),
             sha256=digest,
             sha256_scope=digest_scope,
+            capped=capped,
         )
 
 
