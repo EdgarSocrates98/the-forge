@@ -23,6 +23,7 @@ from typing import Any
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
+from theforge.context.git import head_sha  # noqa: E402
 from theforge.context.resources import (  # noqa: E402
     ResourceResolver,
     discover_roots,
@@ -199,11 +200,20 @@ def main() -> int:
     ws = Path(args.workspace)
     repos = [p for p in ws.iterdir() if p.is_dir() and (p / "forge.agentic.json").is_file()]
 
+    # SHA↔evidence binding (§5.6): the audited commits are captured live
+    # from `git rev-parse --verify HEAD` — never hand-written.
+    repo_shas = {p.name: head_sha(p) for p in repos}
     receipt: dict[str, Any] = {
         "schema": "forge/FinalAudit/v1",
         "generated_at": datetime.now(UTC).isoformat(),
         "workspace": str(ws),
         "repos": sorted(p.name for p in repos),
+        "tested_commit": {
+            "repo": "the-forge",
+            "sha": repo_shas.get("the-forge"),
+            "captured_by": "git rev-parse --verify HEAD (hardened runner)",
+        },
+        "repo_shas": {k: v for k, v in repo_shas.items() if v},
     }
     receipt["contracts"] = audit_contracts(ws, repos)
     receipt["hosts"] = audit_hosts(ws, repos)
