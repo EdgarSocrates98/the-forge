@@ -102,6 +102,20 @@
         }
       }
     },
+    "removed": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Uninstall: ledger-owned paths removed from the target."
+    },
+    "kept": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Uninstall: paths preserved (user-modified, adopted or unsafe)."
+    },
     "managed_markers": {
       "type": "array",
       "items": {
@@ -240,7 +254,7 @@
       "additionalProperties": {
         "type": "integer"
       },
-      "description": "Per-action managed-file counts (created/updated/unchanged/adopted/skipped) plus `written` and `written_bytes` \u2014 measured from what the apply actually did."
+      "description": "Per-action managed-file counts (created/updated/unchanged/adopted/skipped) plus `written` and `written_bytes` — measured from what the apply actually did."
     },
     "verification": {
       "type": "object",

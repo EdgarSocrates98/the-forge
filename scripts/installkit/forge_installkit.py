@@ -1466,6 +1466,7 @@ def uninstall(ctx: InstallContext, *, purge_state: bool = False) -> dict[str, An
         ledger.save()
     receipt = {
         "schema": SCHEMA_RECEIPT,
+        "receipt_id": f"sha256:{_sha(_json_bytes({'r': removed, 'k': kept}))}",
         "forge_id": ctx.spec.forge_id,
         "operation": "uninstall",
         "scope": ctx.scope,
