@@ -43,11 +43,17 @@ from theforge.contracts.verdicts import Verdict, is_blocking  # noqa: E402
 SCENARIO_FORGES: dict[str, list[str]] = {
     "A-aws-standalone": ["spark-forge-aws"],
     "B-aws-full": [
-        "spark-forge-aws", "data-sentinel-forge", "the-forge",
-        "forge-doctor-data", "code-atlas-forge",
+        "spark-forge-aws",
+        "data-sentinel-forge",
+        "the-forge",
+        "forge-doctor-data",
+        "code-atlas-forge",
     ],
     "C-apis": [
-        "api-forge", "api-sentinel-forge", "forge-doctor-api", "code-atlas-forge",
+        "api-forge",
+        "api-sentinel-forge",
+        "forge-doctor-api",
+        "code-atlas-forge",
     ],
     "D-azure": ["spark-forge-azure", "forge-doctor-data", "code-atlas-forge"],
     "E-product": ["product-forge", "the-forge", "forge-agent-bridge"],
@@ -56,21 +62,33 @@ SCENARIO_FORGES: dict[str, list[str]] = {
 
 ROUTING_EVALS: list[tuple[str, str, set[str]]] = [
     # (scenario workspace, task, acceptable primary forges)
-    ("B-aws-full", "glue emr spark job oom shuffle skew",
-     {"spark-forge-aws"}),
-    ("C-apis", "openapi contract breaking change rest api",
-     {"api-forge", "forge-doctor-api"}),
-    ("C-apis", "index codebase symbols call graph",
-     {"code-atlas-forge", "api-forge", "forge-doctor-api"}),
-    ("B-aws-full", "data quality quarantine validation rules",
-     {"data-sentinel-forge", "forge-doctor-data", "spark-forge-aws"}),
-    ("D-azure", "databricks synapse adls fabric spark job",
-     {"spark-forge-azure"}),
+    ("B-aws-full", "glue emr spark job oom shuffle skew", {"spark-forge-aws"}),
+    ("C-apis", "openapi contract breaking change rest api", {"api-forge", "forge-doctor-api"}),
+    (
+        "C-apis",
+        "index codebase symbols call graph",
+        {"code-atlas-forge", "api-forge", "forge-doctor-api"},
+    ),
+    (
+        "B-aws-full",
+        "data quality quarantine validation rules",
+        {"data-sentinel-forge", "forge-doctor-data", "spark-forge-aws"},
+    ),
+    ("D-azure", "databricks synapse adls fabric spark job", {"spark-forge-azure"}),
 ]
 
 RESOURCE_KINDS = [
-    "skill", "agent", "knowledge", "rule", "contract",
-    "eval", "example", "fixture", "protocol", "command", "config",
+    "skill",
+    "agent",
+    "knowledge",
+    "rule",
+    "contract",
+    "eval",
+    "example",
+    "fixture",
+    "protocol",
+    "command",
+    "config",
 ]
 
 
@@ -109,9 +127,11 @@ def materialize_forge(src: Path, dst: Path) -> dict[str, Any]:
             if key == "location":
                 missing += 1
     return {
-        "forge": manifest.get("id", src.name), "materialized": True,
+        "forge": manifest.get("id", src.name),
+        "materialized": True,
         "resources_declared": len(manifest.get("resources", [])),
-        "files_copied": copied, "files_missing": missing,
+        "files_copied": copied,
+        "files_missing": missing,
     }
 
 
@@ -131,10 +151,15 @@ def resolver_for(ws_dir: Path) -> ResourceResolver:
     # matches them as checkout members via their forge.agentic.json
     # marker (gitless members are first-class). `explicit` still pairs
     # each dir with its id — dedup keeps one root per (fid, path).
-    explicit = [
-        (p.name, p) for p in sorted(ws_dir.iterdir())
-        if p.is_dir() and (p / "forge.agentic.json").is_file()
-    ] if ws_dir.is_dir() else []
+    explicit = (
+        [
+            (p.name, p)
+            for p in sorted(ws_dir.iterdir())
+            if p.is_dir() and (p / "forge.agentic.json").is_file()
+        ]
+        if ws_dir.is_dir()
+        else []
+    )
     return ResourceResolver(
         discover_roots(workspace_root=ws_dir, explicit=explicit, scan_installed=False)
     )
@@ -261,9 +286,12 @@ def scenario_subset(ws: Path, forges: dict[str, Path], sid: str, ids: list[str])
         check(len(resolver.list()) > 0, "catalog-nonempty"),
     ]
     return {
-        "id": sid, "workspace": info,
-        "roots": sorted(roots), "resources": len(resolver.list()),
-        "checks": checks, "resolver": resolver,
+        "id": sid,
+        "workspace": info,
+        "roots": sorted(roots),
+        "resources": len(resolver.list()),
+        "checks": checks,
+        "resolver": resolver,
     }
 
 
@@ -283,8 +311,10 @@ def main(argv: list[str] | None = None) -> int:
             "source_workspace": str(Path(args.workspace)),
             "scenarios": {},
             "evals": {"routing": [], "resources": []},
-            "summary": {"scenarios": {"pass": 0, "fail": 0, "unverified": 0},
-                        "evals": {"ok": 0, "total": 0}},
+            "summary": {
+                "scenarios": {"pass": 0, "fail": 0, "unverified": 0},
+                "evals": {"ok": 0, "total": 0},
+            },
             "gating": {
                 "blocking_reasons": [f"runner-error:{type(exc).__name__}: {exc}"],
                 "eval_reasons": [],
@@ -310,8 +340,7 @@ def main(argv: list[str] | None = None) -> int:
 def _execute(args: argparse.Namespace) -> int:
     ws_src = Path(args.workspace)
     forges = {
-        p.name: p for p in ws_src.iterdir()
-        if p.is_dir() and (p / "forge.agentic.json").is_file()
+        p.name: p for p in ws_src.iterdir() if p.is_dir() and (p / "forge.agentic.json").is_file()
     }
     the_forge = ws_src / "the-forge"
     if the_forge.is_dir() and "the-forge" not in forges:
@@ -353,14 +382,23 @@ def _execute(args: argparse.Namespace) -> int:
 
         # ---- H: no .git — implicit in materialization ---------------------
         h = results["G-all"]
-        h_git = check(not any((Path(f["dir"]) / ".git").exists()
-                              for f in [x["workspace"] for x in results.values()]),
-                      "no-.git-anywhere")
+        h_git = check(
+            not any(
+                (Path(f["dir"]) / ".git").exists()
+                for f in [x["workspace"] for x in results.values()]
+            ),
+            "no-.git-anywhere",
+        )
         results["H-no-git"] = {
             "id": "H-no-git",
             "evidence": "materialized workspaces carry no .git; discovery is manifest-based",
-            "checks": [h_git, check(len(h["roots"]) == len(forges) or len(h["roots"]) > 0,
-                                    "discovery-works-without-git")],
+            "checks": [
+                h_git,
+                check(
+                    len(h["roots"]) == len(forges) or len(h["roots"]) > 0,
+                    "discovery-works-without-git",
+                ),
+            ],
         }
 
         # ---- I: offline ----------------------------------------------------
@@ -381,8 +419,10 @@ def _execute(args: argparse.Namespace) -> int:
         results["J-partial-failure"] = {
             "id": "J-partial-failure",
             "checks": [
-                check("spark-forge-aws" in j_ok_roots and "api-forge" in j_ok_roots,
-                      "healthy-forges-still-discovered"),
+                check(
+                    "spark-forge-aws" in j_ok_roots and "api-forge" in j_ok_roots,
+                    "healthy-forges-still-discovered",
+                ),
                 check("bad-forge" not in j_ok_roots, "corrupt-forge-excluded-not-crashing"),
             ],
         }
@@ -392,7 +432,8 @@ def _execute(args: argparse.Namespace) -> int:
         kind_counts = {k: len(gr.list(kind=k)) for k in RESOURCE_KINDS}
         present = [k for k, c in kind_counts.items() if c > 0]
         results["K-resource-discovery"] = {
-            "id": "K-resource-discovery", "kind_counts": kind_counts,
+            "id": "K-resource-discovery",
+            "kind_counts": kind_counts,
             "checks": [
                 check(len(present) >= 6, f">=6 kinds discoverable (found {len(present)})"),
                 check(kind_counts["skill"] > 0, "skills present"),
@@ -414,7 +455,8 @@ def _execute(args: argparse.Namespace) -> int:
             for ref in gr.list():
                 cli_counts[ref.forge_id] = cli_counts.get(ref.forge_id, 0) + 1
             results["L-portal-cli"] = {
-                "id": "L-portal-cli", "portal_total": len(portal.get("resources", [])),
+                "id": "L-portal-cli",
+                "portal_total": len(portal.get("resources", [])),
                 "cli_total": len(gr.list()),
                 "checks": [
                     check(portal_counts == cli_counts, "same-per-forge-counts"),
@@ -422,9 +464,12 @@ def _execute(args: argparse.Namespace) -> int:
                 ],
             }
         except Exception as exc:  # pragma: no cover - environment dependent
-            results["L-portal-cli"] = {"id": "L-portal-cli",
-                                       "verdict": Verdict.UNVERIFIED.value,
-                                       "reason": f"portal import failed: {exc}", "checks": []}
+            results["L-portal-cli"] = {
+                "id": "L-portal-cli",
+                "verdict": Verdict.UNVERIFIED.value,
+                "reason": f"portal import failed: {exc}",
+                "checks": [],
+            }
 
         # ---- M: upgrade/migration — state preserved ------------------------
         mdir = tmpdir / "M-upgrade"
@@ -453,34 +498,42 @@ def _execute(args: argparse.Namespace) -> int:
             "id": "N-uninstall",
             "checks": [
                 check("api-forge" not in n_roots, "removed-forge-gone"),
-                check("spark-forge-aws" in n_roots and "product-forge" in n_roots,
-                      "siblings-untouched"),
+                check(
+                    "spark-forge-aws" in n_roots and "product-forge" in n_roots,
+                    "siblings-untouched",
+                ),
                 check(len(nr.list()) > 0, "remaining-catalogs-intact"),
             ],
         }
 
         # ---- O: context economy vs forge count -----------------------------
         o_rows = []
-        for size, ids in [(1, ["spark-forge-aws"]),
-                          (3, ["spark-forge-aws", "api-forge", "product-forge"]),
-                          (8, sorted(forges)[:8]),
-                          (12, sorted(forges)[:12])]:
+        for size, ids in [
+            (1, ["spark-forge-aws"]),
+            (3, ["spark-forge-aws", "api-forge", "product-forge"]),
+            (8, sorted(forges)[:8]),
+            (12, sorted(forges)[:12]),
+        ]:
             odir = tmpdir / f"O-{size}"
             make_workspace(odir, forges, ids)
             orr = resolver_for(odir)
             plan = plan_context("spark glue job performance", orr, level3_budget=8000)
-            o_rows.append({
-                "forges": len(orr.roots),
-                "l1_refs_scanned": plan.metrics.get("l1_refs_scanned",
-                                                    plan.level1_forges),
-                "l3_refs": len(plan.level3_refs),
-                "l3_est_bytes": plan.est_level3_bytes,
-            })
+            o_rows.append(
+                {
+                    "forges": len(orr.roots),
+                    "l1_refs_scanned": plan.metrics.get("l1_refs_scanned", plan.level1_forges),
+                    "l3_refs": len(plan.level3_refs),
+                    "l3_est_bytes": plan.est_level3_bytes,
+                }
+            )
         o_ok = all(row["l3_est_bytes"] <= 8000 and row["l3_refs"] <= 12 for row in o_rows)
         results["O-context-economy"] = {
-            "id": "O-context-economy", "matrix": o_rows,
-            "checks": [check(o_ok, "l3-bounded-regardless-of-forge-count"),
-                       check(all(r["l3_refs"] <= 12 for r in o_rows), "max-refs-cap")],
+            "id": "O-context-economy",
+            "matrix": o_rows,
+            "checks": [
+                check(o_ok, "l3-bounded-regardless-of-forge-count"),
+                check(all(r["l3_refs"] <= 12 for r in o_rows), "max-refs-cap"),
+            ],
         }
 
         # ---- Onda 14.1 routing evals ---------------------------------------
@@ -488,23 +541,32 @@ def _execute(args: argparse.Namespace) -> int:
             rr = resolvers.get(sid)
             if rr is None or not rr.roots:
                 receipt["evals"]["routing"].append(
-                    {"task": task, "verdict": Verdict.SKIPPED.value,
-                     "reason": "workspace empty"})
+                    {"task": task, "verdict": Verdict.SKIPPED.value, "reason": "workspace empty"}
+                )
                 continue
             plan = plan_context(task, rr)
             hit = plan.level2_forge in accept if plan.level2_forge else False
-            receipt["evals"]["routing"].append({
-                "task": task, "workspace": sid, "primary": plan.level2_forge,
-                "aux": plan.level2_aux, "accepted": sorted(accept), "ok": hit,
-            })
+            receipt["evals"]["routing"].append(
+                {
+                    "task": task,
+                    "workspace": sid,
+                    "primary": plan.level2_forge,
+                    "aux": plan.level2_aux,
+                    "accepted": sorted(accept),
+                    "ok": hit,
+                }
+            )
         # negative: gibberish must not fabricate confident routing
         plan_neg = plan_context("zzzqxkvbnm wqkfj", resolvers["G-all"])
-        receipt["evals"]["routing"].append({
-            "task": "zzzqxkvbnm wqkfj", "workspace": "G-all",
-            "primary": plan_neg.level2_forge,
-            "ok": plan_neg.level2_forge is None,
-            "note": "no fabricated route on zero-match terms",
-        })
+        receipt["evals"]["routing"].append(
+            {
+                "task": "zzzqxkvbnm wqkfj",
+                "workspace": "G-all",
+                "primary": plan_neg.level2_forge,
+                "ok": plan_neg.level2_forge is None,
+                "note": "no fabricated route on zero-match terms",
+            }
+        )
 
         # ---- Onda 14.2 resource evals --------------------------------------
         some = next((r for r in gr.list() if r.entry.availability == "available"), None)
@@ -512,29 +574,50 @@ def _execute(args: argparse.Namespace) -> int:
         if some is not None:
             try:
                 body = gr.get(some.identity, max_bytes=4096)
-                ev.append({"case": "right-resource", "identity": some.identity,
-                           "ok": bool(body.text), "sha256": (body.sha256 or "")[:12]})
+                ev.append(
+                    {
+                        "case": "right-resource",
+                        "identity": some.identity,
+                        "ok": bool(body.text),
+                        "sha256": (body.sha256 or "")[:12],
+                    }
+                )
             except ResourceFailure as exc:
                 ev.append({"case": "right-resource", "ok": False, "error": exc.kind.value})
         try:
             gr.describe("no-such-forge:ghost")
             ev.append({"case": "nonexistent", "ok": False, "error": "no refusal raised"})
         except ResourceFailure as exc:
-            ev.append({"case": "nonexistent", "ok": exc.kind.value in
-                       {"resource_not_installed", "resource_not_indexed"},
-                       "kind": exc.kind.value})
+            ev.append(
+                {
+                    "case": "nonexistent",
+                    "ok": exc.kind.value in {"resource_not_installed", "resource_not_indexed"},
+                    "kind": exc.kind.value,
+                }
+            )
         # traversal entry rejected by contract parse (manifest error, not crash)
         tdir = tmpdir / "T-poison"
         tdir.mkdir()
-        (tdir / "forge.agentic.json").write_text(json.dumps({
-            "schema": "forge/AgenticManifest/v1", "id": "evil", "name": "evil",
-            "version": "0.0.0",
-            "resources": [{"id": "x", "kind": "knowledge", "location": "../outside.md"}],
-        }), encoding="utf-8")
+        (tdir / "forge.agentic.json").write_text(
+            json.dumps(
+                {
+                    "schema": "forge/AgenticManifest/v1",
+                    "id": "evil",
+                    "name": "evil",
+                    "version": "0.0.0",
+                    "resources": [{"id": "x", "kind": "knowledge", "location": "../outside.md"}],
+                }
+            ),
+            encoding="utf-8",
+        )
         tr = resolver_for(tdir)
-        ev.append({"case": "manifest-poisoning-traversal",
-                   "ok": "evil" not in {r.forge_id for r in tr.roots},
-                   "note": "contract validation refuses traversal locations"})
+        ev.append(
+            {
+                "case": "manifest-poisoning-traversal",
+                "ok": "evil" not in {r.forge_id for r in tr.roots},
+                "note": "contract validation refuses traversal locations",
+            }
+        )
 
         # ---- verdicts — closed taxonomy, acceptance via contracts.verdicts --
         for _sid, r in results.items():
@@ -546,15 +629,13 @@ def _execute(args: argparse.Namespace) -> int:
                 if checks and all(c["ok"] for c in checks)
                 else (Verdict.UNVERIFIED.value if not checks else Verdict.FAIL.value)
             )
-        receipt["scenarios"] = {k: dict(v)
-                                for k, v in results.items()}
+        receipt["scenarios"] = {k: dict(v) for k, v in results.items()}
 
-    rp = sum(1 for s in receipt["scenarios"].values()
-             if s.get("verdict") == Verdict.PASS.value)
-    rf = sum(1 for s in receipt["scenarios"].values()
-             if s.get("verdict") == Verdict.FAIL.value)
-    ru = sum(1 for s in receipt["scenarios"].values()
-             if s.get("verdict") == Verdict.UNVERIFIED.value)
+    rp = sum(1 for s in receipt["scenarios"].values() if s.get("verdict") == Verdict.PASS.value)
+    rf = sum(1 for s in receipt["scenarios"].values() if s.get("verdict") == Verdict.FAIL.value)
+    ru = sum(
+        1 for s in receipt["scenarios"].values() if s.get("verdict") == Verdict.UNVERIFIED.value
+    )
     ep = sum(1 for e in receipt["evals"]["routing"] if e.get("ok"))
     eq = sum(1 for e in receipt["evals"]["resources"] if e.get("ok"))
     et = len(receipt["evals"]["routing"]) + len(receipt["evals"]["resources"])
@@ -568,16 +649,10 @@ def _execute(args: argparse.Namespace) -> int:
         "blocking_reasons": blocking,
         "eval_reasons": eval_reasons,
         "required_evals": sum(
-            1
-            for entries in receipt["evals"].values()
-            for e in entries
-            if e.get("required")
+            1 for entries in receipt["evals"].values() for e in entries if e.get("required")
         ),
         "optional_evals": sum(
-            1
-            for entries in receipt["evals"].values()
-            for e in entries
-            if not e.get("required")
+            1 for entries in receipt["evals"].values() for e in entries if not e.get("required")
         ),
     }
     receipt["summary"] = {
@@ -595,9 +670,7 @@ def _execute(args: argparse.Namespace) -> int:
     if read_errors:
         blocking = sorted(set(blocking) | set(read_errors))
         receipt["gating"]["blocking_reasons"] = blocking
-        out.write_text(
-            json.dumps(receipt, indent=2, ensure_ascii=False), encoding="utf-8"
-        )
+        out.write_text(json.dumps(receipt, indent=2, ensure_ascii=False), encoding="utf-8")
     for sid, s in receipt["scenarios"].items():
         print(f"  {sid:24s} {s.get('verdict')}")
     print(f"  evals ok={ep + eq}/{et}  scenarios pass={rp} fail={rf} unverified={ru}")
