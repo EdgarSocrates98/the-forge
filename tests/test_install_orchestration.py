@@ -88,7 +88,7 @@ def test_full_lifecycle(target: Path) -> None:
     skill.write_text("user edit", encoding="utf-8")
     doc = service.doctor(scope="project", root=target)
     assert doc["status"] == "degraded"
-    fixed = service.repair(scope="project", root=target)
+    fixed = service.repair(scope="project", root=target, approved=True)
     assert fixed["status"] == "completed"
     assert service.status(scope="project", root=target)["status"] == "healthy"
 

@@ -16,6 +16,19 @@ from theforge.install import service
 from theforge.mcp.server import build_server
 
 
+def _assert_path_independent_mcp(entry: dict) -> None:
+    """§9.3: the managed key must launch without a PATH lookup — either the
+    registered absolute shim or ``sys.executable -m theforge``."""
+    command = entry["command"]
+    args = entry["args"]
+    assert Path(command).is_absolute()
+    if command == sys.executable:
+        assert args == ["-m", "theforge", "mcp", "serve"]
+    else:
+        assert Path(command).name.startswith("theforge")
+        assert args == ["mcp", "serve"]
+
+
 def test_native_manifest_declares_installable_mcp() -> None:
     root = Path(__file__).resolve().parents[1]
     forge = json.loads((root / "forge.json").read_text(encoding="utf-8"))
@@ -113,10 +126,7 @@ def test_project_install_preserves_other_mcp_servers(tmp_path: Path) -> None:
     assert receipt["status"] == "completed"
     config = json.loads((target / ".mcp.json").read_text(encoding="utf-8"))
     assert config["mcpServers"]["other"]["command"] == "other"
-    assert config["mcpServers"]["theforge"] == {
-        "command": "theforge",
-        "args": ["mcp", "serve"],
-    }
+    _assert_path_independent_mcp(config["mcpServers"]["theforge"])
     service.uninstall(scope="project", root=target)
     config = json.loads((target / ".mcp.json").read_text(encoding="utf-8"))
     assert "theforge" not in config["mcpServers"]
@@ -131,7 +141,7 @@ def test_workspace_install_writes_mcp_at_workspace_root(tmp_path: Path) -> None:
     )
     assert receipt["status"] == "completed"
     config = json.loads((workspace / ".mcp.json").read_text(encoding="utf-8"))
-    assert config["mcpServers"]["theforge"]["args"] == ["mcp", "serve"]
+    _assert_path_independent_mcp(config["mcpServers"]["theforge"])
 
 
 def test_user_install_writes_mcp_at_isolated_user_root(
@@ -152,10 +162,7 @@ def test_user_install_writes_mcp_at_isolated_user_root(
     )
     assert receipt["status"] == "completed"
     config = json.loads((home / ".mcp.json").read_text(encoding="utf-8"))
-    assert config["mcpServers"]["theforge"] == {
-        "command": "theforge",
-        "args": ["mcp", "serve"],
-    }
+    _assert_path_independent_mcp(config["mcpServers"]["theforge"])
 
     removed = service.uninstall(scope="user", root=tmp_path / "ignored-project")
     assert removed["status"] in {"completed", "empty"}

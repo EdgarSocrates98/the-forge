@@ -79,6 +79,23 @@ def test_install_receipt_conforms(tmp_path):
     jsonschema.validate(rcpt, _schema("InstallReceipt.schema.json"))
 
 
+def test_install_auto_aggregate_conforms(tmp_path):
+    """``install auto`` aggregate receipts validate the published schema —
+    ``operation: install-auto`` + setup/detection/recommendation/onboarding
+    blocks must never drift off-contract again."""
+    from theforge.install import service
+
+    doc = service.install_auto(
+        scope="workspace",
+        root=tmp_path,
+        host="none",
+        dry_run=True,
+    )
+    jsonschema.validate(doc, _schema("InstallReceipt.schema.json"))
+    assert doc["operation"] == "install-auto"
+    assert doc["receipt_id"].startswith("sha256:")
+
+
 def test_health_conforms(tmp_path):
     ctx = _ctx(tmp_path)
     kit.apply_install(ctx, approved=True)

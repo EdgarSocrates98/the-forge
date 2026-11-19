@@ -74,10 +74,71 @@ def init(data: dict[str, Any]) -> str:
 
 def doctor(data: dict[str, Any]) -> str:
     lines = [f"The Forge {_clean(data['forge_version'])} - {_clean(data['root'])}"]
+    layers = data.get("layers") or []
+    by_name: dict[str, list[dict[str, Any]]] = {}
     for check in data["checks"]:
-        lines.append(
-            f"{_clean(check['name']):.<32} {_clean(check['status']):<5} {_clean(check['detail'])}"
-        )
+        by_name.setdefault(str(check["name"]), []).append(check)
+    seen: set[int] = set()
+    if layers:
+        for layer in layers:
+            names = layer.get("checks") or []
+            if not names:
+                continue
+            lines.append(
+                f"[{layer['index']:>2}] {_clean(layer['name'])} — {_clean(layer['status'])}"
+            )
+            for name in names:
+                for check in by_name.get(name, []):
+                    seen.add(id(check))
+                    lines.append(
+                        f"    {_clean(check['name']):.<30} {_clean(check['status']):<5} "
+                        f"{_clean(check['detail'])}"
+                    )
+                    guidance = check.get("guidance") or {}
+                    if guidance:
+                        lines.append(f"      PROBLEMA: {_clean(guidance.get('problema'))}")
+                        lines.append(
+                            f"      CAUSA PROVÁVEL: {_clean(guidance.get('causa_provavel'))}"
+                        )
+                        lines.append(f"      AÇÃO: {_clean(guidance.get('acao'))}")
+                        lines.append(f"      ESTADO: {_clean(guidance.get('estado'))}")
+        for check in data["checks"]:
+            if id(check) not in seen:
+                lines.append(
+                    f"    {_clean(check['name']):.<30} {_clean(check['status']):<5} "
+                    f"{_clean(check['detail'])}"
+                )
+    else:
+        for check in data["checks"]:
+            lines.append(
+                f"{_clean(check['name']):.<32} {_clean(check['status']):<5} "
+                f"{_clean(check['detail'])}"
+            )
+            guidance = check.get("guidance") or {}
+            if guidance:
+                lines.append(f"      PROBLEMA: {_clean(guidance.get('problema'))}")
+                lines.append(f"      CAUSA PROVÁVEL: {_clean(guidance.get('causa_provavel'))}")
+                lines.append(f"      AÇÃO: {_clean(guidance.get('acao'))}")
+                lines.append(f"      ESTADO: {_clean(guidance.get('estado'))}")
+    plan = data.get("repair_plan") or {}
+    if plan:
+        lines.append("")
+        lines.append("# repair plan (read-only — `install repair --yes` applies)")
+        if plan.get("error"):
+            lines.append(f"plan unavailable: {_clean(plan['error'])}")
+        elif plan.get("nothing_to_repair"):
+            lines.append("nothing to repair — ledger matches disk")
+        else:
+            for action in plan.get("actions") or []:
+                lines.append(
+                    f"  {_clean(action.get('action')):<10} {_clean(action.get('path'))}"
+                    f"  ({_clean(action.get('status'))}"
+                    + (f", {_clean(action.get('reason'))})" if action.get("reason") else ")")
+                )
+            recovery = plan.get("recovery") or {}
+            if recovery:
+                lines.append(f"  rollback: {_clean(recovery.get('rollback'))}")
+                lines.append(f"  rerunnable: {_clean(recovery.get('rerunnable'))}")
     lines.append("healthy" if data["healthy"] else "UNHEALTHY")
     return "\n".join(lines)
 
@@ -1861,6 +1922,28 @@ def install_doc(data: dict[str, Any]) -> str:
     return text
 
 
+def install_footprint(data: dict[str, Any]) -> str:
+    """``install footprint`` — measured per-host surface + duplication."""
+    lines = [f"# install footprint — {_clean(data.get('target_root'))}"]
+    for host, row in (data.get("per_host") or {}).items():
+        lines.append(
+            f"  {host:<10} {_clean(row.get('dir')):<10} "
+            f"{row.get('files_on_disk', 0):>5} files "
+            f"{row.get('bytes_on_disk', 0):>10}B "
+            f"({row.get('managed_files', 0)} managed)"
+        )
+    dup = data.get("duplication") or {}
+    lines.append(
+        f"duplication: {dup.get('duplicate_groups', 0)} shared-content group(s), "
+        f"{dup.get('extra_copies', 0)} extra copy(ies), {dup.get('extra_bytes', 0)}B"
+    )
+    for g in (dup.get("groups") or [])[:12]:
+        lines.append(f"    {g.get('sha256')}… → {', '.join(map(_clean, g.get('paths') or []))}")
+    if data.get("truncated"):
+        lines.append("WARNING: scan truncated — counts are a lower bound")
+    return "\n".join(lines)
+
+
 def installations(data: dict[str, Any]) -> str:
     rows = data.get("installations") or []
     if not rows:
@@ -1908,6 +1991,51 @@ def hosts(data: dict[str, Any]) -> str:
             lines.append(f"    [{_clean(ev.get('kind'))}] {_clean(ev.get('detail'))}")
     if current:
         lines.append(f"current session host: {_clean(current)}")
+    return "\n".join(lines)
+
+
+_STATE_MARK = {
+    "supported": "+",
+    "partial": "~",
+    "unsupported": "-",
+    "unverified": "?",
+}
+
+
+def hosts_matrix(data: dict[str, Any]) -> str:
+    """``hosts matrix`` — declared capability states, never file guesses."""
+    hosts = data.get("hosts") or {}
+    caps = data.get("capabilities") or []
+    if not hosts or not caps:
+        return "no declared host capability data"
+    names = sorted(hosts)
+    lines = [
+        "# host capability matrix (declared, not detected)",
+        f"{'capability':<18}" + "".join(f"{h:>12}" for h in names),
+    ]
+    for cap in caps:
+        row = f"{cap:<18}"
+        for host in names:
+            state = ((hosts[host] or {}).get(cap) or {}).get("state", "unverified")
+            row += f"{_STATE_MARK.get(state, '?'):>12}"
+        lines.append(row)
+    lines.append("")
+    lines.append("legend: + supported · ~ partial · - unsupported · ? unverified")
+    # Only the non-supported states carry caveats worth printing —
+    # 'supported' details would just repeat the matrix JSON.
+    for host in names:
+        for cap in caps:
+            entry = (hosts[host] or {}).get(cap) or {}
+            if entry.get("state") in ("supported", None):
+                continue
+            detail = entry.get("detail")
+            if detail:
+                lines.append(f"{host}.{cap} [{entry.get('state')}]: {_clean(detail)}")
+    src = data.get("source") or {}
+    if src.get("document"):
+        lines.append(
+            f"source: {_clean(src['document'])} (observed {_clean(src.get('observed_at'))})"
+        )
     return "\n".join(lines)
 
 
@@ -2262,16 +2390,71 @@ def context_plan(data: dict[str, Any]) -> str:
     lines = [
         f"# context plan — {data['task']}",
         f"L1 scanned: {data['level1_forges']} forge catalogs (metadata only)",
-        f"L2 primary: {data['level2_forge'] or '—'}  aux: {', '.join(data['level2_aux']) or '—'}",
         (
-            f"L3 refs ({len(data['level3_refs'])}, "
-            f"est {data['est_level3_bytes']}B/{data['budget_bytes']}B):"
+            f"L2 selection: {_clean(data.get('selection'))}"
+            + (f"  confidence: {_clean(data['confidence'])}" if data.get("confidence") else "")
         ),
+        f"L2 primary: {data['level2_forge'] or '—'}  aux: {', '.join(data['level2_aux']) or '—'}",
     ]
+    disambiguation = data.get("disambiguation")
+    if disambiguation:
+        lines.append(f"why: {_clean(disambiguation)}")
+    evidence = data.get("evidence") or {}
+    if evidence:
+        lines.append("evidence (matched terms):")
+        for fid, terms in evidence.items():
+            score = (data.get("forge_scores") or {}).get(fid)
+            suffix = f"  score={score}" if score is not None else ""
+            lines.append(f"  {_clean(fid)}: {', '.join(map(_clean, terms))}{suffix}")
+    alts = [a for a in data.get("alternatives") or [] if a.get("forge_id")]
+    if alts:
+        lines.append("alternatives:")
+        for alt in alts:
+            lines.append(
+                f"  {_clean(alt['forge_id'])} (score {_clean(alt.get('score'))})"
+                f" — {_clean(alt.get('reason'))}"
+            )
+    lines.append(
+        f"L3 refs ({len(data['level3_refs'])}, "
+        f"est {data['est_level3_bytes']}B/{data['budget_bytes']}B):"
+    )
     lines += [f"  · {i}" for i in data["level3_refs"]]
     m = data.get("metrics") or {}
     lines.append(
-        f"metrics: scanned={m.get('l1_refs_scanned')} selected={m.get('l2_selected')}"
+        f"metrics: discovered={m.get('discovered_refs', m.get('l1_refs_scanned'))}"
+        f" selected={m.get('l2_selected')} retrieved={m.get('retrieved_refs', 0)}"
         f" skipped-unavailable={m.get('unavailable_skipped')}"
     )
+    return "\n".join(lines)
+
+
+def context_budget(data: dict[str, Any]) -> str:
+    """``theforge context budget`` — measured bytes, estimated tokens."""
+    lines = [
+        f"# context budget — {_clean(data.get('root'))}",
+        f"{'category':<24} {'bytes':>10} {'files':>6}  {'~tokens':>8}  state",
+    ]
+    for name in data.get("categories") or {}:
+        cat = data["categories"][name]
+        est = cat.get("estimated_tokens") or {}
+        tokens = f"~{est.get('tokens')}" if est.get("tokens") is not None else "—"
+        byte_s = str(cat.get("bytes")) if cat.get("bytes") is not None else "—"
+        file_s = str(cat.get("files")) if cat.get("files") is not None else "—"
+        lines.append(
+            f"{name:<24} {byte_s:>10} {file_s:>6}  {tokens:>8}  {_clean(cat.get('state'))}"
+        )
+        if cat.get("note"):
+            lines.append(f"    note: {_clean(cat['note'])}")
+    total = data.get("total") or {}
+    est = total.get("estimated_tokens") or {}
+    lines.append(
+        f"total: {total.get('bytes', 0)}B  ~{est.get('tokens', 0)} tokens "
+        f"({_clean(est.get('kind', 'estimated'))}: {_clean(total.get('method'))},"
+        f" confidence={_clean(total.get('confidence'))})"
+    )
+    per_forge = data.get("per_forge") or {}
+    if per_forge:
+        lines.append(f"capability manifests: {len(per_forge)} forge(s)")
+    if data.get("truncated"):
+        lines.append("WARNING: file scan truncated — totals are a lower bound")
     return "\n".join(lines)

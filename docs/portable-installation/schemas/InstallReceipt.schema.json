@@ -29,6 +29,7 @@
     "operation": {
       "enum": [
         "install",
+        "install-auto",
         "update",
         "repair",
         "uninstall"
@@ -225,10 +226,21 @@
     "components": {
       "type": [
         "object",
+        "array",
         "null"
       ],
-      "additionalProperties": true,
-      "description": "InstallContext.options snapshot: component selections made at install (e.g. asset_kinds, graph_studio)."
+      "description": "Component selections: InstallContext.options snapshot (object) or component list for install-auto aggregates.",
+      "items": {
+        "type": "string"
+      },
+      "additionalProperties": true
+    },
+    "counts": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "integer"
+      },
+      "description": "Per-action managed-file counts (created/updated/unchanged/adopted/skipped) plus `written` and `written_bytes` \u2014 measured from what the apply actually did."
     },
     "verification": {
       "type": "object",
@@ -285,7 +297,10 @@
     },
     "lifecycle": {
       "type": "object",
-      "required": ["schema", "state"],
+      "required": [
+        "schema",
+        "state"
+      ],
       "properties": {
         "schema": {
           "const": "forge/InstallLifecycle/v1"
@@ -308,6 +323,150 @@
         }
       },
       "additionalProperties": false
+    },
+    "execution_profile": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Gateway/execution profile (economy|balanced|deep) for aggregate runs."
+    },
+    "forges": {
+      "type": [
+        "array",
+        "null"
+      ],
+      "items": {
+        "type": "object"
+      },
+      "description": "Per-forge delegated results in install-auto receipts."
+    },
+    "provider_registry": {
+      "type": [
+        "object",
+        "array",
+        "null"
+      ],
+      "description": "Provider-registry sync summary recorded by install-auto."
+    },
+    "installation": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "description": "Installation doc summary for install-auto runs."
+    },
+    "workspace": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "description": "Workspace context (root, members) for install-auto runs."
+    },
+    "members": {
+      "type": [
+        "array",
+        "null"
+      ],
+      "items": {
+        "type": "string"
+      },
+      "description": "Workspace members involved."
+    },
+    "setup": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "description": "Setup resolution provenance (flags>preset>yaml>defaults)."
+    },
+    "workspace_detection": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "description": "forge/WorkspaceDetection/v1 summary emitted during setup."
+    },
+    "recommendation": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "description": "forge/SpecialistRecommendation/v1 summary emitted during setup."
+    },
+    "onboarding": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "description": "forge/HostOnboarding/v1 summary emitted after successful apply."
+    },
+    "conflicts": {
+      "type": [
+        "array",
+        "null"
+      ],
+      "items": {
+        "type": "object"
+      },
+      "description": "Cross-forge path-claim conflicts detected at plan time."
+    },
+    "order_notes": {
+      "type": [
+        "array",
+        "null"
+      ],
+      "items": {
+        "type": "string"
+      },
+      "description": "Deterministic install-order rationale notes."
+    },
+    "receipts": {
+      "type": [
+        "object",
+        "array",
+        "null"
+      ],
+      "description": "Child receipt references."
+    },
+    "results": {
+      "type": [
+        "object",
+        "array",
+        "null"
+      ],
+      "description": "Alias view of per-forge results."
+    },
+    "next_steps": {
+      "type": [
+        "array",
+        "null"
+      ],
+      "items": {
+        "type": "string"
+      },
+      "description": "Operator next-step hints."
+    },
+    "plan": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "description": "Planned operation detail for dry-run receipts."
+    },
+    "plan_token": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Approval token binding a plan to an authorized apply."
+    },
+    "approval": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "description": "Approval metadata when the run required confirmation."
     }
   },
   "additionalProperties": false

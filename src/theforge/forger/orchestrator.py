@@ -41,7 +41,7 @@ from theforge.context import (
     extend_context_pack,
     scan_workspace,
 )
-from theforge.context.fingerprints import FingerprintStore
+from theforge.context.fingerprints import FingerprintStore, cache_epoch
 from theforge.context.git import read_git_state
 from theforge.context.scan import WorkspaceScan
 from theforge.context.verify import DRIFT_LIMITATION_PREFIX, DriftReport, apply_drift, check_drift
@@ -584,8 +584,14 @@ class Forger:
             return self._finish(trace, decision, "refused", error=policy_error)
 
         # One fingerprint store per run: the initial pack and every negotiated extension
-        # share it, and it is written once, after the last round (5.5).
-        fingerprints = FingerprintStore(self.root)
+        # share it, and it is written once, after the last round (5.5). The epoch
+        # (§8.6) invalidates the cache on the triggers file-hashing cannot see:
+        # forge update / manifest change (manifest_sha256), permission revocation
+        # (trust) and security-rule updates (VERSION ships the rules).
+        fingerprints = FingerprintStore(
+            self.root,
+            epoch=cache_epoch(VERSION, record.manifest_sha256, record.entry.trust),
+        )
         try:
             executed = self._context_and_execute(
                 trace, task, record, capability, selection, scan, profile, fingerprints

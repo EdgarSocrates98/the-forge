@@ -8,8 +8,9 @@ new entry is recorded only when ``stat`` is identical before and after the read.
 The cache document (``theforge/FingerprintCache/v1``, core-only) lives at
 ``user_cache_dir()/context/<digest12>.json`` (``digest12`` = first 12 hex of the sha256 of
 the resolved root as a POSIX string), is re-read with ``strict=True`` and discarded when it
-is unreadable, malformed, of another version or of another root. It is written at most once
-per run, atomically, after ``security.redact``.
+is unreadable, malformed, of another version, of another root or of another ``epoch``
+(§8.6 — see ``cache_epoch``). It is written at most once per run, atomically, after
+``security.redact``.
 
 This module is also the single owner of line-range hashing (``hash_lines``/
 ``prefix_lines``), used by the broker and by context re-verification. Newline rule: lines
@@ -64,6 +65,31 @@ class FingerprintCache:
     schema: Literal["theforge/FingerprintCache/v1"]
     root: str
     entries: dict[str, FingerprintEntry] = field(default_factory=dict)
+    epoch: str | None = None  # §8.6 cache-level invalidation key (additive)
+
+
+def cache_epoch(*parts: str | None) -> str:
+    """Deterministic epoch key for a fingerprint cache (§8.6).
+
+    An epoch change discards the whole cache — used for the invalidation
+    triggers that content hashing alone cannot see:
+
+    - **forge update / manifest change** — the run record's
+      ``manifest_sha256`` moves;
+    - **permission revocation** — the record's trust state moves;
+    - **security-rule update** — theforge ``VERSION`` moves (security
+      rules ship in the package, not in workspace files);
+    - **workspace change** — already covered: the cache file itself is
+      keyed by the root path digest (see ``FingerprintStore._path``).
+
+    Per-file change is covered by the entry fingerprint (sha + size +
+    mtime) and needs no epoch.
+    """
+    digest = hashlib.sha256()
+    for part in parts:
+        digest.update(b"\x00" if part is None else part.encode("utf-8"))
+        digest.update(b"\x00")
+    return digest.hexdigest()[:32]
 
 
 @dataclass
@@ -97,10 +123,18 @@ def _read_bytes(path: Path) -> bytes:
 class FingerprintStore:
     """Per-run fingerprint cache for one workspace root. Never raises on cache problems."""
 
-    def __init__(self, root: Path, *, cache_dir: Path | None = None, enabled: bool = True) -> None:
+    def __init__(
+        self,
+        root: Path,
+        *,
+        cache_dir: Path | None = None,
+        enabled: bool = True,
+        epoch: str | None = None,
+    ) -> None:
         self.root = root.resolve()
         self.root_key = self.root.as_posix()
         self.enabled = enabled
+        self._epoch = epoch
         self.stats = HashStats()
         self.warnings: list[str] = []
         self._entries: dict[str, FingerprintEntry] = {}
@@ -198,6 +232,16 @@ class FingerprintStore:
             # ContractError and JSONDecodeError are ValueErrors.
             self.warnings.append(f"fingerprint cache discarded ({self.path}): {exc}")
             return
+        if self._epoch is not None and cache.epoch != self._epoch:
+            # §8.6 — forge update, manifest change, permission revocation or
+            # a security-rule update moves the epoch: every prior fingerprint
+            # is suspect, so the whole cache is re-fingerprinted rather than
+            # trusted entry by entry.
+            self.warnings.append(
+                f"fingerprint cache discarded ({self.path}): epoch mismatch "
+                "(forge update, manifest, permissions or security rules changed)"
+            )
+            return
         self._entries = dict(cache.entries)
         if self._entries:
             self._prior = {rel: entry.sha256 for rel, entry in self._entries.items()}
@@ -239,7 +283,9 @@ class FingerprintStore:
                 continue
             entries[rel] = entry
         document = to_dict(
-            FingerprintCache(schema=CACHE_SCHEMA, root=self.root_key, entries=entries)
+            FingerprintCache(
+                schema=CACHE_SCHEMA, root=self.root_key, entries=entries, epoch=self._epoch
+            )
         )
         try:
             if redact(document) != document:

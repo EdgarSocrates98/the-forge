@@ -546,7 +546,9 @@ class TheForgePortal(fp.PortalAdapter):
         )
 
     def _install_repair(self, ctx: fp.RequestContext) -> dict[str, Any]:
-        return service.repair(scope="project", root=self._root)
+        # The portal endpoint is itself the explicit user action (session-
+        # token auth + a deliberate click) — it counts as §10.3 approval.
+        return service.repair(scope="project", root=self._root, approved=True)
 
     def _install_uninstall(self, ctx: fp.RequestContext) -> dict[str, Any]:
         return service.uninstall(scope="project", root=self._root)

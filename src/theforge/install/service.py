@@ -17,6 +17,7 @@ import shutil
 import sys
 import time
 from collections.abc import Sequence
+from dataclasses import replace
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -56,6 +57,37 @@ def _spec() -> kit.ForgeSpec:
         marker_body="",
         user_state_dir="~/.forge",
     )
+
+
+def _resolved_mcp_command(spec: kit.ForgeSpec) -> tuple[str, ...] | None:
+    """The PATH-independent argv for this forge's managed ``.mcp.json`` key.
+
+    §9.3 — a host must never launch the forge's MCP server through a PATH
+    lookup. Resolution order:
+
+    1. the registered install manifest's ``cli.shim`` (absolute launcher
+       written by the bootstrap) → ``(shim, *mcp_command[1:])``;
+    2. ``(sys.executable, "-m", <package>, *mcp_command[1:])`` — the
+       current interpreter, absolute by construction, module-pinned.
+
+    ``None`` when the spec declares no MCP command at all.
+    """
+    if not spec.mcp_command:
+        return None
+    tail = spec.mcp_command[1:]
+    shim = (_manifest().get("cli") or {}).get("shim")
+    if isinstance(shim, str) and shim and Path(shim).is_absolute():
+        return (shim, *tail)
+    return (sys.executable, "-m", spec.package, *tail)
+
+
+def mcp_spec() -> kit.ForgeSpec:
+    """``_spec()`` carrying the argv the managed key actually declares —
+    probes (``install mcp-verify``) exercise the written config, not a
+    PATH guess (§9.3)."""
+    spec = _spec()
+    resolved = _resolved_mcp_command(spec)
+    return replace(spec, mcp_command=resolved) if resolved else spec
 
 
 def _render_for(ctx: kit.InstallContext) -> dict[str, bytes]:
@@ -106,6 +138,7 @@ def _ctx(
         dry_run=dry_run,
         options=options,
         exclude=exclude,
+        mcp_command_resolved=_resolved_mcp_command(spec),
     )
 
 
@@ -629,16 +662,203 @@ def doctor(*, scope: str = "project", root: Path | None = None) -> dict[str, Any
     return doc
 
 
+_FOOTPRINT_HOST_DIRS: dict[str, str] = {
+    ".claude": "claude",
+    ".devin": "devin",
+    ".codex": "codex",
+    ".github": "copilot",
+}
+_FOOTPRINT_SCAN_BOUND = 8_192
+
+
+def _footprint_count(base: Path, budget: list[int]) -> tuple[int, int]:
+    """``(files, bytes)`` under ``base`` — bounded, symlink-free."""
+    if not base.is_dir() or base.is_symlink():
+        return 0, 0
+    files = size = 0
+    stack = [base]
+    while stack and budget[0] > 0:
+        current = stack.pop()
+        try:
+            entries = sorted(current.iterdir(), key=lambda e: e.name)
+        except OSError:
+            continue
+        for entry in entries:
+            if budget[0] <= 0:
+                return files, size
+            try:
+                if entry.is_symlink():
+                    continue
+                if entry.is_dir():
+                    stack.append(entry)
+                elif entry.is_file():
+                    budget[0] -= 1
+                    files += 1
+                    size += entry.stat().st_size
+            except OSError:
+                continue
+    return files, size
+
+
+def footprint(*, scope: str = "project", root: Path | None = None) -> dict[str, Any]:
+    """``install footprint`` — measured physical install surface (§7.x).
+
+    Reports, never restructures: per-host-dir file counts/bytes on disk,
+    and *duplication* as ledger-managed files sharing a content hash at
+    2+ managed paths (``.agents/skills`` is the intentional shared path —
+    duplication is counted, not judged). Empty/absent state reports
+    honest zeros, never a fabricated surface.
+    """
+    ctx = _ctx(scope, root, (), "full", True)
+    ledger = kit.Ledger.load(ctx.state_dir)
+    entries = ledger.entries()
+    budget = [_FOOTPRINT_SCAN_BOUND]
+
+    per_host: dict[str, dict[str, Any]] = {}
+    for dirname, host in sorted(_FOOTPRINT_HOST_DIRS.items()):
+        files, size = _footprint_count(ctx.root / dirname, budget)
+        managed = sum(1 for rel in entries if rel.startswith(f"{dirname}/"))
+        per_host[host] = {
+            "dir": dirname,
+            "files_on_disk": files,
+            "bytes_on_disk": size,
+            "managed_files": managed,
+        }
+    shared_files, shared_bytes = _footprint_count(ctx.root / ".agents", budget)
+    per_host["shared"] = {
+        "dir": ".agents",
+        "files_on_disk": shared_files,
+        "bytes_on_disk": shared_bytes,
+        "managed_files": sum(1 for rel in entries if rel.startswith(".agents/")),
+        "note": "codex/devin shared skills path — intentional dedup, not duplication",
+    }
+
+    by_sha: dict[str, list[str]] = {}
+    for rel, entry in entries.items():
+        sha = entry.get("sha256")
+        if isinstance(sha, str):
+            by_sha.setdefault(sha, []).append(rel)
+    duplicate_groups = {sha: sorted(rels) for sha, rels in by_sha.items() if len(rels) > 1}
+    dup_files = dup_bytes = 0
+    for rels in duplicate_groups.values():
+        extra = len(rels) - 1
+        dup_files += extra
+        try:
+            dup_bytes += (ctx.root / rels[0]).stat().st_size * extra
+        except OSError:
+            continue
+
+    doc = {
+        "schema": "theforge/InstallFootprint/v1",
+        "forge_id": FORGE_ID,
+        "scope": scope,
+        "target_root": str(ctx.root),
+        "measured": True,
+        "per_host": per_host,
+        "duplication": {
+            "duplicate_groups": len(duplicate_groups),
+            "extra_copies": dup_files,
+            "extra_bytes": dup_bytes,
+            "groups": [
+                {"sha256": sha[:16], "paths": rels}
+                for sha, rels in sorted(duplicate_groups.items())
+            ],
+        },
+        "managed_total": len(entries),
+        "truncated": budget[0] <= 0,
+        "notes": [
+            "measured from disk + ledger — no inferred host behavior",
+            "duplication = ledger-managed files sharing a sha256 at 2+ "
+            "managed paths; .agents is the intentional shared path",
+        ],
+    }
+    return doc
+
+
+def _repair_plan(ctx: kit.InstallContext) -> dict[str, Any]:
+    """Read-only repair plan (§10.3): every action repair *would* take,
+    derived from ledger drift — paths, kinds and action names only.
+
+    Nothing here reads or echoes file content, so the plan cannot carry
+    secrets; ``deletes`` is always empty (repair never removes data); a
+    partial failure leaves both a rollback path (backups under the state
+    dir) and a rerunnable receipt, which the plan states explicitly.
+    """
+    from theforge.security.redact import redact
+
+    ledger = kit.Ledger.load(ctx.state_dir)
+    drift = [
+        d
+        for d in ledger.drift(ctx.root, ctx.spec, mcp_argv=ctx.mcp_command_resolved)
+        if d["status"] != "ok"
+    ]
+    actions: list[dict[str, Any]] = []
+    for d in drift:
+        rel, st = d["path"], d["status"]
+        entry = ledger.get(rel)
+        if entry is None or st == "unsafe":
+            actions.append(
+                {
+                    "path": rel,
+                    "status": st,
+                    "action": "skipped",
+                    "reason": "foreign or unsafe path — repair never touches it",
+                }
+            )
+        else:
+            actions.append(
+                {
+                    "path": rel,
+                    "status": st,
+                    "action": "restore" if st == "missing" else "reheal",
+                    "kind": entry.get("kind"),
+                }
+            )
+    redacted: dict[str, Any] = redact(
+        {
+            "actions": actions,
+            "drift_count": len(drift),
+            "nothing_to_repair": not actions,
+            "destructive": False,
+            "deletes": [],
+            "approval_required": True,
+            "recovery": {
+                "rollback": "pre-write backups under .forge/install/backups/",
+                "rerunnable": "receipt recorded under .forge/install/receipts/ — "
+                "a partial repair is idempotent and safe to rerun",
+            },
+        }
+    )
+    return redacted
+
+
 def repair(
-    *, scope: str = "project", root: Path | None = None, dry_run: bool = False
+    *,
+    scope: str = "project",
+    root: Path | None = None,
+    dry_run: bool = False,
+    approved: bool = False,
 ) -> dict[str, Any]:
     ctx = _ctx(scope, root, render.HOSTS, "full", dry_run)
-    if dry_run:
-        doc = kit.status(ctx)
-        doc["lifecycle"] = lifecycle.health_block(doc)
+    plan = _repair_plan(ctx)
+    if dry_run or not approved:
+        # §10.3 — diagnosis is read-only by default: the plan doc is the
+        # whole output and no write happens until explicit approval.
+        doc: dict[str, Any] = dict(kit.status(ctx))
+        doc.update(
+            {
+                "operation": "repair",
+                "status": "planned",
+                "repair_plan": plan,
+                "next": "re-run with --yes to apply the plan (writes only "
+                "managed content, never deletes data)",
+            }
+        )
+        doc["lifecycle"] = lifecycle.receipt_block(doc)
         return doc
     with kit.acquire_lock(ctx.state_dir) as lock:
         r = kit.repair(ctx)
+        r["repair_plan"] = plan | {"approval_required": False, "approved": True}
         # Context registry (§9.2 recovery): redo a stranded transaction
         # journal, reclaim a stale context lock and rebuild registry +
         # ROUTING.md from the capability manifests on disk. Only when a
@@ -1837,7 +2057,10 @@ def _attach_setup_blocks(
         receipt["setup"] = setup
     mcp_check: dict[str, Any] | None = None
     if applied and spec.mcp_server_name and spec.mcp_command and (target / ".mcp.json").is_file():
-        mcp_check = kit.mcp_verify(spec)
+        # Probe the argv the managed key actually declares (absolute path),
+        # never the PATH-dependent declared command — §9.3.
+        resolved = _resolved_mcp_command(spec)
+        mcp_check = kit.mcp_verify(replace(spec, mcp_command=resolved) if resolved else spec)
     receipt["onboarding"] = build_onboarding(
         target,
         hosts=selected_hosts,
@@ -1938,6 +2161,10 @@ def install_auto(
             "status": "failed",
             "created_at": kit._utc_now(),
         }
+        _rid_keys = ("forge_id", "operation", "scope", "target_root", "checks", "created_at")
+        blocked_receipt["receipt_id"] = (
+            f"sha256:{kit._sha(kit._json_bytes({k: blocked_receipt.get(k) for k in _rid_keys}))}"
+        )
         _attach_setup_blocks(
             blocked_receipt,
             target=target,
@@ -2078,7 +2305,7 @@ def install_auto(
             {
                 "id": f"forge:{fid}",
                 "status": check_status,
-                "detail": (proc.stdout or proc.stderr)[-200:],
+                "detail": kit.redact_url_userinfo((proc.stdout or proc.stderr)[-200:]),
             }
         )
 
@@ -2202,6 +2429,20 @@ def install_auto(
         "created_at": kit._utc_now(),
         "created_by": f"theforge/{__version__}",
     }
+    _agg_rid_keys = (
+        "forge_id",
+        "operation",
+        "scope",
+        "target_root",
+        "host",
+        "profile",
+        "forges",
+        "checks",
+        "created_at",
+    )
+    receipt["receipt_id"] = (
+        f"sha256:{kit._sha(kit._json_bytes({k: receipt.get(k) for k in _agg_rid_keys}))}"
+    )
     _attach_setup_blocks(
         receipt,
         target=target,

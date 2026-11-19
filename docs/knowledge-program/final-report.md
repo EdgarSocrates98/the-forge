@@ -3,8 +3,8 @@
 | Campo | Valor |
 |---|---|
 | repository | `the-forge` |
-| branch | `cycle16_1/frente-b` |
-| commit | `f654aae` |
+| branch | `cycle16_1/frente-c` |
+| commit | `6a31f6a` |
 | docs inventoried | 944 (excl. GENERATED mirrors: 783; vendored upstream: 0) |
 
 ## Review levels (honest)
