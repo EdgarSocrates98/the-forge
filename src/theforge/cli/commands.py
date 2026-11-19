@@ -2294,12 +2294,13 @@ def cmd_setup(args: argparse.Namespace) -> int:
             for s in recommendation["suggested"]
             if s.get("role") == "primary" and s.get("installed")
         )
-        forges = selected or None
+        forges = selected
         setup_doc.setdefault("specialists", {})["selected"] = list(selected)
         if not selected:
             print(
                 "theforge: warning: specialists.mode 'recommended' matched no "
-                "registered primary — every registered forge stays in scope",
+                "registered primary — empty delegation scope, nothing to "
+                "install (use mode 'all' or 'manual' to widen)",
                 file=sys.stderr,
             )
 

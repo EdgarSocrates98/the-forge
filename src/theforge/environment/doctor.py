@@ -559,7 +559,16 @@ def _layer_checks(root: Path, environment: Mapping[str, str]) -> list[Check]:
             doc = kit._load_json(last, None) if kit is not None else None
             last_status = (doc or {}).get("status")
             detail += f" status:{last_status}"
-            if last_status not in ("completed", "planned", "verified"):
+            if last_status == "failed":
+                status = "fail"
+            elif last_status not in (
+                "completed",
+                "planned",
+                "verified",
+                "ready",
+                "certified",
+                "applied",
+            ):
                 status = "warn"
         except Exception:
             status = "warn"

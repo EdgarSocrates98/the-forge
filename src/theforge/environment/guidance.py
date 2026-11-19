@@ -48,6 +48,15 @@ _GUIDANCE: Final[tuple[tuple[str, dict[str, str]], ...]] = (
         },
     ),
     (
+        "providers",
+        {
+            "problema": "registry de providers ilegível",
+            "causa": "providers.toml/cache corrompido ou permissões do arquivo de registry",
+            "acao": "`theforge registry refresh`; persistindo, remova o "
+            "arquivo indicado e deixe o cache ser recriado",
+        },
+    ),
+    (
         "account-environment",
         {
             "problema": "ambiente de conta Forge inválido ou parcial",
@@ -168,11 +177,11 @@ def guidance_for(check_name: str, detail: str = "") -> dict[str, str]:
     ``estado`` is the check's observed state, filled by the caller.
     """
     name = check_name.lower()
+    if "unsafe" in detail.lower() or "unsafe" in name:
+        return dict(next(t for p, t in _GUIDANCE if p == "unsafe"))
     for prefix, template in _GUIDANCE:
         if name == prefix or name.startswith(f"{prefix}:") or name.startswith(f"{prefix}-"):
             return {**template}
-    if "unsafe" in detail.lower() or "unsafe" in name:
-        return dict(_GUIDANCE[8][1])  # foreign/unsafe path template
     return dict(_DEFAULT)
 
 

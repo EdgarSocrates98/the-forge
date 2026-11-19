@@ -2161,6 +2161,10 @@ def install_auto(
             "status": "failed",
             "created_at": kit._utc_now(),
         }
+        _rid_keys = ("forge_id", "operation", "scope", "target_root", "checks", "created_at")
+        blocked_receipt["receipt_id"] = (
+            f"sha256:{kit._sha(kit._json_bytes({k: blocked_receipt.get(k) for k in _rid_keys}))}"
+        )
         _attach_setup_blocks(
             blocked_receipt,
             target=target,
@@ -2301,7 +2305,7 @@ def install_auto(
             {
                 "id": f"forge:{fid}",
                 "status": check_status,
-                "detail": (proc.stdout or proc.stderr)[-200:],
+                "detail": kit.redact_url_userinfo((proc.stdout or proc.stderr)[-200:]),
             }
         )
 
@@ -2425,6 +2429,20 @@ def install_auto(
         "created_at": kit._utc_now(),
         "created_by": f"theforge/{__version__}",
     }
+    _rid_keys = (
+        "forge_id",
+        "operation",
+        "scope",
+        "target_root",
+        "host",
+        "profile",
+        "forges",
+        "checks",
+        "created_at",
+    )
+    receipt["receipt_id"] = (
+        f"sha256:{kit._sha(kit._json_bytes({k: receipt.get(k) for k in _rid_keys}))}"
+    )
     _attach_setup_blocks(
         receipt,
         target=target,

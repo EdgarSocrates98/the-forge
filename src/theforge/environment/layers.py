@@ -46,6 +46,7 @@ _LAYER_OF: Final[dict[str, str]] = {
     "account-environment": "registry",
     "workspace": "workspace-root",
     "registry": "registry",
+    "providers": "registry",
     "members": "members",
     "contracts": "contracts",
     "skills": "skills",
