@@ -95,6 +95,10 @@ material. `managed_files` are the **only** paths uninstall may remove.
   "checks": [ { "id": "cli-version", "status": "PASS" } ],
   "verification": { "status": "PASS|FAIL|UNVERIFIED|BLOCKED" },
   "status": "completed|failed|rolled-back|planned",
+  "lifecycle": { "schema": "forge/InstallLifecycle/v1",
+                 "state": "planned|blocked|failed|applied|partially_applied|
+                          verified|unverified|ready|certified",
+                 "detail": "…" },
   "error": { "kind": "AF-*|FORGE-*|SF-*|PF-*", "detail": "…" },
   "rollback": { "available": true,
                 "restore": "previous-receipt-id|none" },
@@ -105,16 +109,34 @@ material. `managed_files` are the **only** paths uninstall may remove.
 `action` semantics: `created`/`updated` = owned, removable;
 `adopted`/`unchanged` = pre-existing, **never removed** on uninstall.
 
+**Lifecycle (cycle 16.1).** `status` is the coarse operation verdict —
+`completed` means the writer finished, never "production-ready". The
+optional `lifecycle` block carries the finer, *derived* position of the
+installation (`forge/InstallLifecycle/v1`): `planned` → `applied` →
+`verified` → `ready` → `certified`, with `blocked`, `failed`,
+`partially_applied` and `unverified` for refusals, errors, subset writes
+and evidence gaps. An applied write whose verification is still pending
+is `applied`, never `verified`. `completed` stays in `status` for
+backward compatibility — existing receipts keep parsing and deriving the
+state from `status` + `verification` + per-forge rows requires no stored
+field.
+
 ## 3. `forge/InstallationHealth/v1` — output of `<cli> doctor --json`
 
 ```jsonc
 { "schema": "forge/InstallationHealth/v1", "forge_id": "…",
   "status": "healthy|degraded|broken|unverified",
+  "lifecycle": { "schema": "forge/InstallLifecycle/v1",
+                 "state": "ready|partially_applied|failed|unverified" },
   "checks": [ { "id": "cli|venv|shim|state|mcp|host-<h>|ledger",
                 "status": "PASS|FAIL|BLOCKED|UNVERIFIED|NOT_APPLICABLE",
                 "detail": "…", "repairable": true } ],
   "repair_hint": "…" }
 ```
+
+Health maps onto the same lifecycle: `healthy → ready` (verified *and*
+clean on disk), `degraded → partially_applied` (drift on part of the
+managed set), `broken → failed`, `unverified → unverified`.
 
 ### 3.1 MCP lifecycle checks
 

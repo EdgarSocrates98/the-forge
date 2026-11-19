@@ -946,6 +946,18 @@ def cmd_install_lifecycle(args: argparse.Namespace) -> int:
         _emit(args, out, render.install_doc)
         return 4
     _emit(args, out, render.install_doc)
+    lifecycle_state = (out.get("lifecycle") or {}).get("state")
+    if lifecycle_state:
+        # forge/InstallLifecycle/v1 — the finer state wins when present:
+        # only verified/ready/certified are proven success; planned and
+        # unverified are honest non-failures; applied keeps exit 0 for
+        # backward compatibility with `completed` but is NOT certified.
+        return (
+            0
+            if lifecycle_state
+            in ("verified", "ready", "certified", "planned", "unverified", "applied")
+            else 1
+        )
     return (
         0 if out.get("status") in ("completed", "planned", "healthy", "unverified", "PASS") else 1
     )
@@ -1645,9 +1657,7 @@ def cmd_telemetry_export(args: argparse.Namespace) -> int:
             "no exportable telemetry for the selection — runs without a "
             f"telemetry artifact: {dict(summary.skipped) or 'none'}"
         )
-    payload = json.dumps(document, indent=2, sort_keys=True, ensure_ascii=False).encode(
-        "utf-8"
-    )
+    payload = json.dumps(document, indent=2, sort_keys=True, ensure_ascii=False).encode("utf-8")
     if args.out == "-":
         sys.stdout.write(payload.decode("utf-8") + "\n")
         for skipped, why in summary.skipped.items():
@@ -2311,8 +2321,7 @@ def cmd_resources_list(args: argparse.Namespace) -> int:
     )
     data = {
         "roots": [
-            {"forge_id": r.forge_id, "origin": r.origin, "root": str(r.root)}
-            for r in res.roots
+            {"forge_id": r.forge_id, "origin": r.origin, "root": str(r.root)} for r in res.roots
         ],
         "count": len(refs),
         "resources": [_ref_doc(r) for r in refs],
@@ -2324,9 +2333,7 @@ def cmd_resources_list(args: argparse.Namespace) -> int:
 def cmd_resources_search(args: argparse.Namespace) -> int:
     """resources.search — deterministic substring match, id ranks first."""
     res = _resource_resolver(args)
-    refs = res.search(
-        args.term, forge_id=args.forge, kind=args.kind, limit=args.limit
-    )
+    refs = res.search(args.term, forge_id=args.forge, kind=args.kind, limit=args.limit)
     _emit(
         args,
         {"term": args.term, "count": len(refs), "resources": [_ref_doc(r) for r in refs]},

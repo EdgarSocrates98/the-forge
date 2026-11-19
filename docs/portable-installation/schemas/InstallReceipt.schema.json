@@ -282,6 +282,32 @@
     },
     "created_by": {
       "type": "string"
+    },
+    "lifecycle": {
+      "type": "object",
+      "required": ["schema", "state"],
+      "properties": {
+        "schema": {
+          "const": "forge/InstallLifecycle/v1"
+        },
+        "state": {
+          "enum": [
+            "planned",
+            "blocked",
+            "failed",
+            "applied",
+            "partially_applied",
+            "verified",
+            "unverified",
+            "ready",
+            "certified"
+          ]
+        },
+        "detail": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
     }
   },
   "additionalProperties": false

@@ -25,7 +25,7 @@ if TYPE_CHECKING:
 from theforge import __version__
 from theforge import _forgecontext as fctx
 from theforge import _installkit as kit
-from theforge.install import providers, render
+from theforge.install import lifecycle, providers, render
 
 FORGE_ID = "the-forge"
 DIST_NAME = "theforge-core"  # PyPI dist name — import package stays `theforge`
@@ -151,7 +151,9 @@ def install(
         exclude=exclude,
     )
     if dry_run:
-        return kit.apply_install(ctx, approved=yes)
+        plan_doc = kit.apply_install(ctx, approved=yes)
+        plan_doc["lifecycle"] = lifecycle.receipt_block(plan_doc)
+        return plan_doc
     with kit.acquire_lock(ctx.state_dir) as lock:
         receipt = kit.apply_install(ctx, approved=yes)
         if lock.recovered:
@@ -165,7 +167,13 @@ def install(
     if not dry_run and receipt.get("status") == "completed":
         _register_context(ctx, receipt)
         _drop_stale_doc_entries(ctx)
+        # Derived AFTER the context layer — it may append checks or flip
+        # the status to failed, and the lifecycle view must see the final
+        # receipt, never the pre-context one.
+        receipt["lifecycle"] = lifecycle.receipt_block(receipt)
         kit._write_receipt(ctx.state_dir, receipt)
+    else:
+        receipt["lifecycle"] = lifecycle.receipt_block(receipt)
     return receipt
 
 
@@ -593,6 +601,7 @@ def status(*, scope: str = "project", root: Path | None = None) -> dict[str, Any
         # truth instead of a false NOT_INSTALLED.
         doc["status"] = "healthy"
         doc["context_registered"] = True
+    doc["lifecycle"] = lifecycle.health_block(doc)
     return doc
 
 
@@ -615,6 +624,7 @@ def doctor(*, scope: str = "project", root: Path | None = None) -> dict[str, Any
                 "detail": f"{FORGE_ID} present in .forge/context/registry.json",
             }
         )
+    doc["lifecycle"] = lifecycle.health_block(doc)
     return doc
 
 
@@ -623,7 +633,9 @@ def repair(
 ) -> dict[str, Any]:
     ctx = _ctx(scope, root, render.HOSTS, "full", dry_run)
     if dry_run:
-        return kit.status(ctx)
+        doc = kit.status(ctx)
+        doc["lifecycle"] = lifecycle.health_block(doc)
+        return doc
     with kit.acquire_lock(ctx.state_dir) as lock:
         r = kit.repair(ctx)
         # Context registry (§9.2 recovery): redo a stranded transaction
@@ -678,6 +690,7 @@ def repair(
                     "detail": "stale lock reclaimed (interrupted install recovered)",
                 }
             )
+        r["lifecycle"] = lifecycle.receipt_block(r)
         return r
 
 
@@ -698,6 +711,7 @@ def uninstall(
             ) | {"removed": [], "kept": [], "scope": scope, "target_root": str(ctx.root)}
             if _docs_leftovers(ctx.root):
                 _unregister_context(ctx.root, r)
+                r["lifecycle"] = lifecycle.receipt_block(r)
             return r
         st = kit.status(ctx)
         return {
@@ -722,7 +736,9 @@ def uninstall(
             if not purge:
                 # kit.uninstall persistiu o receipt antes do unregister —
                 # regrava para que o arquivo reflita checks/status finais.
+                r["lifecycle"] = lifecycle.receipt_block(r)
                 kit._write_receipt(ctx.state_dir, r)
+        r["lifecycle"] = lifecycle.receipt_block(r)
         if lock.recovered:
             r.setdefault("checks", []).append(
                 {
@@ -952,13 +968,15 @@ def sync_provider_registry(
     dry_run: bool = False,
 ) -> dict[str, Any]:
     """Register installed local adapters and refresh live provider state."""
-    return providers.sync(
+    doc = providers.sync(
         kit.installed_forges(),
         root=root,
         forge=forge,
         approved=yes,
         dry_run=dry_run,
     )
+    doc["lifecycle"] = lifecycle.receipt_block(doc)
+    return doc
 
 
 # Delegation argv — built ONLY from the manifest's declared install
@@ -1836,7 +1854,7 @@ def install_auto(
                 "detail": "nenhuma forge registrada em ~/.forge/installations — rode o setup",
             }
         )
-        return {
+        blocked_receipt: dict[str, Any] = {
             "schema": kit.SCHEMA_RECEIPT,
             "forge_id": FORGE_ID,
             "operation": "install-auto",
@@ -1849,6 +1867,8 @@ def install_auto(
             "status": "failed",
             "created_at": kit._utc_now(),
         }
+        blocked_receipt["lifecycle"] = lifecycle.receipt_block(blocked_receipt)
+        return blocked_receipt
     # ------------------------------------------------------------------
     # Phase 1 — consolidated plan (install-2.1): every forge is planned
     # BEFORE any write. Sibling plans come from the child's own
@@ -2099,6 +2119,7 @@ def install_auto(
         "created_at": kit._utc_now(),
         "created_by": f"theforge/{__version__}",
     }
+    receipt["lifecycle"] = lifecycle.receipt_block(receipt)
     if scope == "workspace":
         receipt["workspace"] = _workspace_report(
             target,
@@ -2283,7 +2304,7 @@ def _workspace_report(
 
 
 def _receipt(operation: str, checks: list[dict[str, Any]], status: str) -> dict[str, Any]:
-    return {
+    doc = {
         "schema": kit.SCHEMA_RECEIPT,
         "forge_id": FORGE_ID,
         "operation": operation,
@@ -2298,6 +2319,8 @@ def _receipt(operation: str, checks: list[dict[str, Any]], status: str) -> dict[
         "created_at": kit._utc_now(),
         "created_by": f"theforge/{__version__}",
     }
+    doc["lifecycle"] = lifecycle.receipt_block(doc)
+    return doc
 
 
 __all__ = [
