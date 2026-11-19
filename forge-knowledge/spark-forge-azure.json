@@ -37,7 +37,9 @@
     "event hubs",
     "fabric",
     "adf",
-    "unity catalog"
+    "unity catalog",
+    "azure",
+    "delta"
   ],
   "environments": [
     "azure"

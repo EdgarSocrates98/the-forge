@@ -918,6 +918,7 @@ def cmd_install_lifecycle(args: argparse.Namespace) -> int:
                     components=comps,
                     gateway_profile=getattr(args, "gateway_profile", None),
                 )
+                sys.stdout.write(render.setup_extras(plan))
                 try:
                     approved = approve_plan(plan)
                 except NonInteractive:
@@ -1412,6 +1413,37 @@ def cmd_workspace_show(args: argparse.Namespace) -> int:
     descriptor = dataclasses.replace(descriptor, limitations=[*descriptor.limitations, *missing])
     _warn(registry)
     _emit(args, redact(to_dict(descriptor)), render.workspace)
+    return 0
+
+
+def cmd_workspace_detect(args: argparse.Namespace) -> int:
+    """``workspace detect`` — bounded local technology scan (§6.1–6.3).
+
+    Read-only, deterministic: member dirs are scanned with hard bounds for
+    evidence markers and dependency manifests — no provider process, no
+    network. The recommendation block is advisory: it never installs or
+    activates a specialist by itself.
+    """
+    from theforge import _installkit as kit
+    from theforge.workspace import (
+        detect_workspace,
+        load_workspace_config,
+        recommend_specialists,
+    )
+
+    root = _root(args)
+    detection = detect_workspace(root)
+    registered = [str(m.get("forge_id") or "") for m in kit.installed_forges()]
+    data: dict[str, Any] = {
+        "detection": detection,
+        "recommendation": recommend_specialists(detection, registered=registered),
+    }
+    config = load_workspace_config(root)
+    if config is not None:
+        data["declarative"] = config.setup_doc()
+        for warning in config.warnings:
+            print(f"theforge: warning: {warning}", file=sys.stderr)
+    _emit(args, data, render.workspace_detect)
     return 0
 
 
@@ -2097,11 +2129,64 @@ def cmd_install_wizard(args: argparse.Namespace) -> int:
     )
 
 
+def _setup_prologue(root: Path) -> None:
+    """Bounded detection preview + declared defaults before the setup wizard.
+
+    Read-only and total: any failure degrades to silence — the wizard's own
+    plan re-runs detection through ``install_auto``.
+    """
+    from theforge import _installkit as kit
+    from theforge.state import WORKSPACE_MARKER
+    from theforge.workspace import (
+        detect_workspace,
+        load_workspace_config,
+        recommend_specialists,
+    )
+
+    try:
+        detection = detect_workspace(root)
+        members = detection.get("members") or []
+        print("workspace scan (bounded, local — no provider started):")
+        for m in members[:8]:
+            techs = ", ".join(m.get("techs") or []) or "no evidence"
+            print(f"  {m.get('path', '?')}: {techs} [{m.get('confidence', 'low')}]")
+        registered = [str(m.get("forge_id") or "") for m in kit.installed_forges()]
+        suggestion = recommend_specialists(detection, registered=registered)
+        primaries = [
+            s["forge_id"] for s in suggestion.get("suggested") or [] if s.get("role") == "primary"
+        ]
+        if primaries:
+            print("  advisory suggestion: " + ", ".join(primaries) + " (nothing auto-activates)")
+        config = load_workspace_config(root)
+        if config is not None and config.declared:
+            declared = config.setup_doc().get("forge") or {}
+            if declared:
+                print(f"  declared defaults ({WORKSPACE_MARKER}): {declared}")
+            for warning in config.warnings:
+                print(f"  note: {warning}", file=sys.stderr)
+        print()
+    except Exception:  # noqa: BLE001 — preview must never take setup down
+        return
+
+
 def cmd_setup(args: argparse.Namespace) -> int:
-    """``setup``: one governed onboarding flow for The Forge + specialists."""
+    """``setup``: one governed onboarding flow for The Forge + specialists.
+
+    Cycle 16.1 (§3.1/§6): ``--preset`` aliases onto --profile/--gateway-profile
+    with visible provenance; ``forge.workspace.yaml``'s ``forge:`` block is read
+    as defaults — explicit flags always win; the plan carries the detection,
+    recommendation and onboarding blocks end to end.
+    """
+    from theforge import _installkit as kit
+    from theforge.install import options as setup_options
     from theforge.install import service
     from theforge.ui.kit import NonInteractive, UIContext, approve_plan
     from theforge.ui.wizard import run_setup_wizard
+    from theforge.workspace import (
+        detect_workspace,
+        load_workspace_config,
+        recommend_specialists,
+    )
 
     root = _root(args)
     ctx = UIContext.detect()
@@ -2111,6 +2196,7 @@ def cmd_setup(args: argparse.Namespace) -> int:
         and args.profile is None
         and args.components is None
         and args.gateway_profile is None
+        and getattr(args, "preset", None) is None
         and args.forge is None
         and not args.member
         and not args.yes
@@ -2123,7 +2209,25 @@ def cmd_setup(args: argparse.Namespace) -> int:
                 "setup wizard requires a TTY; use `theforge setup --dry-run` "
                 "or explicit --yes flags in automation"
             )
+        # §3.1 steps 2–3 as the wizard's pre-plan step: the bounded scan +
+        # declared defaults print before the first question (the vendored
+        # wizard is byte-locked, so the preview lives here). The plan the
+        # wizard reviews already carries detection/recommendation/onboarding
+        # through install_auto.
+        _setup_prologue(root)
         return run_setup_wizard(root=root, ctx=ctx, out_json=args.json)
+
+    config = load_workspace_config(root)
+    resolution = setup_options.resolve(
+        preset=getattr(args, "preset", None),
+        profile=args.profile,
+        gateway_profile=args.gateway_profile,
+        host=args.host,
+        forge=args.forge,
+        config=config,
+    )
+    for warning in resolution.warnings:
+        print(f"theforge: warning: {warning}", file=sys.stderr)
 
     components = (
         tuple(c.strip() for c in args.components.split(",") if c.strip())
@@ -2131,22 +2235,49 @@ def cmd_setup(args: argparse.Namespace) -> int:
         else None
     )
     scope = args.scope or "project"
-    host = args.host or "all"
-    profile = args.profile or "recommended"
-    gateway_profile = args.gateway_profile
+    members = tuple(args.member or ())
+    if members and scope != "workspace":
+        raise UsageError("--member only applies to setup --scope workspace")
+
+    forges: tuple[str, ...] | None = resolution.forges
+    detection: dict[str, Any] | None = None
+    setup_doc = resolution.doc
+    if resolution.specialists_mode == "recommended":
+        # Declared "activate recommended": resolve the suggestion's primary
+        # forges against the installed registry — never the alternatives.
+        detection = detect_workspace(root)
+        registered = [str(m.get("forge_id") or "") for m in kit.installed_forges()]
+        recommendation = recommend_specialists(detection, registered=registered)
+        selected = tuple(
+            s["forge_id"]
+            for s in recommendation["suggested"]
+            if s.get("role") == "primary" and s.get("installed")
+        )
+        forges = selected or None
+        setup_doc.setdefault("specialists", {})["selected"] = list(selected)
+        if not selected:
+            print(
+                "theforge: warning: specialists.mode 'recommended' matched no "
+                "registered primary — every registered forge stays in scope",
+                file=sys.stderr,
+            )
+
+    plan_kwargs: dict[str, Any] = {
+        "scope": scope,
+        "root": root,
+        "forge": forges,
+        "members": members,
+        "host": resolution.host,
+        "profile": resolution.profile,
+        "components": components,
+        "gateway_profile": resolution.gateway_profile,
+        "setup": setup_doc,
+        "detection": detection,
+    }
     approved = args.yes
     if not approved and not args.dry_run and not args.json and ctx.interactive:
-        plan = service.install_auto(
-            scope=scope,
-            root=root,
-            forge=args.forge,
-            members=tuple(args.member or ()),
-            host=host,
-            profile=profile,
-            components=components,
-            gateway_profile=gateway_profile,
-            dry_run=True,
-        )
+        plan = service.install_auto(dry_run=True, **plan_kwargs)
+        sys.stdout.write(render.setup_extras(plan))
         try:
             approved = approve_plan(plan)
         except NonInteractive:
@@ -2154,18 +2285,7 @@ def cmd_setup(args: argparse.Namespace) -> int:
         if not approved:
             print("declined — nothing written")
             return 1
-    out = service.install_auto(
-        scope=scope,
-        root=root,
-        forge=args.forge,
-        members=tuple(args.member or ()),
-        host=host,
-        profile=profile,
-        components=components,
-        gateway_profile=gateway_profile,
-        yes=approved,
-        dry_run=args.dry_run,
-    )
+    out = service.install_auto(yes=approved, dry_run=args.dry_run, **plan_kwargs)
     out.setdefault(
         "next_steps",
         [

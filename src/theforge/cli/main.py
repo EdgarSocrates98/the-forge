@@ -154,6 +154,14 @@ def build_parser() -> argparse.ArgumentParser:
         help="The Forge router execution budget",
     )
     setup.add_argument(
+        "--preset",
+        choices=("economy", "balanced", "full", "custom"),
+        default=None,
+        help="transparent alias onto --profile/--gateway-profile "
+        "(economy→minimal+economy, balanced→recommended+balanced, "
+        "full→full+deep, custom→your explicit flags)",
+    )
+    setup.add_argument(
         "--components",
         default=None,
         help="optional components csv: skills,agents,mcp,tui,graph-studio",
@@ -855,6 +863,12 @@ def build_parser() -> argparse.ArgumentParser:
     workspace.add_parser(
         "show", parents=[common], help="describe the workspace (cached manifests only, no provider)"
     ).set_defaults(handler=commands.cmd_workspace_show)
+    workspace.add_parser(
+        "detect",
+        parents=[common],
+        help="bounded local technology scan per member + advisory "
+        "specialist recommendation (no provider process)",
+    ).set_defaults(handler=commands.cmd_workspace_detect)
 
     explain = sub.add_parser("explain", parents=[common], help="explain a past run")
     explain.add_argument("run_id")

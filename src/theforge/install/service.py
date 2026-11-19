@@ -16,6 +16,7 @@ import re
 import shutil
 import sys
 import time
+from collections.abc import Sequence
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -963,7 +964,7 @@ def installations() -> list[dict[str, Any]]:
 def sync_provider_registry(
     *,
     root: Path | None = None,
-    forge: str | None = None,
+    forge: str | Sequence[str] | None = None,
     yes: bool = False,
     dry_run: bool = False,
 ) -> dict[str, Any]:
@@ -1805,29 +1806,83 @@ def _installation_doc(
     return to_dict(doc)
 
 
+def _attach_setup_blocks(
+    receipt: dict[str, Any],
+    *,
+    target: Path,
+    scope: str,
+    selected_hosts: tuple[str, ...],
+    dry_run: bool,
+    applied: bool,
+    spec: kit.ForgeSpec,
+    ws_detection: dict[str, Any] | None,
+    recommendation: dict[str, Any] | None,
+    setup: dict[str, Any] | None,
+) -> None:
+    """Attach the cycle-16.1 informational blocks (§3.1/§6/§9.2).
+
+    ``onboarding`` gets a *real* MCP handshake only when this run actually
+    wrote the managed ``.mcp.json`` and the run completed — a dry-run or a
+    failed apply never spawns the server. Verification is bounded by
+    ``kit.mcp_verify``'s own timeout and reports BLOCKED honestly when the
+    CLI is not resolvable.
+    """
+    from theforge.install.onboarding import build_onboarding
+
+    if ws_detection is not None:
+        receipt["workspace_detection"] = ws_detection
+    if recommendation is not None:
+        receipt["recommendation"] = recommendation
+    if setup is not None:
+        receipt["setup"] = setup
+    mcp_check: dict[str, Any] | None = None
+    if applied and spec.mcp_server_name and spec.mcp_command and (target / ".mcp.json").is_file():
+        mcp_check = kit.mcp_verify(spec)
+    receipt["onboarding"] = build_onboarding(
+        target,
+        hosts=selected_hosts,
+        scope=scope,
+        dry_run=dry_run,
+        applied=applied,
+        mcp_check=mcp_check,
+    )
+
+
 def install_auto(
     *,
     scope: str = "project",
     root: Path | None = None,
     yes: bool = False,
     dry_run: bool = False,
-    forge: str | None = None,
+    forge: str | Sequence[str] | None = None,
     members: tuple[str, ...] = (),
     cwd: Path | None = None,
     host: str = "all",
     profile: str = "recommended",
     components: tuple[str, ...] | None = None,
     gateway_profile: str | None = None,
+    setup: dict[str, Any] | None = None,
+    detection: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Orquestra a familia: cada forge registrada no bootstrap instala a si
     mesma no alvo resolvido. Delega ao CLI real — nunca simula.
-    ``forge`` restringe a delegação a uma única forge. No escopo
+    ``forge`` restringe a delegação a um id ou a um conjunto de ids (a
+    seleção declarativa/recomendada do ``setup``). No escopo
     ``workspace``, ``members`` seleciona subprojetos (paths relativos ao
     root) para delegação per-member adicional — o default e instalar os
-    assets compartilhados no root da workspace sem tocar os membros."""
+    assets compartilhados no root da workspace sem tocar os membros.
+
+    Cycle 16.1 (§3.1/§6): every receipt — plan, blocked or apply — also
+    carries ``workspace_detection`` (evidence-based tech scan),
+    ``recommendation`` (advisory specialist suggestion), ``setup``
+    (resolved preset/declarative provenance, when driven by ``setup``)
+    and ``onboarding`` (honest per-host states + next steps)."""
+    from theforge.workspace.detect import detect_workspace
+    from theforge.workspace.recommend import recommend_specialists
+
     if profile not in PROFILES:
         raise kit.InstallError(kit.E_PROFILE, f"profile {profile!r}; {PROFILES}")
-    _hosts(host)  # validate once before any delegation
+    selected_hosts = _hosts(host)  # validate once before any delegation
     kit.component_options(profile, components)  # validate even when self is absent
     if gateway_profile is not None and gateway_profile not in GATEWAY_PROFILES:
         raise kit.InstallError(
@@ -1838,12 +1893,28 @@ def install_auto(
     base = Path(cwd or Path.cwd())
     target = kit.resolve_scope(spec, scope, base, root)
     found = kit.installed_forges()
+
+    # §6.1–6.3 — read-only, bounded, deterministic: never touches a
+    # provider process and never changes the plan — it only informs it.
+    ws_detection: dict[str, Any] | None = None
+    recommendation: dict[str, Any] | None = None
+    if scope in ("project", "workspace"):
+        ws_detection = detection if detection is not None else detect_workspace(target)
+        recommendation = recommend_specialists(
+            ws_detection, registered=[str(m.get("forge_id") or "") for m in found]
+        )
+
     if forge is not None:
-        found = [m for m in found if m.get("forge_id") == forge]
-        if not found:
+        wanted = (forge,) if isinstance(forge, str) else tuple(forge)
+        registered = {str(m.get("forge_id") or "") for m in found}
+        missing = [fid for fid in wanted if fid not in registered]
+        if missing:
             raise kit.InstallError(
-                kit.E_NOTINSTALLED, f"forge {forge!r} nao registrada em ~/.forge/installations"
+                kit.E_NOTINSTALLED,
+                f"forge(s) {missing!r} nao registrada(s) em ~/.forge/installations",
             )
+        wanted_set = set(wanted)
+        found = [m for m in found if m.get("forge_id") in wanted_set]
     checks: list[dict[str, Any]] = []
     results: list[dict[str, Any]] = []
     if not found:
@@ -1867,6 +1938,18 @@ def install_auto(
             "status": "failed",
             "created_at": kit._utc_now(),
         }
+        _attach_setup_blocks(
+            blocked_receipt,
+            target=target,
+            scope=scope,
+            selected_hosts=selected_hosts,
+            dry_run=dry_run,
+            applied=False,
+            spec=spec,
+            ws_detection=ws_detection,
+            recommendation=recommendation,
+            setup=setup,
+        )
         blocked_receipt["lifecycle"] = lifecycle.receipt_block(blocked_receipt)
         return blocked_receipt
     # ------------------------------------------------------------------
@@ -2119,6 +2202,18 @@ def install_auto(
         "created_at": kit._utc_now(),
         "created_by": f"theforge/{__version__}",
     }
+    _attach_setup_blocks(
+        receipt,
+        target=target,
+        scope=scope,
+        selected_hosts=selected_hosts,
+        dry_run=dry_run,
+        applied=bool(not dry_run and overall == "completed"),
+        spec=spec,
+        ws_detection=ws_detection,
+        recommendation=recommendation,
+        setup=setup,
+    )
     receipt["lifecycle"] = lifecycle.receipt_block(receipt)
     if scope == "workspace":
         receipt["workspace"] = _workspace_report(

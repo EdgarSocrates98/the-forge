@@ -309,6 +309,11 @@ FILE_MARKERS: dict[str, tuple[str, ...]] = {
     "test_offline_e2e.py": ("e2e", "security"),
     "test_federated_uninstall.py": ("integration", "security"),
     "test_evidence_binding.py": ("unit",),
+    # cycle-16.1 FRENTE B: bounded workspace detection (§6.1/§6.2), advisory
+    # recommendation (§6.3), declarative forge.workspace.yaml (§6.7),
+    # --preset resolution (§6.6), honest host onboarding states (§6.4/§9.2),
+    # §3.4 daily-ops surface check
+    "test_cycle161_setup_workspace.py": ("unit", "integration", "security"),
 }
 
 

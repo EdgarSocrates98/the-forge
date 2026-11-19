@@ -1723,6 +1723,122 @@ def replay(data: dict[str, Any]) -> str:
     )
 
 
+def _detection_lines(detection: dict[str, Any]) -> list[str]:
+    members = detection.get("members") or []
+    lines = ["Detection:"]
+    if not members:
+        lines.append("  (no members scanned)")
+    for m in members:
+        techs = ", ".join(_list(m.get("techs"))) or "no evidence"
+        lines.append(
+            f"  {_clean(m.get('path', '?'))}: {_clean(techs)} "
+            f"[{_clean(m.get('confidence', 'low'))}]"
+        )
+    return lines
+
+
+def _recommendation_lines(recommendation: dict[str, Any]) -> list[str]:
+    lines = ["Recommendation (advisory — nothing is activated by it):"]
+    suggested = recommendation.get("suggested") or []
+    if not suggested:
+        lines.append("  no primary suggestion")
+    for s in suggested:
+        line = (
+            f"  {_clean(s.get('forge_id', '?')):<22} {_clean(s.get('role', 'primary'))}"
+            f" [{_clean(s.get('confidence', 'low'))}]"
+        )
+        if s.get("installed") is False:
+            line += " (not installed)"
+        lines.append(line)
+        if s.get("reason"):
+            lines.append(f"    {_clean(s['reason'])}")
+    for a in recommendation.get("alternatives") or []:
+        lines.append(
+            f"  alternative: {_clean(a.get('forge_id', '?'))} "
+            f"[{_clean(a.get('confidence', 'low'))}] — {_clean(a.get('reason', ''))}"
+        )
+    choices = recommendation.get("choices") or []
+    if choices:
+        lines.append("  choices: " + " · ".join(_clean(c.get("id", "?")) for c in choices))
+    return lines
+
+
+def workspace_detect(data: dict[str, Any]) -> str:
+    """``workspace detect`` — the detection summary + advisory recommendation."""
+    detection = data.get("detection") or {}
+    lines = [f"Workspace: {_clean(detection.get('root', '?'))}"]
+    lines += _detection_lines(detection)
+    lines.append("")
+    lines += _recommendation_lines(data.get("recommendation") or {})
+    declarative = data.get("declarative")
+    if isinstance(declarative, dict) and (declarative.get("forge") or declarative.get("members")):
+        lines.append("")
+        lines.append(f"Declarative: {_clean(declarative.get('path'))}")
+        if declarative.get("members"):
+            lines.append(f"  members: {', '.join(_list(declarative['members']))}")
+        forge = declarative.get("forge") or {}
+        for key, value in forge.items():
+            lines.append(f"  {key}: {_clean(value)}")
+    lines += _labelled("Limitations:", _list(detection.get("limitations")))
+    return "\n".join(lines)
+
+
+def setup_extras(data: dict[str, Any]) -> str:
+    """Cycle-16.1 blocks of a setup/auto receipt: detection, recommendation,
+    resolved preset/declarative provenance and the onboarding summary —
+    the parts ``format_status_doc`` cannot know about."""
+    sections: list[str] = []
+    detection = data.get("workspace_detection")
+    if isinstance(detection, dict):
+        sections.append("\n".join(_detection_lines(detection)))
+    recommendation = data.get("recommendation")
+    if isinstance(recommendation, dict):
+        sections.append("\n".join(_recommendation_lines(recommendation)))
+    setup = data.get("setup")
+    if isinstance(setup, dict):
+        lines = ["Resolution:"]
+        preset = setup.get("preset")
+        if isinstance(preset, dict):
+            resolved = preset.get("resolved") or {}
+            lines.append(
+                f"  preset {_clean(preset.get('name'))} → "
+                f"profile={_clean(resolved.get('profile'))} "
+                f"gateway={_clean(resolved.get('gateway_profile'))}"
+            )
+        for name, entry in (setup.get("resolution") or {}).items():
+            if isinstance(entry, dict):
+                lines.append(
+                    f"  {_clean(name)}: {_clean(entry.get('value'))} "
+                    f"({_clean(entry.get('source'))})"
+                )
+        specialists = setup.get("specialists")
+        if isinstance(specialists, dict):
+            line = f"  specialists: {_clean(specialists.get('mode'))}"
+            if specialists.get("include"):
+                line += f" include={','.join(_list(specialists['include']))}"
+            if specialists.get("selected"):
+                line += f" selected={','.join(_list(specialists['selected']))}"
+            lines.append(line + f" ({_clean(specialists.get('source'))})")
+        declarative = setup.get("declarative")
+        if isinstance(declarative, dict) and declarative.get("forge"):
+            lines.append(f"  declarative: {_clean(declarative.get('path'))}")
+        sections.append("\n".join(lines))
+    onboarding = data.get("onboarding")
+    if isinstance(onboarding, dict):
+        lines = ["Onboarding:"]
+        for h in onboarding.get("hosts") or []:
+            lines.append(
+                f"  {_clean(h.get('host')):<10} {_clean(h.get('state'))}"
+                + (f" — {_clean(h['detail'])}" if h.get("detail") else "")
+            )
+        steps = _list(onboarding.get("next_steps"))
+        if steps:
+            lines.append("  next:")
+            lines += [f"    - {_clean(s)}" for s in steps]
+        sections.append("\n".join(lines))
+    return "\n\n".join(sections) + ("\n" if sections else "")
+
+
 def install_doc(data: dict[str, Any]) -> str:
     """forge/* receipt / health / plan document (ADR-0058).
 
@@ -1739,6 +1855,9 @@ def install_doc(data: dict[str, Any]) -> str:
     lifecycle_state = (data.get("lifecycle") or {}).get("state")
     if lifecycle_state:
         text += f"\nlifecycle: {lifecycle_state}"
+    extras = setup_extras(data)
+    if extras:
+        text += "\n" + extras
     return text
 
 

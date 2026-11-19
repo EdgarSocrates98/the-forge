@@ -37,7 +37,11 @@
     "grpc",
     "java",
     "go",
-    "python"
+    "python",
+    "api",
+    "fastapi",
+    "flask",
+    "django"
   ],
   "environments": [
     "local"
