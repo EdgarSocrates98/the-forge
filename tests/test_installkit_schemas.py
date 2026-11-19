@@ -96,6 +96,16 @@ def test_install_auto_aggregate_conforms(tmp_path):
     assert doc["receipt_id"].startswith("sha256:")
 
 
+def test_uninstall_receipt_conforms(tmp_path):
+    """Uninstall receipts must validate the same published schema —
+    ``receipt_id`` is required for every operation (§17 finding)."""
+    ctx = _ctx(tmp_path)
+    kit.apply_install(ctx, approved=True)
+    rcpt = kit.uninstall(ctx)
+    jsonschema.validate(rcpt, _schema("InstallReceipt.schema.json"))
+    assert rcpt["receipt_id"].startswith("sha256:")
+
+
 def test_health_conforms(tmp_path):
     ctx = _ctx(tmp_path)
     kit.apply_install(ctx, approved=True)
