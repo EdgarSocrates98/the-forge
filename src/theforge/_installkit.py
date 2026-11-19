@@ -572,7 +572,27 @@ def _mcp_argv_resolved(ctx: "InstallContext") -> tuple[str, ...]:
         installations_dir() / f"{ctx.spec.forge_id}.json", {})
     shim = (manifest.get("cli") or {}).get("shim")
     if isinstance(shim, str) and shim and Path(shim).is_absolute():
-        return (shim, *tail)
+        shim_path = Path(shim)
+        if head in {shim_path.name, shim_path.stem}:
+            return (shim, *tail)
+        for cand in (shim_path.parent / head, shim_path.parent / (head + ".exe")):
+            if cand.exists():
+                return (str(cand), *tail)
+    # entry-point module lookup keeps the argv a real target when the MCP
+    # console script lives beside the CLI shim (e.g. ``forge-mcp``).
+    try:
+        import importlib.metadata as _imd
+
+        for ep in _imd.entry_points(group="console_scripts"):
+            if ep.name == head and ep.module:
+                return (
+                    sys.executable,
+                    "-c",
+                    f"import sys; from {ep.module} import {ep.attr} as _f; sys.exit(_f())",
+                    *tail,
+                )
+    except Exception:  # noqa: BLE001 — metadata absence must not break install
+        pass
     return (sys.executable, "-m", ctx.spec.package, *tail)
 
 
